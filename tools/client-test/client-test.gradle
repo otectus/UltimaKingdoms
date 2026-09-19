@@ -1,0 +1,43 @@
+// Opt-in client integration harness; excluded from normal builds and release jars.
+allprojects {
+    afterEvaluate { p ->
+        if (!p.plugins.hasPlugin('net.minecraftforge.gradle')) return
+        p.sourceSets {
+            clientTest {
+                java.setSrcDirs(['src/clientTest/java'])
+                resources.setSrcDirs(['src/clientTest/resources'])
+                compileClasspath += p.sourceSets.main.output + p.sourceSets.main.compileClasspath
+                runtimeClasspath += output + compileClasspath + p.sourceSets.main.runtimeClasspath
+            }
+        }
+        p.configurations.clientTestImplementation.extendsFrom p.configurations.implementation
+        p.minecraft.runs {
+            clientTest {
+                parent p.minecraft.runs.client
+                client true
+                workingDirectory p.file('build/client-validation/run')
+                property 'forge.logging.console.level', 'info'
+                property 'ultima.clientTest.output', p.file('build/client-validation').absolutePath
+                property 'ultima.clientTest.focused', p.findProperty('clientTestFocused') ?: 'false'
+                property 'ultima.clientTest.commandsOnly', p.findProperty('clientTestCommands') ?: 'false'
+                args '--width', '1280', '--height', '800', '--username', 'ClientTest'
+                mods {
+                    ultima_kingdoms { source p.sourceSets.main }
+                    ultima_client_test { source p.sourceSets.clientTest }
+                }
+            }
+        }
+        p.tasks.matching { it.name == 'runClientTest' }.configureEach {
+            doFirst {
+                def marker = p.findProperty('clientTestCommands') == 'true' ? 'COMMANDS_PASS.txt' : 'PASS.txt'
+                p.delete p.file("build/client-validation/${marker}"), p.file('build/client-validation/FAIL.txt'), p.file('build/client-validation/STOP')
+            }
+            doLast {
+                def marker = p.findProperty('clientTestCommands') == 'true' ? 'COMMANDS_PASS.txt' : 'PASS.txt'
+                if (!p.file("build/client-validation/${marker}").isFile()) {
+                    throw new GradleException('Client integration did not pass; inspect build/client-validation/FAIL.txt and the runtime log')
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:serenum",
+  "translation_key": "kingdom.ultima_kingdoms.serenum",
+  "name_pool": "ultima_kingdoms:serenum",
+  "fallback": true,
+  "style_hints": ["minecraft:plains"],
+  "heraldry": {"icon": "ultima_kingdoms:serenum", "color": "#E6C65C"},
+  "metadata": {"theme": "open_bell_heartland", "environment": "open_temperate"}
+}

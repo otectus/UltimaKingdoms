@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:anemosia",
+  "priority": 110,
+  "styles": ["minecraft:desert"]
+}

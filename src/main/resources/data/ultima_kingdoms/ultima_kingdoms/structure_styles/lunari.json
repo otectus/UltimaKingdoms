@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:lunari",
+  "priority": 110,
+  "styles": ["minecraft:snowy"]
+}

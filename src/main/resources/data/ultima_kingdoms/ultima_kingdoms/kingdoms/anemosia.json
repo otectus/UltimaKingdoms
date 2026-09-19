@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:anemosia",
+  "translation_key": "kingdom.ultima_kingdoms.anemosia",
+  "name_pool": "ultima_kingdoms:anemosia",
+  "fallback": false,
+  "style_hints": ["minecraft:desert"],
+  "heraldry": {"icon": "ultima_kingdoms:anemosia", "color": "#D9AE65"},
+  "metadata": {"theme": "roads_without_walls", "environment": "arid_windswept"}
+}

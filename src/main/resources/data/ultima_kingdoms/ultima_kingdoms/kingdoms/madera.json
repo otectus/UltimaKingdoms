@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:madera",
+  "translation_key": "kingdom.ultima_kingdoms.madera",
+  "name_pool": "ultima_kingdoms:madera",
+  "fallback": false,
+  "style_hints": ["minecraft:savanna"],
+  "heraldry": {"icon": "ultima_kingdoms:madera", "color": "#C9793E"},
+  "metadata": {"theme": "living_craft", "environment": "warm_woodland"}
+}

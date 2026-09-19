@@ -1,0 +1,21 @@
+gradle.projectsEvaluated {
+    def p = gradle.rootProject
+    p.sourceSets {
+        runtimeTest {
+            java.setSrcDirs(['tools/test/runtime/java'])
+            resources.setSrcDirs(['tools/test/runtime/resources'])
+            compileClasspath += p.sourceSets.main.output + p.sourceSets.gameTest.output + p.sourceSets.main.compileClasspath
+            runtimeClasspath += output + compileClasspath
+        }
+    }
+    p.tasks.named('compileRuntimeTestJava').configure { dependsOn p.tasks.named('gameTestClasses') }
+    p.tasks.register('productionTestJar', Jar) {
+        dependsOn p.tasks.named('runtimeTestClasses')
+        archiveClassifier = 'acceptance'
+        destinationDirectory = p.layout.buildDirectory.dir('test-artifacts')
+        from p.sourceSets.runtimeTest.output
+        from(p.sourceSets.gameTest.output) { include 'com/ultimakingdoms/test/McaGameTests.class', 'com/ultimakingdoms/test/KingdomGameTests*.class' }
+        finalizedBy 'reobfProductionTestJar'
+    }
+    p.reobf { productionTestJar {} }
+}

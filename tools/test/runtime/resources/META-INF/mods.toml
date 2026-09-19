@@ -1,0 +1,19 @@
+modLoader="javafml"
+loaderVersion="[47,48)"
+license="Test fixture only"
+[[mods]]
+modId="ultima_kingdoms_acceptance"
+version="1"
+displayName="Ultima Kingdoms Acceptance Harness"
+[[dependencies.ultima_kingdoms_acceptance]]
+modId="ultima_kingdoms"
+mandatory=true
+versionRange="[0.1.0,)"
+ordering="AFTER"
+side="SERVER"
+[[dependencies.ultima_kingdoms_acceptance]]
+modId="mca"
+mandatory=false
+versionRange="[7.6.26+1.20.1]"
+ordering="AFTER"
+side="SERVER"

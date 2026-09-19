@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:serenum",
+  "priority": 100,
+  "include": ["minecraft:plains", "minecraft:sunflower_plains", "minecraft:meadow"],
+  "exclude": []
+}

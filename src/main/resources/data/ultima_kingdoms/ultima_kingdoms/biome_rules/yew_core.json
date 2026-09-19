@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:yew",
+  "priority": 110,
+  "include": ["minecraft:taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga"],
+  "exclude": []
+}

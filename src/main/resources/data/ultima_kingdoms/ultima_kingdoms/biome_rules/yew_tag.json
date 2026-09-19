@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:yew",
+  "priority": 80,
+  "include": ["#ultima_kingdoms:kingdom/yew"],
+  "exclude": []
+}

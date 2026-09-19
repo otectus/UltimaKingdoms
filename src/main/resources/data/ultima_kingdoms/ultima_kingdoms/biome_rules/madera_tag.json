@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:madera",
+  "priority": 85,
+  "include": ["#ultima_kingdoms:kingdom/madera"],
+  "exclude": []
+}

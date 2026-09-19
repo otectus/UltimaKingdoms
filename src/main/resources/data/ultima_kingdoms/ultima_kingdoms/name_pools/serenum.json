@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:serenum",
+  "canonical": ["Bellmeadow", "Fairmere", "Dawnfield", "Greenford", "Sunvale", "Clearbrook", "Goldfield", "Summerwell", "Whitebridge", "Rosewick", "Brightmere", "Stillwater", "Hearthfield", "Crownmead", "Valegate", "Larkford", "Highmeadow", "Peacecross"],
+  "reserved": [],
+  "blacklist": [],
+  "retries": 64,
+  "templates": [
+    {"format": "{prefix}{suffix}", "weight": 8},
+    {"format": "{descriptor} {noun}", "weight": 2}
+  ],
+  "tokens": {
+    "prefix": ["Dawn", "Fair", "Green", "Gold", "Bright", "Summer", "Rose", "Lark", "Vale", "Bell"],
+    "suffix": ["mere", "ford", "field", "meadow", "wick", "well", "bridge", "haven"],
+    "descriptor": ["High", "White", "Golden", "Still"],
+    "noun": ["Meadow", "Bridge", "Vale", "Cross"]
+  }
+}

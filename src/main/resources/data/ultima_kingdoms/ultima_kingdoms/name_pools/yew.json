@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:yew",
+  "canonical": ["Yewholt", "Elderbough", "Mossford", "Greenwarden", "Thornwatch", "Hartwood", "Blackbough", "Foxhollow", "Ravenholt", "Deepgrove", "Pinewatch", "Stagrest", "Rootmere", "Fernwick", "Yewmere", "Oldwood", "Bowyer's Rest", "Elderholt"],
+  "reserved": [],
+  "blacklist": [],
+  "retries": 64,
+  "templates": [
+    {"format": "{prefix}{suffix}", "weight": 8},
+    {"format": "{descriptor} {noun}", "weight": 2}
+  ],
+  "tokens": {
+    "prefix": ["Yew", "Elder", "Moss", "Thorn", "Hart", "Raven", "Fox", "Pine", "Root", "Fern"],
+    "suffix": ["holt", "wood", "bough", "ford", "watch", "hollow", "grove", "mere", "wick"],
+    "descriptor": ["Old", "Deep", "Green", "Black"],
+    "noun": ["Wood", "Grove", "Holt", "Watch"]
+  }
+}

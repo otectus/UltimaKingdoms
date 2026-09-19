@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:madera",
+  "canonical": ["Sunwood", "Amberbough", "Redleaf", "Coppergrove", "Warmshade", "Goldenbark", "Emberwood", "Saffron Reach", "Tallgrass", "Honeythorn", "Acacia Rest", "Sunbough", "Amberrest", "Redgrove", "Goldbough", "Coppermere", "Brightwood", "Hearthgrove"],
+  "reserved": [],
+  "blacklist": [],
+  "retries": 64,
+  "templates": [
+    {"format": "{prefix}{suffix}", "weight": 8},
+    {"format": "{descriptor} {noun}", "weight": 2}
+  ],
+  "tokens": {
+    "prefix": ["Sun", "Amber", "Red", "Copper", "Gold", "Ember", "Honey", "Warm", "Saffron"],
+    "suffix": ["wood", "bough", "grove", "rest", "shade", "leaf", "reach", "thorn"],
+    "descriptor": ["Golden", "Warm", "Amber", "Bright"],
+    "noun": ["Bough", "Grove", "Reach", "Wood"]
+  }
+}

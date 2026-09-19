@@ -1,0 +1,263 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+version = mod_version
+group = mod_group_id
+def configuredRunDirectory = providers.gradleProperty('runDir').getOrElse('run')
+def explicitLocalRuntimeDirectory = layout.buildDirectory.dir('local-runtime').get().asFile
+def stageExplicitRuntimeJar = { String propertyName, String moduleName ->
+    def configuredPath = providers.gradleProperty(propertyName).orNull
+    if (configuredPath == null) return null
+
+    def sourceJar = file(configuredPath)
+    if (!sourceJar.isFile()) {
+        throw new GradleException("-P${propertyName} does not name a readable jar file: ${sourceJar}")
+    }
+    explicitLocalRuntimeDirectory.mkdirs()
+    def stagedJar = new File(explicitLocalRuntimeDirectory, "${moduleName}-1.0.jar")
+    java.nio.file.Files.copy(sourceJar.toPath(), stagedJar.toPath(),
+            java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    return "explicit.local:${moduleName}:1.0"
+}
+def localMcaModule = stageExplicitRuntimeJar('mcaJar', 'minecraft-comes-alive')
+def localArchitecturyModule = stageExplicitRuntimeJar('architecturyJar', 'architectury')
+
+base {
+    archivesName = mod_id
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+}
+
+sourceSets {
+    gameTest {
+        java.setSrcDirs(['src/gameTest/java'])
+        resources.setSrcDirs(['src/gameTest/resources'])
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath + sourceSets.main.runtimeClasspath
+    }
+}
+
+configurations {
+    gameTestImplementation.extendsFrom implementation
+    gameTestRuntimeOnly.extendsFrom runtimeOnly
+}
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file(configuredRunDirectory)
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'info'
+        }
+
+        client {
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            args '--nogui'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                    source sourceSets.gameTest
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file(providers.gradleProperty('dataRunDir').getOrElse('run-data'))
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    if (localMcaModule != null || localArchitecturyModule != null) {
+        flatDir {
+            name = 'ExplicitLocalRuntime'
+            dirs explicitLocalRuntimeDirectory
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        forRepositories(fg.repository)
+        filter { includeGroup 'maven.modrinth' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // MCA is opt-in for compatibility runs. Prefer the exact pack jar with
+    // -PmcaJar=/absolute/path/to/mca.jar; -PwithMcaRuntime=true resolves the declared version.
+    // Neither path leaks MCA into the compile classpath or the public API artifact.
+    if (localMcaModule != null) {
+        runtimeOnly fg.deobf(localMcaModule)
+    } else if (project.findProperty('withMcaRuntime')?.toBoolean()) {
+        runtimeOnly fg.deobf("maven.modrinth:minecraft-comes-alive-reborn:${mca_version}")
+    }
+    if (localArchitecturyModule != null) {
+        runtimeOnly fg.deobf(localArchitecturyModule)
+    }
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
+            mca_version_range      : mca_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'      : mod_id,
+                'Specification-Vendor'     : mod_authors,
+                'Specification-Version'    : '1',
+                'Implementation-Title'     : project.name,
+                'Implementation-Version'   : project.jar.archiveVersion,
+                'Implementation-Vendor'    : mod_authors,
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.register('apiJar', Jar) {
+    dependsOn tasks.named('compileJava')
+    archiveClassifier = 'api'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(sourceSets.main.output.classesDirs) {
+        include 'com/ultimakingdoms/api/**'
+        exclude 'com/ultimakingdoms/api/ApiBootstrap.class'
+    }
+
+    manifest {
+        attributes([
+                'Specification-Title'  : "${mod_id}-api",
+                'Specification-Version': mod_version,
+                'Implementation-Title' : "${mod_id}-api",
+        ])
+    }
+}
+
+tasks.register('verifyApiJar') {
+    dependsOn tasks.named('apiJar')
+    doLast {
+        def jarFile = tasks.named('apiJar').get().archiveFile.get().asFile
+        def entries = []
+        new java.util.zip.ZipFile(jarFile).withCloseable { zip ->
+            zip.entries().each { entry -> entries << entry.name }
+        }
+
+        if (!entries.any { it.startsWith('com/ultimakingdoms/api/') && it.endsWith('.class') }) {
+            throw new GradleException("${jarFile.name} contains no public API classes")
+        }
+
+        def nonApiClasses = entries.findAll {
+            it.endsWith('.class') && !it.startsWith('com/ultimakingdoms/api/')
+        }
+        if (!nonApiClasses.isEmpty()) {
+            throw new GradleException("${jarFile.name} contains implementation classes: ${nonApiClasses.take(20)}")
+        }
+
+        def resources = entries.findAll {
+            it.endsWith('.json') || it.endsWith('.toml') || it.endsWith('.mcmeta')
+        }
+        if (!resources.isEmpty()) {
+            throw new GradleException("${jarFile.name} must be classes only: ${resources.take(20)}")
+        }
+
+        def forbiddenReferences = ['com/ultimakingdoms/core/', 'com/ultimakingdoms/client/',
+                                   'com/ultimakingdoms/compat/', 'forge/net/mca/']
+        def linking = []
+        new java.util.zip.ZipFile(jarFile).withCloseable { zip ->
+            zip.entries().each { entry ->
+                if (entry.name.endsWith('.class')) {
+                    def constants = new String(zip.getInputStream(entry).bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                    if (forbiddenReferences.any { constants.contains(it) }) linking << entry.name
+                }
+            }
+        }
+        if (!linking.isEmpty()) {
+            throw new GradleException("${jarFile.name} API classes reference implementation/client/MCA classes: ${linking.take(20)}")
+        }
+    }
+}
+
+artifacts {
+    archives tasks.named('apiJar')
+}
+
+tasks.named('assemble').configure {
+    dependsOn tasks.named('apiJar')
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('verifyApiJar')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

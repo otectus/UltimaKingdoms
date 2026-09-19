@@ -1,0 +1,25 @@
+.gradle/
+build/
+run/
+run-data/
+out/
+src/generated/resources/.cache/
+
+*.iml
+*.ipr
+*.iws
+.idea/
+.eclipse/
+.settings/
+.classpath
+.project
+.vscode/
+bin/
+
+# Python test helpers
+__pycache__/
+*.py[cod]
+
+*.log
+*.log.gz
+logs/

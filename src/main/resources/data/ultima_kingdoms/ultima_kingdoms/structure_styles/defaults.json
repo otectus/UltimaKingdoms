@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:defaults",
+  "kingdom": "ultima_kingdoms:serenum",
+  "priority": 100,
+  "styles": ["minecraft:plains"]
+}

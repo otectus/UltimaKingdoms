@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:lunari",
+  "canonical": ["Moonwatch", "Silvermere", "Frosthollow", "Starrest", "Palehaven", "Rimeford", "Nightveil", "Crescent Hollow", "Snowglass", "Wintermere", "Moonfall", "Starmead", "Argent Watch", "Frostmere", "Moonveil", "Rimewatch", "Winterwatch", "Starhollow"],
+  "reserved": [],
+  "blacklist": [],
+  "retries": 64,
+  "templates": [
+    {"format": "{prefix}{suffix}", "weight": 8},
+    {"format": "{descriptor} {noun}", "weight": 2}
+  ],
+  "tokens": {
+    "prefix": ["Moon", "Star", "Silver", "Frost", "Rime", "Night", "Winter", "Pale", "Crescent"],
+    "suffix": ["watch", "mere", "hollow", "rest", "haven", "veil", "fall", "ford", "glass"],
+    "descriptor": ["Argent", "Pale", "Silver", "Winter"],
+    "noun": ["Watch", "Hollow", "Haven", "Rest"]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:lunari",
+  "priority": 110,
+  "include": ["minecraft:snowy_plains", "minecraft:ice_spikes", "minecraft:snowy_slopes", "minecraft:frozen_peaks", "minecraft:jagged_peaks", "minecraft:grove"],
+  "exclude": []
+}

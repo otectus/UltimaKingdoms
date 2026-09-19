@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:yew",
+  "translation_key": "kingdom.ultima_kingdoms.yew",
+  "name_pool": "ultima_kingdoms:yew",
+  "fallback": false,
+  "style_hints": ["minecraft:taiga"],
+  "heraldry": {"icon": "ultima_kingdoms:yew", "color": "#315D3A"},
+  "metadata": {"theme": "greenwood_compact", "environment": "old_forest"}
+}

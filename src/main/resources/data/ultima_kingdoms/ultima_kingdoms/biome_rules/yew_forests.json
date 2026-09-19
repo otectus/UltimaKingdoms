@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:yew",
+  "priority": 85,
+  "include": ["minecraft:dark_forest", "minecraft:forest", "minecraft:flower_forest", "minecraft:birch_forest", "minecraft:old_growth_birch_forest"],
+  "exclude": []
+}

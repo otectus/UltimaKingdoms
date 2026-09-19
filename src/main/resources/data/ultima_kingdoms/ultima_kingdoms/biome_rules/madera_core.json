@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:madera",
+  "priority": 110,
+  "include": ["minecraft:savanna", "minecraft:savanna_plateau"],
+  "exclude": []
+}

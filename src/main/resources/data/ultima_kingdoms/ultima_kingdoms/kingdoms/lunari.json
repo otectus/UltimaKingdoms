@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:lunari",
+  "translation_key": "kingdom.ultima_kingdoms.lunari",
+  "name_pool": "ultima_kingdoms:lunari",
+  "fallback": false,
+  "style_hints": ["minecraft:snowy"],
+  "heraldry": {"icon": "ultima_kingdoms:lunari", "color": "#9DB7D6"},
+  "metadata": {"theme": "moon_winter_scholarship", "environment": "snowy_open"}
+}

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "kingdom": "ultima_kingdoms:lunari",
+  "priority": 90,
+  "include": ["#ultima_kingdoms:kingdom/lunari"],
+  "exclude": []
+}

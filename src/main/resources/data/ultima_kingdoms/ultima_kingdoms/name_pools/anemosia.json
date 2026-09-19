@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:anemosia",
+  "canonical": ["Zephyrgate", "Dustwell", "Dunewatch", "Windrest", "Whisperdune", "Skyreach", "Sandwatch", "Gale Crossing", "Stormwell", "Sunscar", "Crosswind", "Windward", "Far Dune", "Highwind", "Dustgate", "Wanderwell", "Zephyr Rest", "Skydune"],
+  "reserved": [],
+  "blacklist": [],
+  "retries": 64,
+  "templates": [
+    {"format": "{prefix}{suffix}", "weight": 8},
+    {"format": "{descriptor} {noun}", "weight": 2}
+  ],
+  "tokens": {
+    "prefix": ["Zephyr", "Wind", "Gale", "Dust", "Dune", "Sand", "Sky", "Storm", "Wander"],
+    "suffix": ["gate", "well", "watch", "rest", "reach", "crossing", "dune", "ward", "scar"],
+    "descriptor": ["Far", "High", "Whisper", "Cross"],
+    "noun": ["Dune", "Wind", "Crossing", "Reach"]
+  }
+}
