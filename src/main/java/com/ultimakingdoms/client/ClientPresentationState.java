@@ -6,15 +6,12 @@ import com.ultimakingdoms.presentation.KingdomSummary;
 import com.ultimakingdoms.presentation.PresentationConfig;
 import com.ultimakingdoms.presentation.SettlementSummary;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public final class ClientPresentationState {
@@ -24,6 +21,7 @@ public final class ClientPresentationState {
     private static UUID lastSettlement;
     private static ResourceLocation lastKingdom;
     private static int overlayTicks;
+    private static int overlayDuration;
 
     private ClientPresentationState() {
     }
@@ -61,6 +59,7 @@ public final class ClientPresentationState {
         if (PresentationConfig.SHOW_SETTLEMENT_OVERLAY.get() && changedSettlement
                 && (!PresentationConfig.KINGDOM_BORDERS_ONLY.get() || changedKingdom)) {
             overlayTicks = PresentationConfig.OVERLAY_DURATION_TICKS.get();
+            overlayDuration = overlayTicks;
         }
     }
 
@@ -92,17 +91,9 @@ public final class ClientPresentationState {
 
         SettlementSummary settlement = currentOverlay.settlement().orElseThrow();
         KingdomSummary kingdom = currentOverlay.kingdom().orElseThrow();
-        GuiGraphics graphics = event.getGuiGraphics();
-        int center = event.getWindow().getGuiScaledWidth() / 2;
-        int y = Math.min(PresentationConfig.OVERLAY_Y.get(), event.getWindow().getGuiScaledHeight() - 42);
-        int alpha = Math.min(255, overlayTicks * 32);
-        int color = (alpha << 24) | 0xFFFFFF;
-        Component name = Component.literal(settlement.displayName());
-        Component kingdomName = Component.translatable("message.ultima_kingdoms.kingdom_of",
-                Component.translatable(kingdom.translationKey()));
-        graphics.drawCenteredString(minecraft.font, name, center, y, color);
-        graphics.drawCenteredString(minecraft.font, kingdomName, center, y + 12, color);
-        HeraldryRenderer.render(graphics, kingdom, center - minecraft.font.width(name) / 2 - 22, y - 3, 16);
+        SettlementOverlayRenderer.render(event.getGuiGraphics(), minecraft.font, settlement, kingdom,
+                event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight(),
+                PresentationConfig.OVERLAY_Y.get(), overlayTicks, overlayDuration, event.getPartialTick());
     }
 
     @SubscribeEvent
