@@ -1,0 +1,138 @@
+{
+  "entries": [
+    {
+      "id": "first_guild_steps",
+      "category": "civic",
+      "title": "Help the Lamplighters",
+      "summary": "Earn service credit through real work, whether you join or stay independent.",
+      "body": [
+        "The Lamplighters are the first shipped peaceful guild. When the matching quest content and MCA Quests integration are available, complete an authored Lamplighters service job through its normal giver. Ultima records the saved completion as a verified deed and awards the configured guild standing.",
+        "Open Village Ledger → Guilds and read membership, standing, deeds, rank progress, and service explanations. Join enrolls you voluntarily. Leave ends active membership without erasing earned service history, skills, family, inventory, or personal relationships. Multiple organizational memberships are possible unless their definitions declare a conflict.",
+        "A repeatable quest may keep paying its ordinary native reward, but the same authored quest does not keep granting new Lamplighters credit. A verified deed is a distinct eligible completion credited by this system, not every item delivered or enemy defeated.",
+        "For a simple peaceful route, help with several different workshop and relief jobs, then ask a nearby eligible contact for an introduction or curated work. Joining alone does not skip standing and deed requirements. Staying independent is a supported alternative with higher service thresholds.",
+        "If you completed work but see no credit, refresh your own page and check whether that quest is an authored eligible deed. The completion must be saved and delivered through the supported quest integration. Do not abandon and replay the same job hoping to force duplicate credit."
+      ],
+      "commands": [
+        "/ultima guild",
+        "/ultima guild join ultima_kingdoms:lamplighters",
+        "/ultima guild leave ultima_kingdoms:lamplighters"
+      ]
+    },
+    {
+      "id": "guild_requirements",
+      "category": "civic",
+      "title": "Standing, deeds, and rank",
+      "summary": "Read a service requirement as several checks, not one progress bar.",
+      "body": [
+        "Under the bundled Lamplighters rules, active members are volunteers at 0 standing, Lamplighters at 60, and route wardens at 100. Independent contributors retain standing and deeds but do not gain an organizational rank just by reaching those numbers.",
+        "A regional introduction requires an active member to have at least 20 standing, one verified deed, and volunteer rank. An independent contributor instead needs 40 standing and two verified deeds. Curated commissions require an active member to have 60 standing, three deeds, and Lamplighter rank; an independent contributor needs 100 standing and five deeds.",
+        "These are separate checks. A high standing score from too few distinct deeds can still leave a service unavailable. Rank may supply a permission while the service also checks its own standing and deed thresholds. A valid contact and building are further requirements, not extra hidden standing.",
+        "The server can change these authored values. Use the Guilds explanation or explain command for the current decision. The permission IDs are ultima_kingdoms:route_introductions and ultima_kingdoms:commission_access. A qualification explanation does not award a deed or open a military role."
+      ],
+      "commands": [
+        "/ultima guild explain ultima_kingdoms:lamplighters ultima_kingdoms:route_introductions",
+        "/ultima guild explain ultima_kingdoms:lamplighters ultima_kingdoms:commission_access"
+      ]
+    },
+    {
+      "id": "eligible_deeds",
+      "category": "civic",
+      "title": "Which jobs give guild credit?",
+      "summary": "The bundled credit list rewards different service, not endless repetition.",
+      "body": [
+        "The default Lamplighters peaceful list gives 10 credit each for Fire in Poor Hands, Mesh for the Glass, Sootward Plaster, Twist the First Cord, and Weather Eye; it gives 20 each for Charters Night, Reinforce the Ladder, and Warmth at the Gate. Together these eight distinct jobs provide 110 standing, enough for the default independent route when the deed requirement is also met.",
+        "Four additional authored jobs each give 20: Wood and Stone That Live and Source for the Seed Vault in the Green Compact arcana chain; Rations for the Upper Stair in Border Watch; and Teeth in the Lamplight in the Fieldbook expedition chain. Their native quest prerequisites and objectives still apply.",
+        "The exact quest IDs are ultima:civic/lamplighters/ followed by the corresponding snake_case title for the eight civic jobs; ultima:arcana/green_compact/wood_and_stone_that_live; ultima:arcana/green_compact/source_for_the_seed_vault; ultima:expeditions/border_watch/rations_for_the_upper_stair; and ultima:expeditions/fieldbook/teeth_in_the_lamplight.",
+        "These are references to authored pack quests. A bare Ultima installation does not conjure all of them into a giver's menu. Do the objectives described by MCA Quests; Ultima does not supply an alternative turn-in, change the reward, or bypass the native cooldown. Server definitions can change the whitelist and credit."
+      ],
+      "commands": []
+    },
+    {
+      "id": "contacts_and_introductions",
+      "category": "civic",
+      "title": "Find a guild contact",
+      "summary": "A contact is a real resident at a working local chapter.",
+      "body": [
+        "A chapter is a local branch of an organization. A contact is an authored or officially appointed resident who can provide that chapter's services. Ordinary villagers do not all become guild members because of their profession.",
+        "To use an introduction or curated commissions, stand near an eligible loaded contact. The service checks your current standing and deeds, the actual speaker, residence, adulthood where required, and the provider-owned workshop. A broken, changed, or unavailable workshop can suspend service until the real building is restored.",
+        "An introduction reveals one existing neighboring chapter to you privately, within the configured search range. It does not generate a new chapter, reveal all villages, or alter another player's map. If no destination is available, explore more or ask the operator whether a neighboring chapter has actually been established.",
+        "Curated commissions open a relevant selection of existing native quests. They are convenient access, not a second quest engine or exclusive control over ordinary magic, crafting, and exploration content. Native giver restrictions, progression, acceptance, and cooldowns remain in force.",
+        "The commands use the nearest eligible contact for the named organization. If they report no contact, check distance and the chapter rather than guessing a distant NPC identity. Supported MCA Conversations offers equivalent private civic choices when its matching integration is installed."
+      ],
+      "commands": [
+        "/ultima guild chapters",
+        "/ultima guild introduction <organization definition id>",
+        "/ultima guild commissions <organization definition id>"
+      ]
+    },
+    {
+      "id": "workshop_commissions",
+      "category": "civic",
+      "title": "Complete a paid workshop commission",
+      "summary": "Recognized institutional work can pay normally and record a civic honor.",
+      "body": [
+        "This route needs an operational recognized institution, a chartered chapter, an appointed contact, the matching native quest integration, and the server's institutional services setting. It is more specific than ordinary curated guild work.",
+        "1. Visit the actual contact and choose Workshop commissions. Read the native offer before accepting. Acceptance fixes the player, giver, institution, building, quest instance, objectives, rewards, and honor terms. In the bundled R2 workshop example, four lanterns pay six emeralds through MCA Quests; do not assume every commission uses that reward.",
+        "2. Do the stated work. Return to the required giver and complete it through MCA Quests. The quest mod consumes the required items and pays the reward. Ultima then records the verified civic honor from the saved completion. The honor is not a new office and does not automatically change sovereign reputation.",
+        "3. Refresh the relevant history and honors after completion. A replayed receipt cannot pay or grant that honor again. Changing guild membership does not silently rewrite the accepted work's terms.",
+        "If the building, issuer, definition, or legal eligibility becomes unavailable, accepted institutional work may be suspended instead of silently redirected. Restore the genuine prerequisite or use the native quest's supported cancellation. Do not delete a completion record to retry a reward; unresolved saves need operator investigation.",
+        "You must qualify for Lamplighters commissions at a Lamplighters chapter, and the supported MCA Crime service must confirm your institutional-service eligibility. Missing Crime integration does not bypass this requirement."
+      ],
+      "commands": [
+        "/ultima guild workshop <organization definition id>",
+        "/ultima guild institutions"
+      ]
+    },
+    {
+      "id": "hospitality_and_legal_access",
+      "category": "civic",
+      "title": "Hospitality and local restrictions",
+      "summary": "Diplomacy can open introductions; a local legal problem may still block service.",
+      "body": [
+        "Hospitality uses an actual active agreement and available institutional contact to offer a private civic introduction. It is not a teleport, free bed reservation, immunity from hunger, or blanket permission to enter every protected area. The other place must exist and qualify.",
+        "At the contact, ask for Hospitality. The server rechecks the agreement, contact, institution, destination, and your eligibility. An expired or terminated agreement stops future use. Existing private knowledge is not a new treaty or proof that the service remains available.",
+        "When MCA Crime integration is available, relevant local cases can suspend institutional service. Public standing does not erase a local legal obligation, and a screen should not expose another person's private accusations. Occupation alone is not evidence that a neutral civilian committed a crime.",
+        "Resolve the case using MCA Crime's own supported amends or restitution path, then return and refresh. Ultima does not mint a second fine, invent a crime, or close the native case itself. If the legal provider is unavailable, the service can be suspended rather than pretending that you were cleared."
+      ],
+      "commands": [
+        "/ultima guild hospitality <organization definition id>"
+      ]
+    },
+    {
+      "id": "establish_a_chapter",
+      "category": "civic",
+      "title": "Establish a local guild chapter",
+      "summary": "For office holders: recognize the building, charter the branch, appoint a resident.",
+      "body": [
+        "You need current institutional recognition authority for the relevant settlement, or a supported operator setup path. Guild membership alone is not enough. First make sure Townstead recognizes the actual building and the settlement is in the correct kingdom.",
+        "1. Stand at and look at the intended building before opening Kingdom. In Actions, choose the institution recognition action and its charter type. Submit with the correct location. The political owner validates that original building; it does not choose a nearby substitute silently.",
+        "2. Open Establish a guild chapter in Kingdom Tasks. Choose the organization and a named recognized institution from the server list. The chapter becomes a local organization branch bound to that institution; no technical identity is copied.",
+        "3. Inspect chapters, then appoint a nearby eligible adult resident to the chapter. The appointment checks real residence and building context. Moving a contact from another chapter also requires authority over the former chapter.",
+        "Dismiss revokes that NPC's role durably, including automatic reactivation from earlier authored contact evidence. Political suspend_recognition suspends the institution; revalidate checks its original evidence before restoring it. These operations do not move the NPC, change their family, or rebuild a workshop.",
+        "If you only want to do guild work, you do not need to establish a chapter yourself. Find an existing working chapter and its contact."
+      ],
+      "commands": [
+        "/ultima guild charter <organization definition id> \"<institution name>\"",
+        "/ultima guild appoint \"<chapter name>\" <entity selector>",
+        "/ultima guild dismiss \"<contact name>\"",
+        "/ultima guild chapters",
+        "/ultima guild institutions"
+      ]
+    },
+    {
+      "id": "personal_qualifications",
+      "category": "civic",
+      "title": "Skills, faith, race, and lore",
+      "summary": "Optional checks read your existing progression without changing it.",
+      "body": [
+        "Some authored content can ask for a skill level, deity, race, or collected lore book. The supported integration reads the value from the mod that owns it. It does not consume skill experience, bind a deity, change race, rewrite genetics, or grant a lore collection entry.",
+        "The qualify command is a private diagnostic of your own progression. For skill_level, supply the provider's skill name, such as building, and a minimum level. For deity and race, supply the provider's ID. For lore_collected, use an actual RPG Lore book ID. The argument minimum is required by the command even where a non-level comparison uses its own matching rule.",
+        "AVAILABLE means the integration answered the question; it does not necessarily mean you qualified. UNAVAILABLE means the provider or supported capability could not answer. Unknown evidence must not be treated as success.",
+        "These qualifications are separate from guild rank and military allegiance. Read the actual requirement on the offered content; the presence of a qualification command does not make all spells, recipes, races, or gods guild-locked."
+      ],
+      "commands": [
+        "/ultima guild qualify <skill_level|deity|race|lore_collected> \"<qualification name>\" <minimum>"
+      ]
+    }
+  ]
+}

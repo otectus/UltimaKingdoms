@@ -1,0 +1,4323 @@
+--- /dev/null
++++ b/src/content/topics/guild_contact.json
+@@ -0,0 +1,861 @@
++{
++  "_comment": [
++    "Requester-scoped civic contact conversation. Ultima owns qualification, policy, destinations and service effects; dialogue only explains and dispatches a revalidated request."
++  ],
++  "topic": "guild_contact",
++  "civic_contact": true,
++  "entry": {
++    "question": "conversations.cat.village",
++    "answer": "guild_contact"
++  },
++  "return_question": "conversations.cat.village",
++  "leave_lines": {
++    "en": [
++      "We can leave the guild's business there.",
++      "That is enough guild business for now.",
++      "We can speak about the guild another time."
++    ],
++    "pt": [
++      "Podemos deixar os assuntos da guilda por aqui.",
++      "Já chega de assuntos da guilda por enquanto.",
++      "Podemos falar sobre a guilda em outro momento."
++    ]
++  },
++  "ages": [
++    "adult"
++  ],
++  "leave_label": {
++    "en": "That answers my question.",
++    "pt": "Isso responde à minha pergunta."
++  },
++  "followup": {
++    "prompt": {
++      "en": "Anything else about the guild's work?",
++      "pt": "Mais alguma coisa sobre o trabalho da guilda?"
++    },
++    "leave": {
++      "en": "That is enough guild business for now.",
++      "pt": "Já chega de assuntos da guilda por enquanto."
++    }
++  },
++  "scenes": [
++    {
++      "name": "introduction_ready",
++      "subject": "guild_contact.introduction",
++      "shape": "problem_solve",
++      "act": "offer_work",
++      "polarity": "neutral",
++      "predicate": "observation",
++      "temporal": "current",
++      "privacy": "discreet",
++      "obligations": [
++        "clarify",
++        "acknowledge"
++      ],
++      "conditions": [
++        {
++          "field": "civic.introduction_qualified",
++          "is": true,
++          "unknown": "fail"
++        }
++      ],
++      "integrations": [
++        "ultima_kingdoms"
++      ],
++      "base_priority": 40,
++      "cooldown_days": 1,
++      "max_mentions_per_7_days": 3,
++      "vars_used": [
++        "civic_organization"
++      ],
++      "prompt": {
++        "en": "An introduction through %2$s.",
++        "pt": "Uma apresentação por meio de %2$s."
++      },
++      "lines": {
++        "en": [
++          "I can put your name forward through %2$s. The institution will decide what can be disclosed.",
++          "%2$s allows me to request an introduction for you. The answer still comes from its current records.",
++          "I can explain what %2$s permits from this contact at the moment."
++        ],
++        "pt": [
++          "Posso apresentar seu nome por meio de %2$s. A instituição decidirá o que pode ser revelado.",
++          "%2$s permite que eu solicite uma apresentação para você. A resposta ainda vem dos registros atuais.",
++          "Posso explicar o que %2$s permite por meio deste contato no momento."
++        ]
++      },
++      "replies": [
++        {
++          "name": "request_introduction",
++          "stance": "practical_help",
++          "answers": [
++            "clarify"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "Please request the introduction.",
++            "pt": "Por favor, solicite a apresentação."
++          },
++          "phrases": [
++            "please request the introduction"
++          ],
++          "phrases_pt": [
++            "por favor solicite a apresentacao"
++          ],
++          "requires_any": [
++            "request",
++            "introduction",
++            "solicite",
++            "apresentacao"
++          ],
++          "civic_action": "introduction",
++          "reaction": {
++            "id": "requested",
++            "act": "report",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "I'll ask now. Listen for the institution's answer."
++              ],
++              "pt": [
++                "Vou perguntar agora. Aguarde a resposta da instituição."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        },
++        {
++          "name": "ask_what_this_means",
++          "stance": "curiosity",
++          "answers": [
++            "acknowledge"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "What does the introduction reveal?",
++            "pt": "O que a apresentação revela?"
++          },
++          "phrases": [
++            "what does the introduction reveal"
++          ],
++          "phrases_pt": [
++            "o que a apresentacao revela"
++          ],
++          "requires_any": [
++            "reveal",
++            "introduction",
++            "revela",
++            "apresentacao"
++          ],
++          "reaction": {
++            "id": "explained",
++            "act": "explain",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "teach_back",
++            "lines": {
++              "en": [
++                "Only what %2$s is prepared to share with you now. I won't name a destination before it does."
++              ],
++              "pt": [
++                "Apenas o que %2$s estiver disposta a compartilhar agora. Não vou indicar um destino antes disso."
++              ]
++            },
++            "vars_used": [
++              "civic_organization"
++            ],
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        }
++      ],
++      "min_variants": 3,
++      "epistemic": "observed"
++    },
++    {
++      "name": "commissions_ready",
++      "subject": "guild_contact.commissions",
++      "shape": "problem_solve",
++      "act": "offer_work",
++      "polarity": "neutral",
++      "predicate": "observation",
++      "temporal": "current",
++      "privacy": "discreet",
++      "obligations": [
++        "clarify",
++        "acknowledge"
++      ],
++      "conditions": [
++        {
++          "field": "civic.commission_qualified",
++          "is": true,
++          "unknown": "fail"
++        }
++      ],
++      "integrations": [
++        "ultima_kingdoms"
++      ],
++      "base_priority": 39,
++      "cooldown_days": 1,
++      "max_mentions_per_7_days": 3,
++      "vars_used": [
++        "civic_organization"
++      ],
++      "prompt": {
++        "en": "Available work from %2$s.",
++        "pt": "Trabalho disponível em %2$s."
++      },
++      "lines": {
++        "en": [
++          "%2$s has a curated list of ordinary work I may show you. Every offer keeps its own requirements.",
++          "I can open %2$s's commission list. Accepting one still follows the quest giver's normal rules.",
++          "I can explain what %2$s permits from this contact at the moment."
++        ],
++        "pt": [
++          "%2$s tem uma lista selecionada de trabalhos comuns que posso mostrar. Cada oferta mantém seus próprios requisitos.",
++          "Posso abrir a lista de comissões de %2$s. Aceitar uma ainda segue as regras normais do responsável pela missão.",
++          "Posso explicar o que %2$s permite por meio deste contato no momento."
++        ]
++      },
++      "replies": [
++        {
++          "name": "request_commissions",
++          "stance": "practical_help",
++          "answers": [
++            "clarify"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "Show me the available commissions.",
++            "pt": "Mostre as comissões disponíveis."
++          },
++          "phrases": [
++            "show me the available commissions"
++          ],
++          "phrases_pt": [
++            "mostre as comissoes disponiveis"
++          ],
++          "requires_any": [
++            "show",
++            "commissions",
++            "mostre",
++            "comissoes"
++          ],
++          "civic_action": "commissions",
++          "reaction": {
++            "id": "requested",
++            "act": "report",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "I'll ask %2$s for the work it can offer you now."
++              ],
++              "pt": [
++                "Vou consultar %2$s sobre o trabalho que pode oferecer agora."
++              ]
++            },
++            "vars_used": [
++              "civic_organization"
++            ],
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        },
++        {
++          "name": "ask_about_requirements",
++          "stance": "curiosity",
++          "answers": [
++            "acknowledge"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "Do these offers bypass normal requirements?",
++            "pt": "Essas ofertas ignoram os requisitos normais?"
++          },
++          "phrases": [
++            "do these offers bypass normal requirements"
++          ],
++          "phrases_pt": [
++            "essas ofertas ignoram os requisitos normais"
++          ],
++          "requires_any": [
++            "requirements",
++            "bypass",
++            "requisitos",
++            "ignoram"
++          ],
++          "reaction": {
++            "id": "explained",
++            "act": "explain",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "teach_back",
++            "lines": {
++              "en": [
++                "No. The list is curated, but each offer remains an ordinary quest with its own checks and cooldowns."
++              ],
++              "pt": [
++                "Não. A lista é selecionada, mas cada oferta continua sendo uma missão comum com suas próprias verificações e esperas."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        }
++      ],
++      "min_variants": 3,
++      "epistemic": "observed"
++    },
++    {
++      "name": "qualification_recovery",
++      "subject": "guild_contact.recovery",
++      "shape": "teach_back",
++      "act": "explain",
++      "polarity": "neutral",
++      "predicate": "observation",
++      "temporal": "current",
++      "privacy": "discreet",
++      "obligations": [
++        "clarify",
++        "acknowledge"
++      ],
++      "conditions": [
++        {
++          "field": "civic.services_available",
++          "is": true,
++          "unknown": "fail"
++        },
++        {
++          "field": "civic.introduction_qualified",
++          "is": false,
++          "unknown": "fail"
++        },
++        {
++          "field": "civic.commission_qualified",
++          "is": false,
++          "unknown": "fail"
++        }
++      ],
++      "integrations": [
++        "ultima_kingdoms"
++      ],
++      "base_priority": 35,
++      "cooldown_days": 1,
++      "max_mentions_per_7_days": 3,
++      "vars_used": [
++        "civic_organization"
++      ],
++      "prompt": {
++        "en": "What %2$s needs from me.",
++        "pt": "O que %2$s precisa de mim."
++      },
++      "lines": {
++        "en": [
++          "%2$s knows you, but its current requirements do not open an introduction or commission here yet.",
++          "I cannot open either service from %2$s right now. Its public qualification notice will tell you what can change.",
++          "I can explain what %2$s permits from this contact at the moment."
++        ],
++        "pt": [
++          "%2$s conhece você, mas os requisitos atuais ainda não permitem uma apresentação ou comissão aqui.",
++          "Não posso abrir nenhum dos serviços de %2$s agora. O aviso público de qualificação dirá o que pode mudar.",
++          "Posso explicar o que %2$s permite por meio deste contato no momento."
++        ]
++      },
++      "replies": [
++        {
++          "name": "ask_where_to_check",
++          "stance": "curiosity",
++          "answers": [
++            "clarify"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "Where can I check the requirements?",
++            "pt": "Onde posso verificar os requisitos?"
++          },
++          "phrases": [
++            "where can i check the requirements"
++          ],
++          "phrases_pt": [
++            "onde posso verificar os requisitos"
++          ],
++          "requires_any": [
++            "where",
++            "requirements",
++            "onde",
++            "requisitos"
++          ],
++          "reaction": {
++            "id": "explained",
++            "act": "explain",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "teach_back",
++            "lines": {
++              "en": [
++                "Use the guild record. It shows the current public reasons without asking me to guess."
++              ],
++              "pt": [
++                "Consulte o registro da guilda. Ele mostra os motivos públicos atuais sem que eu precise adivinhar."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        },
++        {
++          "name": "acknowledge_recovery",
++          "stance": "candor",
++          "answers": [
++            "acknowledge"
++          ],
++          "tone": "plain",
++          "outcome": "accepted",
++          "label": {
++            "en": "Understood. I'll check the record.",
++            "pt": "Entendi. Vou consultar o registro."
++          },
++          "phrases": [
++            "understood i will check the record"
++          ],
++          "phrases_pt": [
++            "entendi vou consultar o registro"
++          ],
++          "requires_any": [
++            "understood",
++            "record",
++            "entendi",
++            "registro"
++          ],
++          "reaction": {
++            "id": "acknowledged",
++            "act": "accept",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "Good. The record is the authority on your present qualification."
++              ],
++              "pt": [
++                "Ótimo. O registro é a autoridade sobre sua qualificação atual."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        }
++      ],
++      "min_variants": 3,
++      "epistemic": "observed"
++    },
++    {
++      "name": "workshop_unavailable",
++      "subject": "guild_contact.workshop",
++      "shape": "observe",
++      "act": "report",
++      "polarity": "neutral",
++      "predicate": "observation",
++      "temporal": "current",
++      "privacy": "discreet",
++      "obligations": [
++        "clarify",
++        "acknowledge"
++      ],
++      "conditions": [
++        {
++          "field": "civic.services_available",
++          "is": false,
++          "unknown": "fail"
++        }
++      ],
++      "integrations": [
++        "ultima_kingdoms"
++      ],
++      "base_priority": 42,
++      "cooldown_days": 1,
++      "max_mentions_per_7_days": 3,
++      "vars_used": [
++        "civic_organization"
++      ],
++      "prompt": {
++        "en": "Why %2$s cannot serve here.",
++        "pt": "Por que %2$s não pode atender aqui."
++      },
++      "lines": {
++        "en": [
++          "%2$s recognizes this contact, but its service point is not available here right now.",
++          "I still speak for %2$s, though this workshop cannot open its services at present.",
++          "I can explain what %2$s permits from this contact at the moment."
++        ],
++        "pt": [
++          "%2$s reconhece este contato, mas seu ponto de atendimento não está disponível aqui agora.",
++          "Ainda represento %2$s, embora esta oficina não possa abrir os serviços no momento.",
++          "Posso explicar o que %2$s permite por meio deste contato no momento."
++        ]
++      },
++      "replies": [
++        {
++          "name": "ask_when_to_return",
++          "stance": "curiosity",
++          "answers": [
++            "clarify"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "When should I ask again?",
++            "pt": "Quando devo perguntar de novo?"
++          },
++          "phrases": [
++            "when should i ask again"
++          ],
++          "phrases_pt": [
++            "quando devo perguntar de novo"
++          ],
++          "requires_any": [
++            "when",
++            "again",
++            "quando",
++            "novo"
++          ],
++          "reaction": {
++            "id": "answered",
++            "act": "explain",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "Ask after the workshop is restored or another authorized contact is available. I cannot promise a time."
++              ],
++              "pt": [
++                "Pergunte depois que a oficina for restaurada ou outro contato autorizado estiver disponível. Não posso prometer um prazo."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "inferred",
++            "temporal": "future"
++          }
++        },
++        {
++          "name": "acknowledge_unavailable",
++          "stance": "candor",
++          "answers": [
++            "acknowledge"
++          ],
++          "tone": "plain",
++          "outcome": "accepted",
++          "label": {
++            "en": "Understood. I won't press the matter.",
++            "pt": "Entendi. Não vou insistir."
++          },
++          "phrases": [
++            "understood i will not press the matter"
++          ],
++          "phrases_pt": [
++            "entendi nao vou insistir"
++          ],
++          "requires_any": [
++            "understood",
++            "press",
++            "entendi",
++            "insistir"
++          ],
++          "reaction": {
++            "id": "acknowledged",
++            "act": "accept",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "Thank you. I would rather give a clear refusal than pretend the service is open."
++              ],
++              "pt": [
++                "Agradeço. Prefiro recusar com clareza a fingir que o serviço está aberto."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        }
++      ],
++      "min_variants": 3,
++      "epistemic": "observed"
++    }
++  ],
++  "funnel": {
++    "legacy_lines": {
++      "en": [
++        "I cannot open the guild service through this conversation right now.",
++        "The guild service is not available through this dialogue at present.",
++        "Ask again when the conversation service is available."
++      ],
++      "pt": [
++        "Não posso abrir o serviço da guilda por esta conversa agora.",
++        "O serviço da guilda não está disponível por este diálogo no momento.",
++        "Pergunte novamente quando o serviço de conversa estiver disponível."
++      ]
++    },
++    "open": {
++      "subject": "guild_contact.introduction",
++      "act": "report",
++      "polarity": "neutral",
++      "predicate": "observation",
++      "temporal": "current",
++      "privacy": "discreet",
++      "shape": "observe",
++      "obligations": [
++        "clarify",
++        "acknowledge"
++      ],
++      "prompt": {
++        "en": "What this contact can request.",
++        "pt": "O que este contato pode solicitar."
++      },
++      "lines": {
++        "en": [
++          "I am an authorized contact for %2$s. I can request an introduction, but the institution rechecks every request.",
++          "Through %2$s I can ask for an introduction. I cannot decide its answer or reveal a destination myself.",
++          "I can send an introduction request to %2$s. Its current records decide what follows."
++        ],
++        "pt": [
++          "Sou um contato autorizado de %2$s. Posso solicitar uma apresentação, mas a instituição verifica cada pedido novamente.",
++          "Por meio de %2$s posso pedir uma apresentação. Não posso decidir a resposta nem revelar um destino por conta própria.",
++          "Posso enviar um pedido de apresentação a %2$s. Os registros atuais decidem o que acontece depois."
++        ]
++      },
++      "vars_used": [
++        "civic_organization"
++      ],
++      "replies": [
++        {
++          "name": "request_introduction",
++          "stance": "practical_help",
++          "answers": [
++            "clarify"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "Request an introduction for me.",
++            "pt": "Solicite uma apresentação para mim."
++          },
++          "phrases": [
++            "request an introduction for me"
++          ],
++          "phrases_pt": [
++            "solicite uma apresentacao para mim"
++          ],
++          "requires_any": [
++            "request",
++            "introduction",
++            "solicite",
++            "apresentacao"
++          ],
++          "civic_action": "introduction",
++          "reaction": {
++            "id": "requested",
++            "act": "report",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "I have sent the request. The institution will give you its current answer."
++              ],
++              "pt": [
++                "Enviei o pedido. A instituição dará a resposta atual."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        },
++        {
++          "name": "ask_about_privacy",
++          "stance": "curiosity",
++          "answers": [
++            "acknowledge"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "What stays private?",
++            "pt": "O que permanece privado?"
++          },
++          "phrases": [
++            "what stays private"
++          ],
++          "phrases_pt": [
++            "o que permanece privado"
++          ],
++          "requires_any": [
++            "private",
++            "stays",
++            "privado",
++            "permanece"
++          ],
++          "reaction": {
++            "id": "explained",
++            "act": "explain",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "teach_back",
++            "lines": {
++              "en": [
++                "I only relay the institution’s requester-specific answer. I do not announce hidden settlements or affiliations."
++              ],
++              "pt": [
++                "Apenas transmito a resposta da instituição para quem pediu. Não anuncio assentamentos ou vínculos ocultos."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        }
++      ]
++    },
++    "more": {
++      "subject": "guild_contact.commissions",
++      "act": "offer_work",
++      "polarity": "neutral",
++      "predicate": "observation",
++      "temporal": "current",
++      "privacy": "discreet",
++      "shape": "problem_solve",
++      "obligations": [
++        "clarify",
++        "acknowledge"
++      ],
++      "prompt": {
++        "en": "What work this contact can show.",
++        "pt": "Que trabalho este contato pode mostrar."
++      },
++      "lines": {
++        "en": [
++          "I can ask %2$s for its curated commission list. The quests remain ordinary offers with their own checks.",
++          "%2$s may have commissions for this contact. Opening the list grants no automatic acceptance or reward.",
++          "I can request %2$s’s current commissions. The quest giver still applies every normal requirement."
++        ],
++        "pt": [
++          "Posso consultar a lista selecionada de comissões de %2$s. As missões continuam sendo ofertas comuns com suas próprias verificações.",
++          "%2$s pode ter comissões para este contato. Abrir a lista não concede aceitação ou recompensa automática.",
++          "Posso solicitar as comissões atuais de %2$s. O responsável pela missão ainda aplica todos os requisitos normais."
++        ]
++      },
++      "vars_used": [
++        "civic_organization"
++      ],
++      "replies": [
++        {
++          "name": "request_commissions",
++          "stance": "practical_help",
++          "answers": [
++            "clarify"
++          ],
++          "tone": "plain",
++          "outcome": "engaged",
++          "label": {
++            "en": "Show me the current commissions.",
++            "pt": "Mostre as comissões atuais."
++          },
++          "phrases": [
++            "show me the current commissions"
++          ],
++          "phrases_pt": [
++            "mostre as comissoes atuais"
++          ],
++          "requires_any": [
++            "show",
++            "commissions",
++            "mostre",
++            "comissoes"
++          ],
++          "civic_action": "commissions",
++          "reaction": {
++            "id": "requested",
++            "act": "report",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "I have asked for the current commission list."
++              ],
++              "pt": [
++                "Solicitei a lista atual de comissões."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        },
++        {
++          "name": "acknowledge_requirements",
++          "stance": "candor",
++          "answers": [
++            "acknowledge"
++          ],
++          "tone": "plain",
++          "outcome": "accepted",
++          "label": {
++            "en": "Understood. Normal quest rules still apply.",
++            "pt": "Entendi. As regras normais de missão ainda valem."
++          },
++          "phrases": [
++            "understood normal quest rules still apply"
++          ],
++          "phrases_pt": [
++            "entendi as regras normais de missao ainda valem"
++          ],
++          "requires_any": [
++            "understood",
++            "rules",
++            "entendi",
++            "regras"
++          ],
++          "reaction": {
++            "id": "acknowledged",
++            "act": "accept",
++            "polarity": "neutral",
++            "privacy": "discreet",
++            "shape": "observe",
++            "lines": {
++              "en": [
++                "Exactly. The guild curates the list; it does not bypass the quest."
++              ],
++              "pt": [
++                "Exatamente. A guilda seleciona a lista; ela não ignora a missão."
++              ]
++            },
++            "min_variants": 1,
++            "epistemic": "observed",
++            "temporal": "current"
++          }
++        }
++      ]
++    }
++  }
++}
+--- a/src/content/voices/specials/friendly.json
++++ b/src/content/voices/specials/friendly.json
+@@ -344,6 +344,42 @@
+     "dialogue.conversations/3": {
+       "en_us": "You never have to ask twice with me. Sit, sit!",
+       "pt_br": "Comigo você nunca precisa pedir duas vezes. Senta, senta!"
++    },
++    "dialogue.conversations.guild_contact.open/1": {
++      "en_us": "I am glad you asked. I can put the request to %2$s, and they will answer from their own records.",
++      "pt_br": "Que bom que perguntou. Posso enviar o pedido a %2$s, e a instituição responderá com base nos próprios registros."
++    },
++    "dialogue.conversations.guild_contact.open/2": {
++      "en_us": "I can ask %2$s for you. I will leave the decision and any private destination to them.",
++      "pt_br": "Posso consultar %2$s para você. A decisão e qualquer destino privado ficam com a instituição."
++    },
++    "dialogue.conversations.guild_contact.open/3": {
++      "en_us": "Of course. I can send the request to %2$s; their current policy decides what happens next.",
++      "pt_br": "Claro. Posso enviar o pedido a %2$s; a política atual decide o que acontece depois."
++    },
++    "dialogue.conversations.scene.guild_contact.introduction_ready/1": {
++      "en_us": "I would be happy to put your name forward through %2$s. The institution decides what it can share.",
++      "pt_br": "Terei prazer em apresentar seu nome por meio de %2$s. A instituição decide o que pode compartilhar."
++    },
++    "dialogue.conversations.scene.guild_contact.introduction_ready/2": {
++      "en_us": "%2$s lets me request an introduction for you. I hope its current records open the right door.",
++      "pt_br": "%2$s permite que eu solicite uma apresentação para você. Espero que os registros atuais abram a porta certa."
++    },
++    "dialogue.conversations.scene.guild_contact.introduction_ready/3": {
++      "en_us": "Let me explain what %2$s permits here, then I can send the request if you wish.",
++      "pt_br": "Vou explicar o que %2$s permite aqui; depois posso enviar o pedido, se quiser."
++    },
++    "dialogue.conversations.scene.guild_contact.commissions_ready/1": {
++      "en_us": "Good timing — I can show you the work %2$s has cleared for this contact.",
++      "pt_br": "Boa hora — posso mostrar o trabalho que %2$s liberou para este contato."
++    },
++    "dialogue.conversations.scene.guild_contact.qualification_recovery/1": {
++      "en_us": "I wish I could open it now. %2$s’s public record will show what you can work toward.",
++      "pt_br": "Queria poder abrir agora. O registro público de %2$s mostrará o que você pode buscar."
++    },
++    "dialogue.conversations.scene.guild_contact.workshop_unavailable/1": {
++      "en_us": "I am sorry — %2$s still knows this contact, but the workshop cannot serve you here today.",
++      "pt_br": "Sinto muito — %2$s ainda reconhece este contato, mas a oficina não pode atender você aqui hoje."
+     }
+   }
+ }
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaconversations/compat/CivicBridge.java
+@@ -0,0 +1,236 @@
++package dev.otectus.mcaconversations.compat;
++
++import dev.otectus.mcaconversations.McaConversations;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.world.entity.Entity;
++import net.minecraftforge.fml.ModList;
++
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Optional;
++import java.util.UUID;
++
++/** Reflection-only access to Ultima Kingdoms' requester-scoped civic contact API. */
++public final class CivicBridge {
++
++    private static final String MOD_ID = "ultima_kingdoms";
++    private static final String API = "com.ultimakingdoms.api.civic.CivicNetworkApi";
++    private static volatile Access binding;
++    private static volatile boolean attempted;
++    private static volatile Access testAccess;
++    private static boolean failureReported;
++
++    public enum Action {
++        INTRODUCTION,
++        COMMISSIONS;
++
++        public static Action parse(String value) {
++            return switch (value) {
++                case "introduction" -> INTRODUCTION;
++                case "commissions" -> COMMISSIONS;
++                default -> throw new IllegalArgumentException(
++                        "conversations_civic must be 'introduction' or 'commissions'");
++            };
++        }
++    }
++
++    /** Flattened public context; no hidden settlement or provider type crosses this boundary. */
++    public record Contact(UUID npc, ResourceLocation organization, String nameKey, String role,
++                          boolean servicesAvailable, boolean introductionQualified,
++                          boolean commissionQualified, List<String> reasons,
++                          List<String> commissionReasons, long stateRevision, long policyRevision) {
++        public Contact {
++            reasons = List.copyOf(reasons);
++            commissionReasons = List.copyOf(commissionReasons);
++        }
++    }
++
++    /** Requester-only result. Settlement identity deliberately remains inside Ultima's own response. */
++    public record Reply(boolean success, String reason) {
++    }
++
++    interface Access {
++        Optional<?> context(ServerPlayer player, Entity speaker) throws Throwable;
++
++        Object request(Action action, ServerPlayer player, Entity speaker) throws Throwable;
++    }
++
++    private CivicBridge() {
++    }
++
++    public static boolean isAvailable() {
++        return access() != null;
++    }
++
++    public static Optional<Contact> speakerContext(ServerPlayer player, Entity speaker) {
++        Access live = access();
++        if (live == null || player == null || speaker == null) return Optional.empty();
++        try {
++            Optional<?> raw = live.context(player, speaker);
++            if (raw == null || raw.isEmpty()) return Optional.empty();
++            Contact decoded = decode(raw.get());
++            return decoded.npc().equals(speaker.getUUID()) ? Optional.of(decoded) : Optional.empty();
++        } catch (Throwable failure) {
++            report(failure);
++            return Optional.empty();
++        }
++    }
++
++    public static Reply request(Action action, ServerPlayer player, Entity speaker) {
++        Access live = access();
++        if (live == null || action == null || player == null || speaker == null) {
++            return new Reply(false, "civic.institution_unavailable");
++        }
++        try {
++            Object raw = live.request(action, player, speaker);
++            return raw == null ? new Reply(false, "civic.institution_unavailable") : decodeReply(raw);
++        } catch (Throwable failure) {
++            report(failure);
++            return new Reply(false, "civic.institution_unavailable");
++        }
++    }
++
++    private static Contact decode(Object raw) throws Throwable {
++        UUID npc = (UUID) accessor(raw, "npc").invoke(raw);
++        String organization = boundedResourceId(
++                (String) accessor(raw, "organization").invoke(raw), "organization");
++        ResourceLocation organizationId = ResourceLocation.tryParse(organization);
++        if (npc == null || organizationId == null || !organizationId.toString().equals(organization)) {
++            throw new IllegalArgumentException("invalid civic contact identity");
++        }
++        String nameKey = boundedKey((String) accessor(raw, "nameKey").invoke(raw), "name key");
++        String role = boundedToken((String) accessor(raw, "role").invoke(raw), "role");
++        boolean services = (boolean) accessor(raw, "servicesAvailable").invoke(raw);
++        boolean introductions = (boolean) accessor(raw, "introductionQualified").invoke(raw);
++        boolean commissions = (boolean) accessor(raw, "commissionQualified").invoke(raw);
++        List<String> reasons = reasons(accessor(raw, "reasons").invoke(raw));
++        List<String> commissionReasons = reasons(accessor(raw, "commissionReasons").invoke(raw));
++        long stateRevision = (long) accessor(raw, "stateRevision").invoke(raw);
++        long policyRevision = (long) accessor(raw, "policyRevision").invoke(raw);
++        if (stateRevision < 0L || policyRevision < 0L) throw new IllegalArgumentException("negative civic revision");
++        return new Contact(npc, organizationId, nameKey, role, services, introductions, commissions,
++                reasons, commissionReasons, stateRevision, policyRevision);
++    }
++
++    private static Reply decodeReply(Object raw) throws Throwable {
++        boolean success = (boolean) accessor(raw, "success").invoke(raw);
++        String reason = boundedKey((String) accessor(raw, "reason").invoke(raw), "action reason");
++        // Deliberately do not invoke settlement(): destinations remain inside Ultima's requester-only
++        // presentation and cannot leak into MCA dialogue state, chat, or generated text.
++        return new Reply(success, reason);
++    }
++
++    static Contact decodeContextForTest(Object raw) throws Throwable {
++        return decode(raw);
++    }
++
++    static Reply decodeReplyForTest(Object raw) throws Throwable {
++        return decodeReply(raw);
++    }
++
++    private static List<String> reasons(Object raw) {
++        if (!(raw instanceof List<?> values) || values.size() > 8) {
++            throw new IllegalArgumentException("invalid civic reasons");
++        }
++        List<String> result = new ArrayList<>();
++        for (Object value : values) {
++            if (!(value instanceof String reason)) throw new IllegalArgumentException("invalid civic reason");
++            result.add(boundedKey(reason, "reason"));
++        }
++        return List.copyOf(result);
++    }
++
++    private static String boundedKey(String value, String what) {
++        if (value == null || value.isBlank() || value.length() > 256
++                || !value.matches("[a-z0-9_.:/-]+")) {
++            throw new IllegalArgumentException("invalid civic " + what);
++        }
++        return value;
++    }
++
++    private static String boundedResourceId(String value, String what) {
++        if (value == null || value.length() > 256) {
++            throw new IllegalArgumentException("invalid civic " + what);
++        }
++        ResourceLocation parsed = ResourceLocation.tryParse(value);
++        if (parsed == null || !parsed.toString().equals(value)) {
++            throw new IllegalArgumentException("invalid civic " + what);
++        }
++        return value;
++    }
++
++    private static String boundedToken(String value, String what) {
++        if (value == null || value.isBlank() || value.length() > 64
++                || !value.matches("[a-z0-9_.-]+")) {
++            throw new IllegalArgumentException("invalid civic " + what);
++        }
++        return value;
++    }
++
++    private static Method accessor(Object owner, String name) throws NoSuchMethodException {
++        return owner.getClass().getMethod(name);
++    }
++
++    private static Access access() {
++        if (testAccess != null) return testAccess;
++        if (binding != null) return binding;
++        if (attempted) return null;
++        try {
++            if (!ModList.get().isLoaded(MOD_ID)) {
++                attempted = true;
++                return null;
++            }
++        } catch (Throwable unavailableForge) {
++            attempted = true;
++            return null;
++        }
++        synchronized (CivicBridge.class) {
++            if (binding != null) return binding;
++            if (attempted) return null;
++            attempted = true;
++            try {
++                Class<?> api = Class.forName(API, false, CivicBridge.class.getClassLoader());
++                Method context = api.getMethod("speakerContext", ServerPlayer.class, Entity.class);
++                Method introduction = api.getMethod("requestIntroduction", ServerPlayer.class, Entity.class);
++                Method commissions = api.getMethod("requestCommissions", ServerPlayer.class, Entity.class);
++                binding = new ReflectiveAccess(context, introduction, commissions);
++                return binding;
++            } catch (Throwable failure) {
++                report(failure);
++                return null;
++            }
++        }
++    }
++
++    static void setAccessForTest(Access access) {
++        testAccess = access;
++    }
++
++    static void resetForTest() {
++        testAccess = null;
++    }
++
++    private static void report(Throwable failure) {
++        if (failureReported) return;
++        failureReported = true;
++        Throwable cause = failure instanceof InvocationTargetException invocation
++                && invocation.getCause() != null ? invocation.getCause() : failure;
++        McaConversations.LOGGER.warn("Ultima civic context/action bridge failed closed", cause);
++    }
++
++    private record ReflectiveAccess(Method context, Method introduction, Method commissions) implements Access {
++        @Override
++        @SuppressWarnings("unchecked")
++        public Optional<?> context(ServerPlayer player, Entity speaker) throws Throwable {
++            return (Optional<?>) context.invoke(null, player, speaker);
++        }
++
++        @Override
++        public Object request(Action action, ServerPlayer player, Entity speaker) throws Throwable {
++            return (action == Action.INTRODUCTION ? introduction : commissions).invoke(null, player, speaker);
++        }
++    }
++}
+--- a/src/main/java/dev/otectus/mcaconversations/compat/mca/ConversationsMcaRegistrar.java
++++ b/src/main/java/dev/otectus/mcaconversations/compat/mca/ConversationsMcaRegistrar.java
+@@ -10,6 +10,7 @@
+ import dev.otectus.mcaconversations.check.CheckResolver;
+ import dev.otectus.mcaconversations.check.CheckTier;
+ import dev.otectus.mcaconversations.compat.McaCompat;
++import dev.otectus.mcaconversations.compat.CivicBridge;
+ import dev.otectus.mcaconversations.compat.QuestsBridge;
+ import dev.otectus.mcaconversations.conversation.ConversationCatalogLoader;
+ import dev.otectus.mcaconversations.conversation.ConversationSessions;
+@@ -46,6 +47,7 @@
+ import dev.otectus.mcaconversations.template.WorldContext;
+ import dev.otectus.mcaconversations.util.SafeParse;
+ import dev.otectus.mcaconversations.world.WorldQuery;
++import net.minecraft.network.chat.Component;
+ 
+ /**
+  * Registers this mod's dialogue conditions and actions into MCA's public static registries.
+@@ -596,6 +598,22 @@
+                     }
+                 });
+ 
++        // Revalidates against Ultima's server-owned policy with the actual requester and speaker.
++        // The provider owns any destination message; this adapter returns only its requester-scoped
++        // reason and never serializes the hidden settlement from CivicActionResult.
++        McaHandles.registerAction("conversations_civic",
++                (json, name) -> SafeParse.orNull("conversations_civic", json,
++                        () -> CivicBridge.Action.parse(json.getAsString())),
++                action -> (villager, player) -> {
++                    try {
++                        if (action == null) return;
++                        CivicBridge.Reply reply = CivicBridge.request(action, player, villager);
++                        player.sendSystemMessage(Component.translatable(reply.reason()));
++                    } catch (Throwable t) {
++                        McaConversations.LOGGER.debug("conversations_civic failed closed", t);
++                    }
++                });
++
+         /*
+          * conversations_reputation_signal — records an authored conversation outcome as a public deed
+          * (spec 30.6).
+@@ -641,6 +659,7 @@
+                 + "/conversations_check/conversations_progress/conversations_kingdom/conversations_quest_* and actions conversations_record/conversations_say"
+                 + "/conversations_gossip_say/conversations_disposition_apply/conversations_session"
+                 + "/conversations_affection_apply/conversations_progress_apply/conversations_quest_open"
++                + "/conversations_civic"
+                 + "; reputation conditions conversations_reputation/conversations_reputation_incident"
+                 + "/conversations_reputation_profile and action conversations_reputation_signal");
+     }
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaconversations/context/CivicContextSource.java
+@@ -0,0 +1,68 @@
++package dev.otectus.mcaconversations.context;
++
++import dev.otectus.mcaconversations.compat.CivicBridge;
++import net.minecraft.world.entity.Entity;
++
++import java.util.List;
++import java.util.Optional;
++
++/** Requester/speaker civic facts supplied only by Ultima's public reflective API. */
++public final class CivicContextSource implements ConversationContextSource {
++    public static final String ID = "civic";
++    private static final List<ContextKey<?>> DECLARES = List.of(
++            ContextKeys.CIVIC_CONTACT, ContextKeys.CIVIC_ORGANIZATION,
++            ContextKeys.CIVIC_ORGANIZATION_NAME_KEY, ContextKeys.CIVIC_ROLE,
++            ContextKeys.CIVIC_SERVICES_AVAILABLE, ContextKeys.CIVIC_INTRODUCTION_QUALIFIED,
++            ContextKeys.CIVIC_COMMISSION_QUALIFIED, ContextKeys.CIVIC_INTRODUCTION_REASONS,
++            ContextKeys.CIVIC_COMMISSION_REASONS, ContextKeys.CIVIC_STATE_REVISION,
++            ContextKeys.CIVIC_POLICY_REVISION);
++
++    @Override
++    public String id() {
++        return ID;
++    }
++
++    @Override
++    public List<ContextKey<?>> declares() {
++        return DECLARES;
++    }
++
++    @Override
++    public boolean isAvailable(ContextRequest request) {
++        return CivicBridge.isAvailable() && request.player() != null && request.villager() != null;
++    }
++
++    @Override
++    public void contribute(ContextSnapshotBuilder builder, ContextRequest request) {
++        if (!isAvailable(request)) {
++            builder.allUnavailable(DECLARES);
++            builder.reportCapability(ContextCapabilities.Status.ABSENT, "Ultima civic API unavailable");
++            return;
++        }
++        Optional<CivicBridge.Contact> context = CivicBridge.speakerContext(request.player(), request.villager());
++        if (context.isEmpty()) {
++            builder.put(ContextKeys.CIVIC_CONTACT, false);
++            for (ContextKey<?> key : DECLARES) {
++                if (key != ContextKeys.CIVIC_CONTACT) builder.unknown(key);
++            }
++            builder.reportCapability(ContextCapabilities.Status.READY, "speaker is not a civic contact");
++            return;
++        }
++        contribute(builder, context.get());
++        builder.reportCapability(ContextCapabilities.Status.READY, "");
++    }
++
++    static void contribute(ContextSnapshotBuilder builder, CivicBridge.Contact context) {
++        builder.put(ContextKeys.CIVIC_CONTACT, true);
++        builder.put(ContextKeys.CIVIC_ORGANIZATION, context.organization().toString());
++        builder.put(ContextKeys.CIVIC_ORGANIZATION_NAME_KEY, context.nameKey());
++        builder.put(ContextKeys.CIVIC_ROLE, context.role());
++        builder.put(ContextKeys.CIVIC_SERVICES_AVAILABLE, context.servicesAvailable());
++        builder.put(ContextKeys.CIVIC_INTRODUCTION_QUALIFIED, context.introductionQualified());
++        builder.put(ContextKeys.CIVIC_COMMISSION_QUALIFIED, context.commissionQualified());
++        builder.put(ContextKeys.CIVIC_INTRODUCTION_REASONS, context.reasons());
++        builder.put(ContextKeys.CIVIC_COMMISSION_REASONS, context.commissionReasons());
++        builder.put(ContextKeys.CIVIC_STATE_REVISION, context.stateRevision());
++        builder.put(ContextKeys.CIVIC_POLICY_REVISION, context.policyRevision());
++    }
++}
+--- a/src/main/java/dev/otectus/mcaconversations/context/ContextKeys.java
++++ b/src/main/java/dev/otectus/mcaconversations/context/ContextKeys.java
+@@ -195,6 +195,27 @@
+     public static final ContextKey<Set<String>> STANDING_SPEAKER_KNOWN_FOR =
+             ContextKey.generic("standing.speaker_known_for", Set.class);
+ 
++    // --- Civic network (Ultima Kingdoms; written only by CivicContextSource) -------------------
++    /** True only when the actual speaker is an authored civic contact visible to this requester. */
++    public static final ContextKey<Boolean> CIVIC_CONTACT = ContextKey.of("civic.contact", Boolean.class);
++    public static final ContextKey<String> CIVIC_ORGANIZATION = ContextKey.of("civic.organization", String.class);
++    /** Translation key supplied by the civic provider; never a hidden settlement name. */
++    public static final ContextKey<String> CIVIC_ORGANIZATION_NAME_KEY =
++            ContextKey.of("civic.organization_name_key", String.class);
++    public static final ContextKey<String> CIVIC_ROLE = ContextKey.of("civic.role", String.class);
++    public static final ContextKey<Boolean> CIVIC_SERVICES_AVAILABLE =
++            ContextKey.of("civic.services_available", Boolean.class);
++    public static final ContextKey<Boolean> CIVIC_INTRODUCTION_QUALIFIED =
++            ContextKey.of("civic.introduction_qualified", Boolean.class);
++    public static final ContextKey<Boolean> CIVIC_COMMISSION_QUALIFIED =
++            ContextKey.of("civic.commission_qualified", Boolean.class);
++    public static final ContextKey<List<String>> CIVIC_INTRODUCTION_REASONS =
++            ContextKey.generic("civic.introduction_reasons", List.class);
++    public static final ContextKey<List<String>> CIVIC_COMMISSION_REASONS =
++            ContextKey.generic("civic.commission_reasons", List.class);
++    public static final ContextKey<Long> CIVIC_STATE_REVISION = ContextKey.of("civic.state_revision", Long.class);
++    public static final ContextKey<Long> CIVIC_POLICY_REVISION = ContextKey.of("civic.policy_revision", Long.class);
++
+     /**
+      * Forces this class to initialise.
+      *
+--- a/src/main/java/dev/otectus/mcaconversations/context/ContextSources.java
++++ b/src/main/java/dev/otectus/mcaconversations/context/ContextSources.java
+@@ -35,6 +35,7 @@
+         register(new IdentityContextSource());
+         register(new CapitalContextSource());
+         register(new ReputationContextSource());
++        register(new CivicContextSource());
+     }
+ 
+     private ContextSources() {
+--- a/src/main/java/dev/otectus/mcaconversations/conversation/TopicEntry.java
++++ b/src/main/java/dev/otectus/mcaconversations/conversation/TopicEntry.java
+@@ -34,7 +34,8 @@
+                          Optional<Arc> arc,
+                          Set<String> milestones,
+                          Map<String, Set<String>> exclusiveGroups,
+-                         Optional<KingdomGateSpec> kingdomGate) {
++                         Optional<KingdomGateSpec> kingdomGate,
++                         boolean civicContact) {
+ 
+     /** MCA's age vocabulary, minus {@code baby} — babies babble and are never catalog topics. */
+     public static final Set<AgeGroup> AGE_GROUPS =
+@@ -131,10 +132,11 @@
+         Optional<KingdomGateSpec> kingdomGate = json.has("kingdom_gate")
+                 ? Optional.of(KingdomGateSpec.fromJson(json.get("kingdom_gate")))
+                 : Optional.empty();
++        boolean civicContact = json.has("civic_contact") && json.get("civic_contact").getAsBoolean();
+ 
+         return new TopicEntry(id, entryQuestion, entryAnswer, depth, returnQuestion,
+                 Set.copyOf(ages), Set.copyOf(families), chatRequired, arc,
+-                Set.copyOf(milestones), Map.copyOf(exclusiveGroups), kingdomGate);
++                Set.copyOf(milestones), Map.copyOf(exclusiveGroups), kingdomGate, civicContact);
+     }
+ 
+     /**
+--- a/src/main/java/dev/otectus/mcaconversations/conversation/TopicGate.java
++++ b/src/main/java/dev/otectus/mcaconversations/conversation/TopicGate.java
+@@ -1,13 +1,14 @@
+ package dev.otectus.mcaconversations.conversation;
+ 
+ import dev.otectus.mcaconversations.compat.KingdomBridge;
++import dev.otectus.mcaconversations.compat.CivicBridge;
+ import dev.otectus.mcaconversations.compat.McaCompat;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.entity.Entity;
+ 
+ import java.util.function.Predicate;
+ 
+-/** The shared age-and-kingdom decision used by every catalog-topic entry path. */
++/** The shared age, kingdom and civic-contact decision used by every catalog-topic entry path. */
+ public final class TopicGate {
+ 
+     private TopicGate() {
+@@ -30,7 +31,10 @@
+     public static boolean allows(TopicEntry entry, Entity villager, ServerPlayer player) {
+         if (entry == null) return true;
+         if (villager == null || !entry.allowsAge(McaCompat.ageGroup(villager))) return false;
+-        return entry.kingdomGate().map(gate -> KingdomBridge.allows(gate, player, villager)).orElse(true);
++        if (entry.kingdomGate().map(gate -> KingdomBridge.allows(gate, player, villager)).orElse(true) == false) {
++            return false;
++        }
++        return !entry.civicContact() || CivicBridge.speakerContext(player, villager).isPresent();
+     }
+ 
+     /** Whether a packet/question pair names a catalog starter and therefore needs owned validation. */
+@@ -42,10 +46,17 @@
+     /** Pure seam for parser and bypass regression tests without a running Minecraft server. */
+     static boolean allows(ConversationCatalog catalog, String question, String answer, AgeGroup age,
+                           Predicate<KingdomGateSpec> kingdomEvaluator) {
++        return allows(catalog, question, answer, age, kingdomEvaluator, () -> false);
++    }
++
++    static boolean allows(ConversationCatalog catalog, String question, String answer, AgeGroup age,
++                          Predicate<KingdomGateSpec> kingdomEvaluator,
++                          java.util.function.BooleanSupplier civicContactEvaluator) {
+         if (catalog == null || question == null || answer == null) return true;
+         return catalog.byStarter(question, answer)
+                 .map(entry -> entry.allowsAge(age)
+-                        && entry.kingdomGate().map(kingdomEvaluator::test).orElse(true))
++                        && entry.kingdomGate().map(kingdomEvaluator::test).orElse(true)
++                        && (!entry.civicContact() || civicContactEvaluator.getAsBoolean()))
+                 .orElse(true);
+     }
+ }
+--- a/src/main/java/dev/otectus/mcaconversations/hub/HubDomain.java
++++ b/src/main/java/dev/otectus/mcaconversations/hub/HubDomain.java
+@@ -81,6 +81,7 @@
+             Map.entry("neighbour", VILLAGE),
+             Map.entry("rumors", VILLAGE),
+             Map.entry("standing", VILLAGE),
++            Map.entry("guild_contact", VILLAGE),
+             Map.entry("place", VILLAGE),
+             Map.entry("origin", VILLAGE),
+ 
+--- a/src/main/java/dev/otectus/mcaconversations/mixin/QuestionMixin.java
++++ b/src/main/java/dev/otectus/mcaconversations/mixin/QuestionMixin.java
+@@ -98,13 +98,13 @@
+             answers.removeIf(answer -> !TopicGate.allows(question, answer, entity, player));
+         } catch (Throwable t) {
+             // A runtime integration fault must not widen an explicitly restricted topic. Preserve the
+-            // old soft-fail behavior for age-only and unknown answers, but remove kingdom-gated rows.
++            // old soft-fail behavior for age-only and unknown answers, but remove explicit provider gates.
+             String question = getName();
+             answers.removeIf(answer -> ConversationCatalogLoader.active().byStarter(question, answer)
+-                    .flatMap(dev.otectus.mcaconversations.conversation.TopicEntry::kingdomGate).isPresent());
++                    .map(entry -> entry.kingdomGate().isPresent() || entry.civicContact()).orElse(false));
+             if (!mcaconversations$topicFilterWarned) {
+                 mcaconversations$topicFilterWarned = true;
+-                McaConversations.LOGGER.warn("Topic gate failed; explicitly kingdom-gated answers were hidden", t);
++                McaConversations.LOGGER.warn("Topic gate failed; explicitly provider-gated answers were hidden", t);
+             }
+         }
+     }
+--- a/src/main/java/dev/otectus/mcaconversations/template/TemplateContextFactory.java
++++ b/src/main/java/dev/otectus/mcaconversations/template/TemplateContextFactory.java
+@@ -7,6 +7,7 @@
+ import dev.otectus.mcaconversations.compat.CapitalsBridge;
+ import dev.otectus.mcaconversations.compat.CapitalsCompat;
+ import dev.otectus.mcaconversations.compat.McaCompat;
++import dev.otectus.mcaconversations.compat.CivicBridge;
+ import dev.otectus.mcaconversations.context.CapitalContextSource;
+ import dev.otectus.mcaconversations.gift.ConversationsCapabilities;
+ import dev.otectus.mcaconversations.season.SeasonContext;
+@@ -109,6 +110,8 @@
+                 case CAPITAL_NAME, SOVEREIGN_NAME, SOVEREIGN_TITLE, HEIR_NAME, HOUSE_NAME,
+                         HOUSE_WORDS, VILLAGER_TITLE, RIVAL_CAPITAL_NAME, ALLY_CAPITAL_NAME ->
+                         capitalVariable(context, var, villager);
++                case CIVIC_ORGANIZATION -> CivicBridge.speakerContext(player, villager)
++                        .ifPresent(contact -> context.with(var, Component.translatable(contact.nameKey())));
+             }
+         }
+         return context;
+--- a/src/main/java/dev/otectus/mcaconversations/template/TemplateVariable.java
++++ b/src/main/java/dev/otectus/mcaconversations/template/TemplateVariable.java
+@@ -58,7 +58,10 @@
+     /** A capital this one is at war with. */
+     RIVAL_CAPITAL_NAME("mcaconversations.fallback.rival_capital_name"),
+     /** A capital this one is allied with. */
+-    ALLY_CAPITAL_NAME("mcaconversations.fallback.ally_capital_name");
++    ALLY_CAPITAL_NAME("mcaconversations.fallback.ally_capital_name"),
++
++    /** Localized public name of the civic contact's organization. */
++    CIVIC_ORGANIZATION("mcaconversations.fallback.civic_organization");
+ 
+     private final String fallbackKey;
+ 
+--- a/src/main/resources/assets/mca_dialogue/lang/en_us.json
++++ b/src/main/resources/assets/mca_dialogue/lang/en_us.json
+@@ -384,6 +384,7 @@
+   "dialogue.conversations.cat.village.back": "Something else.",
+   "dialogue.conversations.cat.village.court": "What is the court like?",
+   "dialogue.conversations.cat.village.crown": "Who rules here now?",
++  "dialogue.conversations.cat.village.guild_contact": "What work can the guild contact arrange?",
+   "dialogue.conversations.cat.village.house": "Do you belong to a house?",
+   "dialogue.conversations.cat.village.neighbour": "Is there anyone on your mind?",
+   "dialogue.conversations.cat.village.people": "What do you make of your neighbors?",
+@@ -2003,6 +2004,16 @@
+   "dialogue.conversations.gossip.young.war/1": "%2$s is fighting with %3$s. A real war, not a pretend one.",
+   "dialogue.conversations.gossip.young.war/2": "There's a war. %2$s and %3$s. My mother says not to ask about it.",
+   "dialogue.conversations.gossip.young.war/3": "%2$s went to war with %3$s. Everyone stopped smiling when they said it.",
++  "dialogue.conversations.guild_contact.legacy/1": "I cannot open the guild service through this conversation right now.",
++  "dialogue.conversations.guild_contact.legacy/2": "The guild service is not available through this dialogue at present.",
++  "dialogue.conversations.guild_contact.legacy/3": "Ask again when the conversation service is available.",
++  "dialogue.conversations.guild_contact.more.acknowledged/1": "Exactly. The guild curates the list; it does not bypass the quest.",
++  "dialogue.conversations.guild_contact.more.requested/1": "I have asked for the current commission list.",
++  "dialogue.conversations.guild_contact.open.explained/1": "I only relay the institution’s requester-specific answer. I do not announce hidden settlements or affiliations.",
++  "dialogue.conversations.guild_contact.open.requested/1": "I have sent the request. The institution will give you its current answer.",
++  "dialogue.conversations.guild_contact.open/1": "I am an authorized contact for %2$s. I can request an introduction, but the institution rechecks every request.",
++  "dialogue.conversations.guild_contact.open/2": "Through %2$s I can ask for an introduction. I cannot decide its answer or reveal a destination myself.",
++  "dialogue.conversations.guild_contact.open/3": "I can send an introduction request to %2$s. Its current records decide what follows.",
+   "dialogue.conversations.happy.gratitude.didnt_know/1": "You weren't meant to. I'm telling you because not telling you got heavy.",
+   "dialogue.conversations.happy.gratitude.didnt_know/2": "It does. I've a habit of keeping the good things quieter than the bad ones.",
+   "dialogue.conversations.happy.gratitude.didnt_know/3": "Now you do. That's the whole reason I said it out loud.",
+@@ -4097,6 +4108,47 @@
+   "dialogue.conversations.scene.future.the_decision_between_us/1": "If we ever have a big decision to make together, I'd want both of us to get a say.",
+   "dialogue.conversations.scene.future.the_decision_between_us/2": "Being close shouldn't mean one of us decides and the other goes along.",
+   "dialogue.conversations.scene.future.the_decision_between_us/3": "For any shared decision, I'd want both voices to count.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.explained/1": "No. The list is curated, but each offer remains an ordinary quest with its own checks and cooldowns.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.requested/1": "I'll ask %2$s for the work it can offer you now.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond": "Available work from %2$s.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond.ask_about_requirements": "Do these offers bypass normal requirements?",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond.leave": "That answers my question.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond.request_commissions": "Show me the available commissions.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready/1": "%2$s has a curated list of ordinary work I may show you. Every offer keeps its own requirements.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready/2": "I can open %2$s's commission list. Accepting one still follows the quest giver's normal rules.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready/3": "I can explain what %2$s permits from this contact at the moment.",
++  "dialogue.conversations.scene.guild_contact.followup": "Anything else about the guild's work?",
++  "dialogue.conversations.scene.guild_contact.followup.leave": "That is enough guild business for now.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.explained/1": "Only what %2$s is prepared to share with you now. I won't name a destination before it does.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.requested/1": "I'll ask now. Listen for the institution's answer.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond": "An introduction through %2$s.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond.ask_what_this_means": "What does the introduction reveal?",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond.leave": "That answers my question.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond.request_introduction": "Please request the introduction.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready/1": "I can put your name forward through %2$s. The institution will decide what can be disclosed.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready/2": "%2$s allows me to request an introduction for you. The answer still comes from its current records.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready/3": "I can explain what %2$s permits from this contact at the moment.",
++  "dialogue.conversations.scene.guild_contact.leaving/1": "We can leave the guild's business there.",
++  "dialogue.conversations.scene.guild_contact.leaving/2": "That is enough guild business for now.",
++  "dialogue.conversations.scene.guild_contact.leaving/3": "We can speak about the guild another time.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.acknowledged/1": "Good. The record is the authority on your present qualification.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.explained/1": "Use the guild record. It shows the current public reasons without asking me to guess.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond": "What %2$s needs from me.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond.acknowledge_recovery": "Understood. I'll check the record.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond.ask_where_to_check": "Where can I check the requirements?",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond.leave": "That answers my question.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery/1": "%2$s knows you, but its current requirements do not open an introduction or commission here yet.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery/2": "I cannot open either service from %2$s right now. Its public qualification notice will tell you what can change.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery/3": "I can explain what %2$s permits from this contact at the moment.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.acknowledged/1": "Thank you. I would rather give a clear refusal than pretend the service is open.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.answered/1": "Ask after the workshop is restored or another authorized contact is available. I cannot promise a time.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond": "Why %2$s cannot serve here.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond.acknowledge_unavailable": "Understood. I won't press the matter.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond.ask_when_to_return": "When should I ask again?",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond.leave": "That answers my question.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable/1": "%2$s recognizes this contact, but its service point is not available here right now.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable/2": "I still speak for %2$s, though this workshop cannot open its services at present.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable/3": "I can explain what %2$s permits from this contact at the moment.",
+   "dialogue.conversations.scene.happy.a_good_stretch.answered/1": "I don't think so. A good mood can stand on its own.",
+   "dialogue.conversations.scene.happy.a_good_stretch.answered/2": "Probably not. I'd rather enjoy it than conduct an investigation.",
+   "dialogue.conversations.scene.happy.a_good_stretch.answered/3": "Not every good feeling needs an explanation before it's allowed to stay.",
+@@ -9078,6 +9130,14 @@
+   "dialogue.conversations.topic.future.respond.ask_priorities": "What matters most to you?",
+   "dialogue.conversations.topic.future.respond.avoid": "Let's not plan that far ahead.",
+   "dialogue.conversations.topic.future.respond.leave": "We'll come back to this.",
++  "dialogue.conversations.topic.guild_contact.more.respond": "What work this contact can show.",
++  "dialogue.conversations.topic.guild_contact.more.respond.acknowledge_requirements": "Understood. Normal quest rules still apply.",
++  "dialogue.conversations.topic.guild_contact.more.respond.leave": "That answers my question.",
++  "dialogue.conversations.topic.guild_contact.more.respond.request_commissions": "Show me the current commissions.",
++  "dialogue.conversations.topic.guild_contact.open.respond": "What this contact can request.",
++  "dialogue.conversations.topic.guild_contact.open.respond.ask_about_privacy": "What stays private?",
++  "dialogue.conversations.topic.guild_contact.open.respond.leave": "That answers my question.",
++  "dialogue.conversations.topic.guild_contact.open.respond.request_introduction": "Request an introduction for me.",
+   "dialogue.conversations.topic.happy.followup": "So there it is.",
+   "dialogue.conversations.topic.happy.followup.ask_improve": "What could we do better?",
+   "dialogue.conversations.topic.happy.followup.ask_unspoken": "Is there something you haven't said?",
+--- a/src/main/resources/assets/mca_dialogue/lang/pt_br.json
++++ b/src/main/resources/assets/mca_dialogue/lang/pt_br.json
+@@ -384,6 +384,7 @@
+   "dialogue.conversations.cat.village.back": "Outra coisa.",
+   "dialogue.conversations.cat.village.court": "Como é a corte?",
+   "dialogue.conversations.cat.village.crown": "Quem governa aqui agora?",
++  "dialogue.conversations.cat.village.guild_contact": "Que trabalho o contato da guilda pode organizar?",
+   "dialogue.conversations.cat.village.house": "Você pertence a alguma casa?",
+   "dialogue.conversations.cat.village.neighbour": "Tem alguém na sua cabeça?",
+   "dialogue.conversations.cat.village.people": "O que você acha dos seus vizinhos?",
+@@ -2003,6 +2004,16 @@
+   "dialogue.conversations.gossip.young.war/1": "%2$s está brigando com %3$s. Guerra de verdade, não de brincadeira.",
+   "dialogue.conversations.gossip.young.war/2": "Tem uma guerra. %2$s e %3$s. Minha mãe disse pra não perguntar disso.",
+   "dialogue.conversations.gossip.young.war/3": "%2$s foi à guerra com %3$s. Todo mundo parou de sorrir quando falaram.",
++  "dialogue.conversations.guild_contact.legacy/1": "Não posso abrir o serviço da guilda por esta conversa agora.",
++  "dialogue.conversations.guild_contact.legacy/2": "O serviço da guilda não está disponível por este diálogo no momento.",
++  "dialogue.conversations.guild_contact.legacy/3": "Pergunte novamente quando o serviço de conversa estiver disponível.",
++  "dialogue.conversations.guild_contact.more.acknowledged/1": "Exatamente. A guilda seleciona a lista; ela não ignora a missão.",
++  "dialogue.conversations.guild_contact.more.requested/1": "Solicitei a lista atual de comissões.",
++  "dialogue.conversations.guild_contact.open.explained/1": "Apenas transmito a resposta da instituição para quem pediu. Não anuncio assentamentos ou vínculos ocultos.",
++  "dialogue.conversations.guild_contact.open.requested/1": "Enviei o pedido. A instituição dará a resposta atual.",
++  "dialogue.conversations.guild_contact.open/1": "Sou um contato autorizado de %2$s. Posso solicitar uma apresentação, mas a instituição verifica cada pedido novamente.",
++  "dialogue.conversations.guild_contact.open/2": "Por meio de %2$s posso pedir uma apresentação. Não posso decidir a resposta nem revelar um destino por conta própria.",
++  "dialogue.conversations.guild_contact.open/3": "Posso enviar um pedido de apresentação a %2$s. Os registros atuais decidem o que acontece depois.",
+   "dialogue.conversations.happy.gratitude.didnt_know/1": "Não era pra saber. Estou dizendo porque não dizer ficou pesado.",
+   "dialogue.conversations.happy.gratitude.didnt_know/2": "Importa. Tenho o hábito de guardar as coisas boas mais que as ruins.",
+   "dialogue.conversations.happy.gratitude.didnt_know/3": "Agora sabe. É esse o motivo inteiro de eu ter dito em voz alta.",
+@@ -4097,6 +4108,47 @@
+   "dialogue.conversations.scene.future.the_decision_between_us/1": "Se tivermos uma decisão grande para tomar juntos, quero que os dois possam opinar.",
+   "dialogue.conversations.scene.future.the_decision_between_us/2": "Ter intimidade não deve significar que um decide e o outro só acompanha.",
+   "dialogue.conversations.scene.future.the_decision_between_us/3": "Em qualquer decisão conjunta, quero que as duas vozes contem.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.explained/1": "Não. A lista é selecionada, mas cada oferta continua sendo uma missão comum com suas próprias verificações e esperas.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.requested/1": "Vou consultar %2$s sobre o trabalho que pode oferecer agora.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond": "Trabalho disponível em %2$s.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond.ask_about_requirements": "Essas ofertas ignoram os requisitos normais?",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond.leave": "Isso responde à minha pergunta.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready.respond.request_commissions": "Mostre as comissões disponíveis.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready/1": "%2$s tem uma lista selecionada de trabalhos comuns que posso mostrar. Cada oferta mantém seus próprios requisitos.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready/2": "Posso abrir a lista de comissões de %2$s. Aceitar uma ainda segue as regras normais do responsável pela missão.",
++  "dialogue.conversations.scene.guild_contact.commissions_ready/3": "Posso explicar o que %2$s permite por meio deste contato no momento.",
++  "dialogue.conversations.scene.guild_contact.followup": "Mais alguma coisa sobre o trabalho da guilda?",
++  "dialogue.conversations.scene.guild_contact.followup.leave": "Já chega de assuntos da guilda por enquanto.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.explained/1": "Apenas o que %2$s estiver disposta a compartilhar agora. Não vou indicar um destino antes disso.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.requested/1": "Vou perguntar agora. Aguarde a resposta da instituição.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond": "Uma apresentação por meio de %2$s.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond.ask_what_this_means": "O que a apresentação revela?",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond.leave": "Isso responde à minha pergunta.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready.respond.request_introduction": "Por favor, solicite a apresentação.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready/1": "Posso apresentar seu nome por meio de %2$s. A instituição decidirá o que pode ser revelado.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready/2": "%2$s permite que eu solicite uma apresentação para você. A resposta ainda vem dos registros atuais.",
++  "dialogue.conversations.scene.guild_contact.introduction_ready/3": "Posso explicar o que %2$s permite por meio deste contato no momento.",
++  "dialogue.conversations.scene.guild_contact.leaving/1": "Podemos deixar os assuntos da guilda por aqui.",
++  "dialogue.conversations.scene.guild_contact.leaving/2": "Já chega de assuntos da guilda por enquanto.",
++  "dialogue.conversations.scene.guild_contact.leaving/3": "Podemos falar sobre a guilda em outro momento.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.acknowledged/1": "Ótimo. O registro é a autoridade sobre sua qualificação atual.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.explained/1": "Consulte o registro da guilda. Ele mostra os motivos públicos atuais sem que eu precise adivinhar.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond": "O que %2$s precisa de mim.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond.acknowledge_recovery": "Entendi. Vou consultar o registro.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond.ask_where_to_check": "Onde posso verificar os requisitos?",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery.respond.leave": "Isso responde à minha pergunta.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery/1": "%2$s conhece você, mas os requisitos atuais ainda não permitem uma apresentação ou comissão aqui.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery/2": "Não posso abrir nenhum dos serviços de %2$s agora. O aviso público de qualificação dirá o que pode mudar.",
++  "dialogue.conversations.scene.guild_contact.qualification_recovery/3": "Posso explicar o que %2$s permite por meio deste contato no momento.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.acknowledged/1": "Agradeço. Prefiro recusar com clareza a fingir que o serviço está aberto.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.answered/1": "Pergunte depois que a oficina for restaurada ou outro contato autorizado estiver disponível. Não posso prometer um prazo.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond": "Por que %2$s não pode atender aqui.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond.acknowledge_unavailable": "Entendi. Não vou insistir.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond.ask_when_to_return": "Quando devo perguntar de novo?",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable.respond.leave": "Isso responde à minha pergunta.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable/1": "%2$s reconhece este contato, mas seu ponto de atendimento não está disponível aqui agora.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable/2": "Ainda represento %2$s, embora esta oficina não possa abrir os serviços no momento.",
++  "dialogue.conversations.scene.guild_contact.workshop_unavailable/3": "Posso explicar o que %2$s permite por meio deste contato no momento.",
+   "dialogue.conversations.scene.happy.a_good_stretch.answered/1": "Acho que não. Bom humor já vale por si só.",
+   "dialogue.conversations.scene.happy.a_good_stretch.answered/2": "Provavelmente não. Prefiro aproveitar a abrir uma investigação.",
+   "dialogue.conversations.scene.happy.a_good_stretch.answered/3": "Nem toda sensação boa precisa de explicação para poder ficar.",
+@@ -9078,6 +9130,14 @@
+   "dialogue.conversations.topic.future.respond.ask_priorities": "O que importa mais para você?",
+   "dialogue.conversations.topic.future.respond.avoid": "Vamos não planejar tão longe.",
+   "dialogue.conversations.topic.future.respond.leave": "A gente volta a isso.",
++  "dialogue.conversations.topic.guild_contact.more.respond": "Que trabalho este contato pode mostrar.",
++  "dialogue.conversations.topic.guild_contact.more.respond.acknowledge_requirements": "Entendi. As regras normais de missão ainda valem.",
++  "dialogue.conversations.topic.guild_contact.more.respond.leave": "Isso responde à minha pergunta.",
++  "dialogue.conversations.topic.guild_contact.more.respond.request_commissions": "Mostre as comissões atuais.",
++  "dialogue.conversations.topic.guild_contact.open.respond": "O que este contato pode solicitar.",
++  "dialogue.conversations.topic.guild_contact.open.respond.ask_about_privacy": "O que permanece privado?",
++  "dialogue.conversations.topic.guild_contact.open.respond.leave": "Isso responde à minha pergunta.",
++  "dialogue.conversations.topic.guild_contact.open.respond.request_introduction": "Solicite uma apresentação para mim.",
+   "dialogue.conversations.topic.happy.followup": "Então é isso.",
+   "dialogue.conversations.topic.happy.followup.ask_improve": "O que a gente podia melhorar?",
+   "dialogue.conversations.topic.happy.followup.ask_unspoken": "Tem algo que você não disse?",
+--- a/src/main/resources/assets/mca_dialogue_friendly/lang/en_us.json
++++ b/src/main/resources/assets/mca_dialogue_friendly/lang/en_us.json
+@@ -336,6 +336,9 @@
+   "friendly.dialogue.conversations.gossip.marriage/2": "%2$s and %3$s wed this week! Two lovely souls, one happy home. My heart's just full.",
+   "friendly.dialogue.conversations.gossip.none/1": "Quiet week! Everyone's fine, fed, and boring — which is the best news a village can have, honestly.",
+   "friendly.dialogue.conversations.gossip.none/2": "Not a peep! Come back tomorrow — someone always does something worth telling.",
++  "friendly.dialogue.conversations.guild_contact.open/1": "I am glad you asked. I can put the request to %2$s, and they will answer from their own records.",
++  "friendly.dialogue.conversations.guild_contact.open/2": "I can ask %2$s for you. I will leave the decision and any private destination to them.",
++  "friendly.dialogue.conversations.guild_contact.open/3": "Of course. I can send the request to %2$s; their current policy decides what happens next.",
+   "friendly.dialogue.conversations.happy.gratitude.didnt_know/1": "You weren't meant to, %1$s. I'm telling you because not telling you got heavy.",
+   "friendly.dialogue.conversations.happy.gratitude.didnt_know/2": "It does. I've a habit of keeping the good things quiet and I'm trying to stop.",
+   "friendly.dialogue.conversations.happy.gratitude.didnt_know/3": "Now you do. I'd rather you knew it from me than worked it out on your own.",
+@@ -627,6 +630,12 @@
+   "friendly.dialogue.conversations.scene.future.the_decision_between_us/1": "If we have a big choice ahead, I'd like us to talk it through together.",
+   "friendly.dialogue.conversations.scene.future.the_decision_between_us/2": "For a decision that affects us both, I want to hear your side too.",
+   "friendly.dialogue.conversations.scene.future.the_decision_between_us/3": "I'd want our plans to have room for both of us. Especially the big ones.",
++  "friendly.dialogue.conversations.scene.guild_contact.commissions_ready/1": "Good timing — I can show you the work %2$s has cleared for this contact.",
++  "friendly.dialogue.conversations.scene.guild_contact.introduction_ready/1": "I would be happy to put your name forward through %2$s. The institution decides what it can share.",
++  "friendly.dialogue.conversations.scene.guild_contact.introduction_ready/2": "%2$s lets me request an introduction for you. I hope its current records open the right door.",
++  "friendly.dialogue.conversations.scene.guild_contact.introduction_ready/3": "Let me explain what %2$s permits here, then I can send the request if you wish.",
++  "friendly.dialogue.conversations.scene.guild_contact.qualification_recovery/1": "I wish I could open it now. %2$s’s public record will show what you can work toward.",
++  "friendly.dialogue.conversations.scene.guild_contact.workshop_unavailable/1": "I am sorry — %2$s still knows this contact, but the workshop cannot serve you here today.",
+   "friendly.dialogue.conversations.scene.hopes.the_long_one/1": "I'd like to be useful and still have time for the people I enjoy.",
+   "friendly.dialogue.conversations.scene.hopes.the_long_one/2": "Helping feels good. I hope I can leave room in my life for other things too.",
+   "friendly.dialogue.conversations.scene.hopes.the_long_one/3": "I hope work leaves me enough of the day to spend with someone.",
+--- a/src/main/resources/assets/mca_dialogue_friendly/lang/pt_br.json
++++ b/src/main/resources/assets/mca_dialogue_friendly/lang/pt_br.json
+@@ -336,6 +336,9 @@
+   "friendly.dialogue.conversations.gossip.marriage/2": "%2$s e %3$s se casaram essa semana! Duas almas adoráveis, um lar feliz. Meu coração está cheio.",
+   "friendly.dialogue.conversations.gossip.none/1": "Semana quieta! Todo mundo bem, alimentado e sem graça — que é a melhor notícia que um vilarejo pode ter, sinceramente.",
+   "friendly.dialogue.conversations.gossip.none/2": "Nem um pio! Volte amanhã — sempre tem alguém fazendo algo que valha a pena contar.",
++  "friendly.dialogue.conversations.guild_contact.open/1": "Que bom que perguntou. Posso enviar o pedido a %2$s, e a instituição responderá com base nos próprios registros.",
++  "friendly.dialogue.conversations.guild_contact.open/2": "Posso consultar %2$s para você. A decisão e qualquer destino privado ficam com a instituição.",
++  "friendly.dialogue.conversations.guild_contact.open/3": "Claro. Posso enviar o pedido a %2$s; a política atual decide o que acontece depois.",
+   "friendly.dialogue.conversations.happy.gratitude.didnt_know/1": "Não era pra saber, %1$s. Estou dizendo porque não dizer ficou pesado.",
+   "friendly.dialogue.conversations.happy.gratitude.didnt_know/2": "Importa. Tenho o hábito de guardar as coisas boas e estou tentando parar.",
+   "friendly.dialogue.conversations.happy.gratitude.didnt_know/3": "Agora sabe. Prefiro que saiba por mim a que descubra sozinho.",
+@@ -627,6 +630,12 @@
+   "friendly.dialogue.conversations.scene.future.the_decision_between_us/1": "Se tivermos uma escolha importante pela frente, quero que a gente converse.",
+   "friendly.dialogue.conversations.scene.future.the_decision_between_us/2": "Numa decisão que afete nós dois, quero ouvir seu lado também.",
+   "friendly.dialogue.conversations.scene.future.the_decision_between_us/3": "Quero que nossos planos tenham espaço para nós dois. Principalmente os grandes.",
++  "friendly.dialogue.conversations.scene.guild_contact.commissions_ready/1": "Boa hora — posso mostrar o trabalho que %2$s liberou para este contato.",
++  "friendly.dialogue.conversations.scene.guild_contact.introduction_ready/1": "Terei prazer em apresentar seu nome por meio de %2$s. A instituição decide o que pode compartilhar.",
++  "friendly.dialogue.conversations.scene.guild_contact.introduction_ready/2": "%2$s permite que eu solicite uma apresentação para você. Espero que os registros atuais abram a porta certa.",
++  "friendly.dialogue.conversations.scene.guild_contact.introduction_ready/3": "Vou explicar o que %2$s permite aqui; depois posso enviar o pedido, se quiser.",
++  "friendly.dialogue.conversations.scene.guild_contact.qualification_recovery/1": "Queria poder abrir agora. O registro público de %2$s mostrará o que você pode buscar.",
++  "friendly.dialogue.conversations.scene.guild_contact.workshop_unavailable/1": "Sinto muito — %2$s ainda reconhece este contato, mas a oficina não pode atender você aqui hoje.",
+   "friendly.dialogue.conversations.scene.hopes.the_long_one/1": "Quero ser útil e ainda ter tempo para as pessoas de quem gosto.",
+   "friendly.dialogue.conversations.scene.hopes.the_long_one/2": "É bom ajudar. Espero deixar espaço na vida para outras coisas também.",
+   "friendly.dialogue.conversations.scene.hopes.the_long_one/3": "Espero que o trabalho deixe tempo no dia para estar com alguém.",
+--- a/src/main/resources/assets/mcaconversations/lang/en_us.json
++++ b/src/main/resources/assets/mcaconversations/lang/en_us.json
+@@ -140,6 +140,7 @@
+   "mcaconversations.culture.who_the_well_belongs_to": "who the well belongs to",
+   "mcaconversations.fallback.ally_capital_name": "our allies",
+   "mcaconversations.fallback.capital_name": "the capital",
++  "mcaconversations.fallback.civic_organization": "the guild",
+   "mcaconversations.fallback.heir_name": "the heir",
+   "mcaconversations.fallback.holiday": "the season",
+   "mcaconversations.fallback.house_name": "the house",
+--- a/src/main/resources/assets/mcaconversations/lang/pt_br.json
++++ b/src/main/resources/assets/mcaconversations/lang/pt_br.json
+@@ -140,6 +140,7 @@
+   "mcaconversations.culture.who_the_well_belongs_to": "de quem é o poço",
+   "mcaconversations.fallback.ally_capital_name": "nossos aliados",
+   "mcaconversations.fallback.capital_name": "a capital",
++  "mcaconversations.fallback.civic_organization": "a guilda",
+   "mcaconversations.fallback.heir_name": "o herdeiro",
+   "mcaconversations.fallback.holiday": "a temporada",
+   "mcaconversations.fallback.house_name": "a casa",
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/chat_intents/scene_generated_ultima_kingdoms.json
+@@ -0,0 +1,303 @@
++{
++  "_generated": [
++    "GENERATED by ContentCompiler from src/content/ — do not edit by hand.",
++    "Run ./gradlew generateConversationContent after changing an authoring source.",
++    "Chat intents for every generated reply (spec 18.3).",
++    "Every reply a player can press, a player can also type. Each is bound to its exact page",
++    "through 'context', so a phrase means something only while that page is on screen."
++  ],
++  "intents": {
++    "scene.guild_contact.commissions_ready.ask_about_requirements": {
++      "question": "conversations.scene.guild_contact.commissions_ready.respond",
++      "answer": "ask_about_requirements",
++      "context": "conversations.scene.guild_contact.commissions_ready.respond",
++      "keywords": {
++        "requirements": 1.8,
++        "bypass": 1.8,
++        "requisitos": 1.8,
++        "ignoram": 1.8,
++        "these": 0.8,
++        "offers": 0.8,
++        "normal": 0.8
++      },
++      "requiresAny": [
++        "requirements",
++        "bypass",
++        "requisitos",
++        "ignoram"
++      ],
++      "phrases": [
++        "do these offers bypass normal requirements",
++        "do these offers bypass normal requirements",
++        "essas ofertas ignoram os requisitos normais"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.commissions_ready.request_commissions": {
++      "question": "conversations.scene.guild_contact.commissions_ready.respond",
++      "answer": "request_commissions",
++      "context": "conversations.scene.guild_contact.commissions_ready.respond",
++      "keywords": {
++        "show": 1.8,
++        "commissions": 1.8,
++        "mostre": 1.8,
++        "comissoes": 1.8,
++        "available": 0.8
++      },
++      "requiresAny": [
++        "show",
++        "commissions",
++        "mostre",
++        "comissoes"
++      ],
++      "phrases": [
++        "show me the available commissions",
++        "show me the available commissions",
++        "mostre as comissoes disponiveis"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.introduction_ready.ask_what_this_means": {
++      "question": "conversations.scene.guild_contact.introduction_ready.respond",
++      "answer": "ask_what_this_means",
++      "context": "conversations.scene.guild_contact.introduction_ready.respond",
++      "keywords": {
++        "reveal": 1.8,
++        "introduction": 1.8,
++        "revela": 1.8,
++        "apresentacao": 1.8,
++        "does": 0.8
++      },
++      "requiresAny": [
++        "reveal",
++        "introduction",
++        "revela",
++        "apresentacao"
++      ],
++      "phrases": [
++        "what does the introduction reveal",
++        "what does the introduction reveal",
++        "o que a apresentacao revela"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.introduction_ready.request_introduction": {
++      "question": "conversations.scene.guild_contact.introduction_ready.respond",
++      "answer": "request_introduction",
++      "context": "conversations.scene.guild_contact.introduction_ready.respond",
++      "keywords": {
++        "request": 1.8,
++        "introduction": 1.8,
++        "solicite": 1.8,
++        "apresentacao": 1.8,
++        "please": 0.8
++      },
++      "requiresAny": [
++        "request",
++        "introduction",
++        "solicite",
++        "apresentacao"
++      ],
++      "phrases": [
++        "please request the introduction",
++        "please request the introduction",
++        "por favor solicite a apresentacao"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.more.acknowledge_requirements": {
++      "question": "conversations.topic.guild_contact.more.respond",
++      "answer": "acknowledge_requirements",
++      "context": "conversations.topic.guild_contact.more.respond",
++      "keywords": {
++        "understood": 1.8,
++        "rules": 1.8,
++        "entendi": 1.8,
++        "regras": 1.8,
++        "normal": 0.8,
++        "quest": 0.8,
++        "still": 0.8,
++        "apply": 0.8
++      },
++      "requiresAny": [
++        "understood",
++        "rules",
++        "entendi",
++        "regras"
++      ],
++      "phrases": [
++        "understood normal quest rules still apply",
++        "understood normal quest rules still apply",
++        "entendi as regras normais de missao ainda valem"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.more.request_commissions": {
++      "question": "conversations.topic.guild_contact.more.respond",
++      "answer": "request_commissions",
++      "context": "conversations.topic.guild_contact.more.respond",
++      "keywords": {
++        "show": 1.8,
++        "commissions": 1.8,
++        "mostre": 1.8,
++        "comissoes": 1.8,
++        "current": 0.8
++      },
++      "requiresAny": [
++        "show",
++        "commissions",
++        "mostre",
++        "comissoes"
++      ],
++      "phrases": [
++        "show me the current commissions",
++        "show me the current commissions",
++        "mostre as comissoes atuais"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.open.ask_about_privacy": {
++      "question": "conversations.topic.guild_contact.open.respond",
++      "answer": "ask_about_privacy",
++      "context": "conversations.topic.guild_contact.open.respond",
++      "keywords": {
++        "private": 1.8,
++        "stays": 1.8,
++        "privado": 1.8,
++        "permanece": 1.8
++      },
++      "requiresAny": [
++        "private",
++        "stays",
++        "privado",
++        "permanece"
++      ],
++      "phrases": [
++        "what stays private",
++        "what stays private",
++        "o que permanece privado"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.open.request_introduction": {
++      "question": "conversations.topic.guild_contact.open.respond",
++      "answer": "request_introduction",
++      "context": "conversations.topic.guild_contact.open.respond",
++      "keywords": {
++        "request": 1.8,
++        "introduction": 1.8,
++        "solicite": 1.8,
++        "apresentacao": 1.8
++      },
++      "requiresAny": [
++        "request",
++        "introduction",
++        "solicite",
++        "apresentacao"
++      ],
++      "phrases": [
++        "request an introduction for me",
++        "request an introduction for me",
++        "solicite uma apresentacao para mim"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.qualification_recovery.acknowledge_recovery": {
++      "question": "conversations.scene.guild_contact.qualification_recovery.respond",
++      "answer": "acknowledge_recovery",
++      "context": "conversations.scene.guild_contact.qualification_recovery.respond",
++      "keywords": {
++        "understood": 1.8,
++        "record": 1.8,
++        "entendi": 1.8,
++        "registro": 1.8,
++        "ill": 0.8
++      },
++      "requiresAny": [
++        "understood",
++        "record",
++        "entendi",
++        "registro"
++      ],
++      "phrases": [
++        "understood ill check the record",
++        "understood i will check the record",
++        "entendi vou consultar o registro"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.qualification_recovery.ask_where_to_check": {
++      "question": "conversations.scene.guild_contact.qualification_recovery.respond",
++      "answer": "ask_where_to_check",
++      "context": "conversations.scene.guild_contact.qualification_recovery.respond",
++      "keywords": {
++        "where": 1.8,
++        "requirements": 1.8,
++        "onde": 1.8,
++        "requisitos": 1.8
++      },
++      "requiresAny": [
++        "where",
++        "requirements",
++        "onde",
++        "requisitos"
++      ],
++      "phrases": [
++        "where can i check the requirements",
++        "where can i check the requirements",
++        "onde posso verificar os requisitos"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.workshop_unavailable.acknowledge_unavailable": {
++      "question": "conversations.scene.guild_contact.workshop_unavailable.respond",
++      "answer": "acknowledge_unavailable",
++      "context": "conversations.scene.guild_contact.workshop_unavailable.respond",
++      "keywords": {
++        "understood": 1.8,
++        "press": 1.8,
++        "entendi": 1.8,
++        "insistir": 1.8,
++        "wont": 0.8,
++        "matter": 0.8
++      },
++      "requiresAny": [
++        "understood",
++        "press",
++        "entendi",
++        "insistir"
++      ],
++      "phrases": [
++        "understood i wont press the matter",
++        "understood i will not press the matter",
++        "entendi nao vou insistir"
++      ],
++      "category": "topics"
++    },
++    "scene.guild_contact.workshop_unavailable.ask_when_to_return": {
++      "question": "conversations.scene.guild_contact.workshop_unavailable.respond",
++      "answer": "ask_when_to_return",
++      "context": "conversations.scene.guild_contact.workshop_unavailable.respond",
++      "keywords": {
++        "when": 1.8,
++        "again": 1.8,
++        "quando": 1.8,
++        "novo": 1.8,
++        "should": 0.8,
++        "ask": 0.8
++      },
++      "requiresAny": [
++        "when",
++        "again",
++        "quando",
++        "novo"
++      ],
++      "phrases": [
++        "when should i ask again",
++        "when should i ask again",
++        "quando devo perguntar de novo"
++      ],
++      "category": "topics"
++    }
++  }
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/conversation_beats/scene_generated_ultima_kingdoms.json
+@@ -0,0 +1,1054 @@
++{
++  "_generated": [
++    "GENERATED by ContentCompiler from src/content/ — do not edit by hand.",
++    "Run ./gradlew generateConversationContent after changing an authoring source.",
++    "Semantic contracts for every generated scene (spec 10.1, 10.2).",
++    "Each beat carries a v2 frame - predicate, tense, footing, privacy, the obligations it",
++    "makes relevant - and each non-exit reply names the obligation it fulfils. That pairing",
++    "is what lets the build refuse a page where the villager asks and nothing answers."
++  ],
++  "beats": {
++    "guild_contact.commissions_ready.open": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.commissions_ready",
++      "response_question": "conversations.scene.guild_contact.commissions_ready.respond",
++      "npc_act": "offer_work",
++      "subject": "guild_contact.commissions",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "practical_help",
++        "curiosity",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "candor",
++        "encouragement",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "problem_solve"
++      },
++      "min_variants": 3
++    },
++    "guild_contact.commissions_ready.open.explained": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.commissions_ready.explained",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "explain",
++      "subject": "guild_contact.commissions",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "teach_back"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.commissions_ready.open.requested": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.commissions_ready.requested",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "report",
++      "subject": "guild_contact.commissions",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.introduction_ready.open": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.introduction_ready",
++      "response_question": "conversations.scene.guild_contact.introduction_ready.respond",
++      "npc_act": "offer_work",
++      "subject": "guild_contact.introduction",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "practical_help",
++        "curiosity",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "candor",
++        "encouragement",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "problem_solve"
++      },
++      "min_variants": 3
++    },
++    "guild_contact.introduction_ready.open.explained": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.introduction_ready.explained",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "explain",
++      "subject": "guild_contact.introduction",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "teach_back"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.introduction_ready.open.requested": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.introduction_ready.requested",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "report",
++      "subject": "guild_contact.introduction",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.legacy": {
++      "topic": "guild_contact",
++      "say": "conversations.guild_contact.legacy",
++      "response_question": "conversations.cat.village",
++      "npc_act": "report",
++      "subject": "guild_contact.talk",
++      "polarity": "positive",
++      "openness": "ends_conversation",
++      "allowed_stances": [
++        "exit"
++      ]
++    },
++    "guild_contact.more.acknowledged": {
++      "topic": "guild_contact",
++      "say": "conversations.guild_contact.more.acknowledged",
++      "response_question": "conversations.cat.village",
++      "npc_act": "accept",
++      "subject": "guild_contact.commissions",
++      "polarity": "neutral",
++      "openness": "ends_conversation",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "curiosity",
++        "candor",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "accepted",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.more.requested": {
++      "topic": "guild_contact",
++      "say": "conversations.guild_contact.more.requested",
++      "response_question": "conversations.cat.village",
++      "npc_act": "report",
++      "subject": "guild_contact.commissions",
++      "polarity": "neutral",
++      "openness": "ends_conversation",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "curiosity",
++        "candor",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.open": {
++      "topic": "guild_contact",
++      "say": "conversations.guild_contact.open",
++      "response_question": "conversations.topic.guild_contact.open.respond",
++      "npc_act": "report",
++      "subject": "guild_contact.introduction",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "practical_help",
++        "curiosity",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "candor",
++        "encouragement",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 3
++    },
++    "guild_contact.open.explained": {
++      "topic": "guild_contact",
++      "say": "conversations.guild_contact.open.explained",
++      "response_question": "conversations.topic.guild_contact.more.respond",
++      "npc_act": "explain",
++      "subject": "guild_contact.introduction",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "practical_help",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "curiosity",
++        "encouragement",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "teach_back"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.open.requested": {
++      "topic": "guild_contact",
++      "say": "conversations.guild_contact.open.requested",
++      "response_question": "conversations.topic.guild_contact.more.respond",
++      "npc_act": "report",
++      "subject": "guild_contact.introduction",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "practical_help",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "curiosity",
++        "encouragement",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.qualification_recovery.open": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.qualification_recovery",
++      "response_question": "conversations.scene.guild_contact.qualification_recovery.respond",
++      "npc_act": "explain",
++      "subject": "guild_contact.recovery",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "teach_back"
++      },
++      "min_variants": 3
++    },
++    "guild_contact.qualification_recovery.open.acknowledged": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.qualification_recovery.acknowledged",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "accept",
++      "subject": "guild_contact.recovery",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "accepted",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.qualification_recovery.open.explained": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.qualification_recovery.explained",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "explain",
++      "subject": "guild_contact.recovery",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "teach_back"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.scene.leaving": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.leaving",
++      "response_question": "conversations.cat.village",
++      "npc_act": "accept",
++      "subject": "guild_contact.talk",
++      "polarity": "neutral",
++      "openness": "ends_conversation",
++      "allowed_stances": [
++        "exit"
++      ]
++    },
++    "guild_contact.workshop_unavailable.open": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.workshop_unavailable",
++      "response_question": "conversations.scene.guild_contact.workshop_unavailable.respond",
++      "npc_act": "report",
++      "subject": "guild_contact.workshop",
++      "polarity": "neutral",
++      "openness": "invites_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "clarify",
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 3
++    },
++    "guild_contact.workshop_unavailable.open.acknowledged": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.workshop_unavailable.acknowledged",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "accept",
++      "subject": "guild_contact.workshop",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "accepted",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "current",
++        "epistemic": "observed",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    },
++    "guild_contact.workshop_unavailable.open.answered": {
++      "topic": "guild_contact",
++      "say": "conversations.scene.guild_contact.workshop_unavailable.answered",
++      "response_question": "conversations.scene.guild_contact.followup",
++      "npc_act": "explain",
++      "subject": "guild_contact.workshop",
++      "polarity": "neutral",
++      "openness": "permits_followup",
++      "facts": [
++        "topic:guild_contact"
++      ],
++      "allowed_stances": [
++        "curiosity",
++        "candor",
++        "exit"
++      ],
++      "forbidden_stances": [
++        "empathy",
++        "encouragement",
++        "practical_help",
++        "humor",
++        "respectful_disagreement",
++        "self_disclosure",
++        "restraint",
++        "challenge",
++        "flirtation",
++        "dismissal",
++        "boundary_push"
++      ],
++      "outcome": "engaged",
++      "context": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "frame": {
++        "predicate": "observation",
++        "temporal": "future",
++        "epistemic": "inferred",
++        "privacy": "discreet",
++        "obligations": [
++          "acknowledge"
++        ],
++        "shape": "observe"
++      },
++      "min_variants": 1
++    }
++  },
++  "replies": {
++    "conversations.scene.guild_contact.commissions_ready.respond/ask_about_requirements": {
++      "stance": "curiosity",
++      "responds_to": [
++        "guild_contact.commissions_ready.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "acknowledge"
++      ]
++    },
++    "conversations.scene.guild_contact.commissions_ready.respond/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "guild_contact.commissions_ready.open"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.scene.guild_contact.commissions_ready.respond/request_commissions": {
++      "stance": "practical_help",
++      "responds_to": [
++        "guild_contact.commissions_ready.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "clarify"
++      ]
++    },
++    "conversations.scene.guild_contact.followup/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "subject:guild_contact.*"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.scene.guild_contact.introduction_ready.respond/ask_what_this_means": {
++      "stance": "curiosity",
++      "responds_to": [
++        "guild_contact.introduction_ready.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "acknowledge"
++      ]
++    },
++    "conversations.scene.guild_contact.introduction_ready.respond/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "guild_contact.introduction_ready.open"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.scene.guild_contact.introduction_ready.respond/request_introduction": {
++      "stance": "practical_help",
++      "responds_to": [
++        "guild_contact.introduction_ready.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "clarify"
++      ]
++    },
++    "conversations.scene.guild_contact.qualification_recovery.respond/acknowledge_recovery": {
++      "stance": "candor",
++      "responds_to": [
++        "guild_contact.qualification_recovery.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "accepted"
++      ],
++      "answers_obligation": [
++        "acknowledge"
++      ]
++    },
++    "conversations.scene.guild_contact.qualification_recovery.respond/ask_where_to_check": {
++      "stance": "curiosity",
++      "responds_to": [
++        "guild_contact.qualification_recovery.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "clarify"
++      ]
++    },
++    "conversations.scene.guild_contact.qualification_recovery.respond/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "guild_contact.qualification_recovery.open"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.scene.guild_contact.workshop_unavailable.respond/acknowledge_unavailable": {
++      "stance": "candor",
++      "responds_to": [
++        "guild_contact.workshop_unavailable.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "accepted"
++      ],
++      "answers_obligation": [
++        "acknowledge"
++      ]
++    },
++    "conversations.scene.guild_contact.workshop_unavailable.respond/ask_when_to_return": {
++      "stance": "curiosity",
++      "responds_to": [
++        "guild_contact.workshop_unavailable.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "clarify"
++      ]
++    },
++    "conversations.scene.guild_contact.workshop_unavailable.respond/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "guild_contact.workshop_unavailable.open"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.topic.guild_contact.more.respond/acknowledge_requirements": {
++      "stance": "candor",
++      "responds_to": [
++        "guild_contact.open.requested",
++        "guild_contact.open.explained"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "accepted"
++      ],
++      "answers_obligation": [
++        "acknowledge"
++      ]
++    },
++    "conversations.topic.guild_contact.more.respond/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "guild_contact.open.requested",
++        "guild_contact.open.explained"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.topic.guild_contact.more.respond/request_commissions": {
++      "stance": "practical_help",
++      "responds_to": [
++        "guild_contact.open.requested",
++        "guild_contact.open.explained"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "clarify"
++      ]
++    },
++    "conversations.topic.guild_contact.open.respond/ask_about_privacy": {
++      "stance": "curiosity",
++      "responds_to": [
++        "guild_contact.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "acknowledge"
++      ]
++    },
++    "conversations.topic.guild_contact.open.respond/leave": {
++      "stance": "exit",
++      "responds_to": [
++        "guild_contact.open"
++      ],
++      "tone": "plain",
++      "exit": true
++    },
++    "conversations.topic.guild_contact.open.respond/request_introduction": {
++      "stance": "practical_help",
++      "responds_to": [
++        "guild_contact.open"
++      ],
++      "tone": "plain",
++      "outcomes": [
++        "engaged"
++      ],
++      "answers_obligation": [
++        "clarify"
++      ]
++    }
++  }
++}
+--- a/src/main/resources/data/mcaconversations/conversation_catalog/topics.json
++++ b/src/main/resources/data/mcaconversations/conversation_catalog/topics.json
+@@ -105,6 +105,25 @@
+       ],
+       "chat_required": true
+     },
++    "guild_contact": {
++      "entry": {
++        "question": "conversations.cat.village",
++        "answer": "guild_contact"
++      },
++      "depth": "quick",
++      "return_question": "conversations.cat.village",
++      "ages": [
++        "adult"
++      ],
++      "required_stance_families": [
++        "curiosity",
++        "practical_help",
++        "candor",
++        "exit"
++      ],
++      "chat_required": true,
++      "civic_contact": true
++    },
+     "crown": {
+       "entry": {
+         "question": "conversations.cat.village",
+--- a/src/main/resources/data/mcaconversations/conversation_scenes/generated.json
++++ b/src/main/resources/data/mcaconversations/conversation_scenes/generated.json
+@@ -1491,6 +1491,136 @@
+         "opening_beat": "future.the_decision_between_us.open"
+       }
+     },
++    "topic.guild_contact.commissions_ready": {
++      "purpose": "topic:guild_contact",
++      "shape": "problem_solve",
++      "profile": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "context": {
++        "conditions": [
++          {
++            "field": "civic.commission_qualified",
++            "is": true,
++            "unknown": "fail"
++          }
++        ],
++        "integrations": [
++          "ultima_kingdoms"
++        ]
++      },
++      "selection": {
++        "base_priority": 39,
++        "cooldown_days": 1,
++        "max_mentions_per_7_days": 3
++      },
++      "route": {
++        "question": "conversations.scene.guild_contact.commissions_ready.respond",
++        "opening_beat": "guild_contact.commissions_ready.open"
++      }
++    },
++    "topic.guild_contact.introduction_ready": {
++      "purpose": "topic:guild_contact",
++      "shape": "problem_solve",
++      "profile": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "context": {
++        "conditions": [
++          {
++            "field": "civic.introduction_qualified",
++            "is": true,
++            "unknown": "fail"
++          }
++        ],
++        "integrations": [
++          "ultima_kingdoms"
++        ]
++      },
++      "selection": {
++        "base_priority": 40,
++        "cooldown_days": 1,
++        "max_mentions_per_7_days": 3
++      },
++      "route": {
++        "question": "conversations.scene.guild_contact.introduction_ready.respond",
++        "opening_beat": "guild_contact.introduction_ready.open"
++      }
++    },
++    "topic.guild_contact.qualification_recovery": {
++      "purpose": "topic:guild_contact",
++      "shape": "teach_back",
++      "profile": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "context": {
++        "conditions": [
++          {
++            "field": "civic.services_available",
++            "is": true,
++            "unknown": "fail"
++          },
++          {
++            "field": "civic.introduction_qualified",
++            "is": false,
++            "unknown": "fail"
++          },
++          {
++            "field": "civic.commission_qualified",
++            "is": false,
++            "unknown": "fail"
++          }
++        ],
++        "integrations": [
++          "ultima_kingdoms"
++        ]
++      },
++      "selection": {
++        "base_priority": 35,
++        "cooldown_days": 1,
++        "max_mentions_per_7_days": 3
++      },
++      "route": {
++        "question": "conversations.scene.guild_contact.qualification_recovery.respond",
++        "opening_beat": "guild_contact.qualification_recovery.open"
++      }
++    },
++    "topic.guild_contact.workshop_unavailable": {
++      "purpose": "topic:guild_contact",
++      "shape": "observe",
++      "profile": {
++        "ages": [
++          "adult"
++        ]
++      },
++      "context": {
++        "conditions": [
++          {
++            "field": "civic.services_available",
++            "is": false,
++            "unknown": "fail"
++          }
++        ],
++        "integrations": [
++          "ultima_kingdoms"
++        ]
++      },
++      "selection": {
++        "base_priority": 42,
++        "cooldown_days": 1,
++        "max_mentions_per_7_days": 3
++      },
++      "route": {
++        "question": "conversations.scene.guild_contact.workshop_unavailable.respond",
++        "opening_beat": "guild_contact.workshop_unavailable.open"
++      }
++    },
+     "topic.happy.a_good_stretch": {
+       "purpose": "topic:happy",
+       "shape": "celebrate",
+--- a/src/main/resources/data/mcaconversations/dialogues/conversations.cat.village.json
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.cat.village.json
+@@ -5717,6 +5717,283 @@
+       ]
+     },
+     {
++      "name": "guild_contact",
++      "results": [
++        {
++          "baseChance": 0,
++          "conditions": [
++            {
++              "chance": 900,
++              "conversations_scene": {
++                "is": "topic.guild_contact.introduction_ready"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.introduction_ready",
++                "not": true
++              }
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "dynamic"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "branching"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "topics"
++            }
++          ],
++          "actions": {
++            "conversations_session": {
++              "op": "begin",
++              "topic": "guild_contact",
++              "budget": "standard",
++              "branch": "scene",
++              "beat": "guild_contact.introduction_ready.open"
++            },
++            "conversations_record": {
++              "id": "mcaconversations.cooldown.guild_contact",
++              "var": "player",
++              "time": 36000
++            },
++            "next": "conversations.scene.guild_contact.introduction_ready.respond",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.introduction_ready",
++              "vars": [
++                "civic_organization"
++              ]
++            }
++          }
++        },
++        {
++          "baseChance": 0,
++          "conditions": [
++            {
++              "chance": 900,
++              "conversations_scene": {
++                "is": "topic.guild_contact.commissions_ready"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.commissions_ready",
++                "not": true
++              }
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "dynamic"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "branching"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "topics"
++            }
++          ],
++          "actions": {
++            "conversations_session": {
++              "op": "begin",
++              "topic": "guild_contact",
++              "budget": "standard",
++              "branch": "scene",
++              "beat": "guild_contact.commissions_ready.open"
++            },
++            "conversations_record": {
++              "id": "mcaconversations.cooldown.guild_contact",
++              "var": "player",
++              "time": 36000
++            },
++            "next": "conversations.scene.guild_contact.commissions_ready.respond",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.commissions_ready",
++              "vars": [
++                "civic_organization"
++              ]
++            }
++          }
++        },
++        {
++          "baseChance": 0,
++          "conditions": [
++            {
++              "chance": 900,
++              "conversations_scene": {
++                "is": "topic.guild_contact.qualification_recovery"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.qualification_recovery",
++                "not": true
++              }
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "dynamic"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "branching"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "topics"
++            }
++          ],
++          "actions": {
++            "conversations_session": {
++              "op": "begin",
++              "topic": "guild_contact",
++              "budget": "standard",
++              "branch": "scene",
++              "beat": "guild_contact.qualification_recovery.open"
++            },
++            "conversations_record": {
++              "id": "mcaconversations.cooldown.guild_contact",
++              "var": "player",
++              "time": 36000
++            },
++            "next": "conversations.scene.guild_contact.qualification_recovery.respond",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.qualification_recovery",
++              "vars": [
++                "civic_organization"
++              ]
++            }
++          }
++        },
++        {
++          "baseChance": 0,
++          "conditions": [
++            {
++              "chance": 900,
++              "conversations_scene": {
++                "is": "topic.guild_contact.workshop_unavailable"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.workshop_unavailable",
++                "not": true
++              }
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "dynamic"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "branching"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "topics"
++            }
++          ],
++          "actions": {
++            "conversations_session": {
++              "op": "begin",
++              "topic": "guild_contact",
++              "budget": "standard",
++              "branch": "scene",
++              "beat": "guild_contact.workshop_unavailable.open"
++            },
++            "conversations_record": {
++              "id": "mcaconversations.cooldown.guild_contact",
++              "var": "player",
++              "time": 36000
++            },
++            "next": "conversations.scene.guild_contact.workshop_unavailable.respond",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.workshop_unavailable",
++              "vars": [
++                "civic_organization"
++              ]
++            }
++          }
++        },
++        {
++          "baseChance": 800,
++          "conditions": [
++            {
++              "chance": -2000,
++              "conversations_disabled": "branching"
++            },
++            {
++              "chance": -2000,
++              "conversations_disabled": "topics"
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.introduction_ready"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.commissions_ready"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.qualification_recovery"
++              }
++            },
++            {
++              "chance": -5000,
++              "conversations_scene": {
++                "is": "topic.guild_contact.workshop_unavailable"
++              }
++            }
++          ],
++          "actions": {
++            "conversations_session": {
++              "op": "begin",
++              "topic": "guild_contact",
++              "budget": "quick",
++              "branch": "funnel",
++              "beat": "guild_contact.open"
++            },
++            "next": "conversations.topic.guild_contact.open.respond",
++            "conversations_say": {
++              "phrase": "conversations.guild_contact.open",
++              "slots": [
++                "civic_organization"
++              ]
++            }
++          }
++        },
++        {
++          "baseChance": 1,
++          "actions": {
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.guild_contact.legacy"
++            }
++          },
++          "conditions": [
++            {
++              "chance": -2000,
++              "conversations_enabled": "branching"
++            }
++          ]
++        }
++      ]
++    },
++    {
+       "name": "back",
+       "results": [
+         {
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.commissions_ready.respond.json
+@@ -0,0 +1,61 @@
++{
++  "answers": [
++    {
++      "name": "request_commissions",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.commissions_ready.open.requested"
++            },
++            "conversations_civic": "commissions",
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.commissions_ready.requested",
++              "vars": [
++                "civic_organization"
++              ]
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "ask_about_requirements",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.commissions_ready.open.explained"
++            },
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.commissions_ready.explained"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.followup.json
+@@ -0,0 +1,21 @@
++{
++  "answers": [
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.introduction_ready.respond.json
+@@ -0,0 +1,61 @@
++{
++  "answers": [
++    {
++      "name": "request_introduction",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.introduction_ready.open.requested"
++            },
++            "conversations_civic": "introduction",
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.introduction_ready.requested"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "ask_what_this_means",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.introduction_ready.open.explained"
++            },
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.introduction_ready.explained",
++              "vars": [
++                "civic_organization"
++              ]
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.qualification_recovery.respond.json
+@@ -0,0 +1,57 @@
++{
++  "answers": [
++    {
++      "name": "ask_where_to_check",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.qualification_recovery.open.explained"
++            },
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.qualification_recovery.explained"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "acknowledge_recovery",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.qualification_recovery.open.acknowledged"
++            },
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.qualification_recovery.acknowledged"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.workshop_unavailable.respond.json
+@@ -0,0 +1,57 @@
++{
++  "answers": [
++    {
++      "name": "ask_when_to_return",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.workshop_unavailable.open.answered"
++            },
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.workshop_unavailable.answered"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "acknowledge_unavailable",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.workshop_unavailable.open.acknowledged"
++            },
++            "next": "conversations.scene.guild_contact.followup",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.workshop_unavailable.acknowledged"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.topic.guild_contact.more.respond.json
+@@ -0,0 +1,58 @@
++{
++  "answers": [
++    {
++      "name": "request_commissions",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end",
++              "beat": "guild_contact.more.requested"
++            },
++            "conversations_civic": "commissions",
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.guild_contact.more.requested"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "acknowledge_requirements",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end",
++              "beat": "guild_contact.more.acknowledged"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.guild_contact.more.acknowledged"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/src/main/resources/data/mcaconversations/dialogues/conversations.topic.guild_contact.open.respond.json
+@@ -0,0 +1,58 @@
++{
++  "answers": [
++    {
++      "name": "request_introduction",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.open.requested"
++            },
++            "conversations_civic": "introduction",
++            "next": "conversations.topic.guild_contact.more.respond",
++            "conversations_say": {
++              "phrase": "conversations.guild_contact.open.requested"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "ask_about_privacy",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "turn",
++              "beat": "guild_contact.open.explained"
++            },
++            "next": "conversations.topic.guild_contact.more.respond",
++            "conversations_say": {
++              "phrase": "conversations.guild_contact.open.explained"
++            }
++          }
++        }
++      ]
++    },
++    {
++      "name": "leave",
++      "results": [
++        {
++          "baseChance": 1,
++          "actions": {
++            "conversations_session": {
++              "op": "end"
++            },
++            "next": "conversations.cat.village",
++            "conversations_say": {
++              "phrase": "conversations.scene.guild_contact.leaving"
++            }
++          }
++        }
++      ]
++    }
++  ]
++}
+--- a/src/test/java/dev/otectus/mcaconversations/authoring/ContentCompiler.java
++++ b/src/test/java/dev/otectus/mcaconversations/authoring/ContentCompiler.java
+@@ -90,6 +90,8 @@
+     private final Set<String> funnelTopics = new TreeSet<>();
+     /** Optional kingdom gates declared beside generated topics, mirrored into the runtime catalog. */
+     private final Map<String, java.util.Optional<JsonObject>> topicKingdomGates = new TreeMap<>();
++    /** Topics whose starters require the actual speaker to resolve as a civic contact. */
++    private final Map<String, Boolean> topicCivicContacts = new TreeMap<>();
+ 
+     /** Records that a topic's funnel is generated, so its lang keys are cleaned rather than orphaned. */
+     void ownFunnelTopic(String topic) {
+@@ -102,6 +104,10 @@
+                 : java.util.Optional.of(
+                         dev.otectus.mcaconversations.conversation.KingdomGateSpec.fromJson(gate).toJson());
+         topicKingdomGates.put(topic, parsed);
++    }
++
++    void ownTopicCivicContact(String topic, boolean required) {
++        topicCivicContacts.put(topic, required);
+     }
+ 
+     /** Matcher fixtures the intent test asserts, so every generated reply is typable. */
+@@ -447,7 +453,7 @@
+         pruneSharedKeywords();
+         checkNoTwoIntentsShareEvidence();
+         Path data = resourceRoot.resolve("data/mcaconversations");
+-        syncTopicKingdomGates(data.resolve("conversation_catalog/topics.json"));
++        syncTopicGates(data.resolve("conversation_catalog/topics.json"));
+ 
+         for (Map.Entry<String, JsonObject> entry : dialogues.entrySet()) {
+             writeJson(data.resolve("dialogues").resolve(entry.getKey() + ".json"), entry.getValue());
+@@ -539,7 +545,12 @@
+      * to both sources by the ordinary generator workflow.
+      */
+     void syncTopicKingdomGates(Path catalogFile) throws IOException {
+-        if (topicKingdomGates.isEmpty() || !Files.exists(catalogFile)) return;
++        syncTopicGates(catalogFile);
++    }
++
++    /** Mirrors all top-level provider gates from authored topic sources into the runtime catalog. */
++    void syncTopicGates(Path catalogFile) throws IOException {
++        if (topicKingdomGates.isEmpty() && topicCivicContacts.isEmpty() || !Files.exists(catalogFile)) return;
+         JsonObject root = JsonParser.parseString(Files.readString(catalogFile)).getAsJsonObject();
+         JsonObject topics = root.getAsJsonObject("topics");
+         if (topics == null) throw new IllegalStateException(catalogFile + " has no topics object");
+@@ -556,6 +567,19 @@
+             if (java.util.Objects.equals(before, after)) continue;
+             if (after == null) row.remove("kingdom_gate");
+             else row.add("kingdom_gate", after.deepCopy());
++            changed = true;
++        }
++        for (Map.Entry<String, Boolean> authored : topicCivicContacts.entrySet()) {
++            JsonObject row = topics.has(authored.getKey()) && topics.get(authored.getKey()).isJsonObject()
++                    ? topics.getAsJsonObject(authored.getKey()) : null;
++            if (row == null) {
++                throw new IllegalStateException("authored topic '" + authored.getKey()
++                        + "' has no runtime catalog row");
++            }
++            boolean before = row.has("civic_contact") && row.get("civic_contact").getAsBoolean();
++            if (before == authored.getValue() && (authored.getValue() || !row.has("civic_contact"))) continue;
++            if (authored.getValue()) row.addProperty("civic_contact", true);
++            else row.remove("civic_contact");
+             changed = true;
+         }
+         if (changed) writeJson(catalogFile, root);
+--- a/src/test/java/dev/otectus/mcaconversations/authoring/TopicPackCompiler.java
++++ b/src/test/java/dev/otectus/mcaconversations/authoring/TopicPackCompiler.java
+@@ -50,6 +50,8 @@
+         this.ages = ContentCompiler.strings(source, "ages").isEmpty()
+                 ? List.of("teen", "adult") : ContentCompiler.strings(source, "ages");
+         out.ownTopicKingdomGate(topic, source.get("kingdom_gate"));
++        out.ownTopicCivicContact(topic,
++                source.has("civic_contact") && source.get("civic_contact").getAsBoolean());
+     }
+ 
+     void compile() {
+@@ -433,6 +435,13 @@
+             disposition.add("deltas", reply.get("disposition"));
+             actions.add("conversations_disposition_apply", disposition);
+         }
++        if (reply.has("civic_action")) {
++            String civicAction = reply.get("civic_action").getAsString();
++            if (!Set.of("introduction", "commissions").contains(civicAction)) {
++                throw new IllegalStateException(replyKey + " has unknown civic_action '" + civicAction + "'");
++            }
++            actions.addProperty("conversations_civic", civicAction);
++        }
+         if (reply.has("claim")) {
+             JsonObject claim = new JsonObject();
+             claim.addProperty("op", "record");
+@@ -805,6 +814,13 @@
+             disposition.add("deltas", reply.get("disposition"));
+             actions.add("conversations_disposition_apply", disposition);
+         }
++        if (reply.has("civic_action")) {
++            String civicAction = reply.get("civic_action").getAsString();
++            if (!Set.of("introduction", "commissions").contains(civicAction)) {
++                throw new IllegalStateException(replyKey + " has unknown civic_action '" + civicAction + "'");
++            }
++            actions.addProperty("conversations_civic", civicAction);
++        }
+         actions.addProperty("next", responseQuestion);
+         actions.add("conversations_say", sayAction(reactionSay, List.of()));
+ 
+@@ -855,7 +871,9 @@
+         JsonObject actions = new JsonObject();
+         actions.add("conversations_session", session);
+         actions.addProperty("next", funnelQuestionId(true));
+-        actions.add("conversations_say", sayAction("conversations." + topic + ".open", List.of()));
++        JsonObject funnelOpen = ContentCompiler.object(ContentCompiler.object(source, "funnel"), "open");
++        actions.add("conversations_say", sayAction("conversations." + topic + ".open",
++                ContentCompiler.strings(funnelOpen, "vars_used")));
+ 
+         JsonObject route = new JsonObject();
+         route.addProperty("baseChance", 800);
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaconversations/compat/CivicBridgeTest.java
+@@ -0,0 +1,59 @@
++package dev.otectus.mcaconversations.compat;
++
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++import java.util.Optional;
++import java.util.UUID;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++
++class CivicBridgeTest {
++    private static final UUID NPC = UUID.fromString("a0f63bf6-dd4f-4eb3-97ab-1e204fd733b8");
++
++    public record FakeContext(UUID npc, String organization, String nameKey, String role,
++                              boolean servicesAvailable, boolean introductionQualified,
++                              boolean commissionQualified, List<String> reasons,
++                              List<String> commissionReasons, long stateRevision, long policyRevision) {
++    }
++
++    public static final class FakeResult {
++        public boolean success() { return true; }
++        public String reason() { return "civic.introduction_sent"; }
++        public Optional<UUID> settlement() {
++            throw new AssertionError("the conversations bridge must never read hidden destinations");
++        }
++    }
++
++    @Test
++    void publicContextIsFlattenedAndBounded() throws Throwable {
++        CivicBridge.Contact context = CivicBridge.decodeContextForTest(new FakeContext(
++                NPC, "ultima_kingdoms:civic/lamplighters", "civic.organization/lamplighters",
++                "guild_contact", true, true, false,
++                List.of("civic.qualified"), List.of("civic.rank_required"), 14L, 9L));
++
++        assertEquals(NPC, context.npc());
++        assertEquals("ultima_kingdoms:civic/lamplighters", context.organization().toString());
++        assertEquals(List.of("civic.rank_required"), context.commissionReasons());
++        assertThrows(UnsupportedOperationException.class,
++                () -> context.reasons().add("civic.not_allowed"));
++    }
++
++    @Test
++    void malformedOrOversizedProviderContextFailsClosed() {
++        assertThrows(IllegalArgumentException.class, () -> CivicBridge.decodeContextForTest(
++                new FakeContext(NPC, "NOT A RESOURCE", "civic.name", "contact",
++                        true, true, true, List.of(), List.of(), 1L, 1L)));
++        assertThrows(IllegalArgumentException.class, () -> CivicBridge.decodeContextForTest(
++                new FakeContext(NPC, "ultima_kingdoms:guild", "civic.name", "contact",
++                        true, true, true, List.of("x", "x", "x", "x", "x", "x", "x", "x", "x"),
++                        List.of(), 1L, 1L)));
++    }
++
++    @Test
++    void actionReplyNeverTouchesSettlementIdentity() throws Throwable {
++        assertEquals(new CivicBridge.Reply(true, "civic.introduction_sent"),
++                CivicBridge.decodeReplyForTest(new FakeResult()));
++    }
++}
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaconversations/content/CivicContentContractTest.java
+@@ -0,0 +1,72 @@
++package dev.otectus.mcaconversations.content;
++
++import com.google.gson.JsonArray;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParser;
++import org.junit.jupiter.api.Test;
++
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.HashSet;
++import java.util.Set;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++class CivicContentContractTest {
++    private static final Path SOURCE = Path.of("src/content/topics/guild_contact.json");
++
++    @Test
++    void civicTopicIsAdultDiscreetAndHasNoOpinionOrHeartMutation() throws Exception {
++        JsonObject topic = JsonParser.parseString(Files.readString(SOURCE)).getAsJsonObject();
++        assertTrue(topic.get("civic_contact").getAsBoolean());
++        assertEquals(Set.of("adult"), strings(topic.getAsJsonArray("ages")));
++        Set<String> actions = new HashSet<>();
++        for (JsonElement sceneElement : topic.getAsJsonArray("scenes")) {
++            JsonObject scene = sceneElement.getAsJsonObject();
++            assertEquals("discreet", scene.get("privacy").getAsString());
++            assertTrue(strings(scene.getAsJsonArray("integrations")).contains("ultima_kingdoms"));
++            for (JsonElement replyElement : scene.getAsJsonArray("replies")) {
++                JsonObject reply = replyElement.getAsJsonObject();
++                assertFalse(reply.has("affection"));
++                assertFalse(reply.has("disposition"));
++                JsonObject reaction = reply.getAsJsonObject("reaction");
++                assertEquals("discreet", reaction.get("privacy").getAsString());
++                if (reply.has("civic_action")) actions.add(reply.get("civic_action").getAsString());
++            }
++        }
++        assertEquals(Set.of("introduction", "commissions"), actions);
++    }
++
++    @Test
++    void generatedTopicKeepsGateAndRequesterOnlyActionVocabulary() throws Exception {
++        JsonObject catalog = JsonParser.parseString(Files.readString(Path.of(
++                "src/main/resources/data/mcaconversations/conversation_catalog/topics.json")))
++                .getAsJsonObject().getAsJsonObject("topics").getAsJsonObject("guild_contact");
++        assertTrue(catalog.get("civic_contact").getAsBoolean());
++        assertEquals(Set.of("adult"), strings(catalog.getAsJsonArray("ages")));
++
++        String generated = Files.readString(Path.of(
++                "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.introduction_ready.respond.json"))
++                + Files.readString(Path.of(
++                "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.commissions_ready.respond.json"));
++        assertTrue(generated.contains("\"conversations_civic\""));
++        assertFalse(generated.contains("\"positive\""));
++        assertFalse(generated.contains("\"negative\""));
++        assertFalse(generated.contains("conversations_affection_apply"));
++        assertFalse(generated.contains("conversations_disposition_apply"));
++
++        String registrar = Files.readString(Path.of(
++                "src/main/java/dev/otectus/mcaconversations/compat/mca/ConversationsMcaRegistrar.java"));
++        assertTrue(registrar.contains("CivicBridge.request(action, player, villager)"));
++        assertTrue(registrar.contains("player.sendSystemMessage"));
++    }
++
++    private static Set<String> strings(JsonArray array) {
++        Set<String> values = new HashSet<>();
++        for (JsonElement value : array) values.add(value.getAsString());
++        return Set.copyOf(values);
++    }
++}
+--- a/src/test/java/dev/otectus/mcaconversations/content/ContentLintTest.java
++++ b/src/test/java/dev/otectus/mcaconversations/content/ContentLintTest.java
+@@ -75,7 +75,7 @@
+             "conversations_record", "conversations_say", "conversations_gossip_say",
+             "conversations_disposition_apply", "conversations_quest_open",
+             "conversations_session", "conversations_affection_apply", "conversations_progress_apply",
+-            "conversations_reputation_signal",
++            "conversations_reputation_signal", "conversations_civic",
+             // Living histories. Every one instantiates an authored template rather than a
+             // shape, so a result can never invent an episode kind or an unregistered promise.
+             "conversations_episode", "conversations_thread", "conversations_commitment",
+--- a/src/test/java/dev/otectus/mcaconversations/content/ConversationGraphLintTest.java
++++ b/src/test/java/dev/otectus/mcaconversations/content/ConversationGraphLintTest.java
+@@ -1006,7 +1006,10 @@
+     void everyTopicHasABetterAndAWorseRoute() {
+         List<String> problems = new ArrayList<>();
+         for (TopicEntry topic : catalog.topics()) {
+-            if (!isConverted(topic)) {
++            // A civic contact dispatches institutional services. Treating either service choice as
++            // interpersonal praise or insult would turn public qualification into villager warmth,
++            // so these explicitly gated service topics must remain affection-neutral.
++            if (!isConverted(topic) || topic.civicContact()) {
+                 continue;
+             }
+             boolean positive = false;
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaconversations/context/CivicContextSourceTest.java
+@@ -0,0 +1,37 @@
++package dev.otectus.mcaconversations.context;
++
++import dev.otectus.mcaconversations.compat.CivicBridge;
++import net.minecraft.resources.ResourceLocation;
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++import java.util.Optional;
++import java.util.UUID;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++class CivicContextSourceTest {
++    @Test
++    void contactSnapshotCarriesOnlyRequesterScopedPublicFacts() {
++        ContextSnapshotBuilder builder = new ContextSnapshotBuilder();
++        builder.beginSource(CivicContextSource.ID);
++        CivicContextSource.contribute(builder, new CivicBridge.Contact(
++                UUID.fromString("fcd0b19b-77fb-4aa2-aaf4-a83272b071b8"),
++                new ResourceLocation("ultima_kingdoms", "lamplighters"),
++                "civic.organization.lamplighters", "guild_contact", true, false, true,
++                List.of("civic.introduction.rank"), List.of(), 17L, 4L));
++        ConversationContextSnapshot snapshot = builder.build();
++
++        assertEquals(Optional.of(true), snapshot.value(ContextKeys.CIVIC_CONTACT));
++        assertEquals(Optional.of("ultima_kingdoms:lamplighters"),
++                snapshot.value(ContextKeys.CIVIC_ORGANIZATION));
++        assertEquals(Optional.of("civic.organization.lamplighters"),
++                snapshot.value(ContextKeys.CIVIC_ORGANIZATION_NAME_KEY));
++        assertEquals(Optional.of(false), snapshot.value(ContextKeys.CIVIC_INTRODUCTION_QUALIFIED));
++        assertEquals(Optional.of(true), snapshot.value(ContextKeys.CIVIC_COMMISSION_QUALIFIED));
++        assertEquals(Optional.of(List.of("civic.introduction.rank")),
++                snapshot.value(ContextKeys.CIVIC_INTRODUCTION_REASONS));
++        assertEquals(Optional.of(17L), snapshot.value(ContextKeys.CIVIC_STATE_REVISION));
++        assertEquals(Optional.of(4L), snapshot.value(ContextKeys.CIVIC_POLICY_REVISION));
++    }
++}
+--- a/src/test/java/dev/otectus/mcaconversations/context/ContextKeyOwnershipTest.java
++++ b/src/test/java/dev/otectus/mcaconversations/context/ContextKeyOwnershipTest.java
+@@ -170,7 +170,7 @@
+         // vacuum.
+         assertTrue(ContextKey.all().size() >= 55,
+                 "expected the full context vocabulary, found " + ContextKey.all().size());
+-        assertEquals(7, ContextSources.registered().size(),
+-                "vanilla, mca, village, history, identity, capital, reputation");
++        assertEquals(8, ContextSources.registered().size(),
++                "vanilla, mca, village, history, identity, capital, reputation, civic");
+     }
+ }
+--- a/src/test/java/dev/otectus/mcaconversations/conversation/ContentOperationConsistencyTest.java
++++ b/src/test/java/dev/otectus/mcaconversations/conversation/ContentOperationConsistencyTest.java
+@@ -44,7 +44,7 @@
+         return new TopicEntry(id, "conversations.cat.chitchat", "day", DepthClass.QUICK,
+                 "conversations.cat.chitchat", java.util.Set.of(AgeGroup.ADULT),
+                 java.util.Set.of(StanceFamily.EXIT), false, java.util.Optional.empty(),
+-                java.util.Set.of(), java.util.Map.of(), java.util.Optional.empty());
++                java.util.Set.of(), java.util.Map.of(), java.util.Optional.empty(), false);
+     }
+ 
+     @Test
+--- a/src/test/java/dev/otectus/mcaconversations/conversation/TopicGateTest.java
++++ b/src/test/java/dev/otectus/mcaconversations/conversation/TopicGateTest.java
+@@ -20,6 +20,15 @@
+         return ConversationCatalog.build(List.of(entry));
+     }
+ 
++    private static ConversationCatalog civicCatalog() {
++        TopicEntry entry = TopicEntry.fromJson("guild_contact", JsonParser.parseString("""
++                {"entry":{"question":"village","answer":"guild_contact"},"depth":"quick",
++                 "return_question":"main","ages":["adult"],
++                 "required_stance_families":["exit"],"civic_contact":true}
++                """).getAsJsonObject());
++        return ConversationCatalog.build(List.of(entry));
++    }
++
+     @Test
+     void nativeStarterCannotBypassKingdomDecision() {
+         ConversationCatalog catalog = catalog();
+@@ -34,4 +43,15 @@
+         assertTrue(TopicGate.allows(catalog, "greet", "not_catalogued", AgeGroup.CHILD, gate -> false));
+         assertTrue(TopicGate.allows(null, "greet", "checkin", AgeGroup.CHILD, gate -> false));
+     }
++
++    @Test
++    void civicStarterFailsClosedAndCannotBeEnteredByDirectOrChatSelection() {
++        ConversationCatalog catalog = civicCatalog();
++        assertFalse(TopicGate.allows(catalog, "village", "guild_contact", AgeGroup.ADULT,
++                gate -> true, () -> false));
++        assertTrue(TopicGate.allows(catalog, "village", "guild_contact", AgeGroup.ADULT,
++                gate -> true, () -> true));
++        assertFalse(TopicGate.allows(catalog, "village", "guild_contact", AgeGroup.CHILD,
++                gate -> true, () -> true));
++    }
+ }
+--- a/src/test/resources/generated_matcher_fixtures.tsv
++++ b/src/test/resources/generated_matcher_fixtures.tsv
+@@ -297,6 +297,42 @@
+ algumas coisas nao valem um acordo	conversations.scene.future.the_decision_between_us.answered.respond	scene.future.the_decision_between_us.follow_2	follow_1,follow_2,leave	pt_br
+ some things arent worth compromising on	conversations.scene.future.the_decision_between_us.answered.respond	scene.future.the_decision_between_us.follow_2	follow_1,follow_2,leave	en_us
+ some things arent worth compromising on	conversations.scene.future.the_decision_between_us.answered.respond	scene.future.the_decision_between_us.follow_2	follow_1,follow_2,leave	en_us
++do these offers bypass normal requirements	conversations.scene.guild_contact.commissions_ready.respond	scene.guild_contact.commissions_ready.ask_about_requirements	request_commissions,ask_about_requirements,leave	en_us
++do these offers bypass normal requirements	conversations.scene.guild_contact.commissions_ready.respond	scene.guild_contact.commissions_ready.ask_about_requirements	request_commissions,ask_about_requirements,leave	en_us
++essas ofertas ignoram os requisitos normais	conversations.scene.guild_contact.commissions_ready.respond	scene.guild_contact.commissions_ready.ask_about_requirements	request_commissions,ask_about_requirements,leave	pt_br
++mostre as comissoes disponiveis	conversations.scene.guild_contact.commissions_ready.respond	scene.guild_contact.commissions_ready.request_commissions	request_commissions,ask_about_requirements,leave	pt_br
++show me the available commissions	conversations.scene.guild_contact.commissions_ready.respond	scene.guild_contact.commissions_ready.request_commissions	request_commissions,ask_about_requirements,leave	en_us
++show me the available commissions	conversations.scene.guild_contact.commissions_ready.respond	scene.guild_contact.commissions_ready.request_commissions	request_commissions,ask_about_requirements,leave	en_us
++o que a apresentacao revela	conversations.scene.guild_contact.introduction_ready.respond	scene.guild_contact.introduction_ready.ask_what_this_means	request_introduction,ask_what_this_means,leave	pt_br
++what does the introduction reveal	conversations.scene.guild_contact.introduction_ready.respond	scene.guild_contact.introduction_ready.ask_what_this_means	request_introduction,ask_what_this_means,leave	en_us
++what does the introduction reveal	conversations.scene.guild_contact.introduction_ready.respond	scene.guild_contact.introduction_ready.ask_what_this_means	request_introduction,ask_what_this_means,leave	en_us
++please request the introduction	conversations.scene.guild_contact.introduction_ready.respond	scene.guild_contact.introduction_ready.request_introduction	request_introduction,ask_what_this_means,leave	en_us
++please request the introduction	conversations.scene.guild_contact.introduction_ready.respond	scene.guild_contact.introduction_ready.request_introduction	request_introduction,ask_what_this_means,leave	en_us
++por favor solicite a apresentacao	conversations.scene.guild_contact.introduction_ready.respond	scene.guild_contact.introduction_ready.request_introduction	request_introduction,ask_what_this_means,leave	pt_br
++entendi as regras normais de missao ainda valem	conversations.topic.guild_contact.more.respond	scene.guild_contact.more.acknowledge_requirements	request_commissions,acknowledge_requirements,leave	pt_br
++understood normal quest rules still apply	conversations.topic.guild_contact.more.respond	scene.guild_contact.more.acknowledge_requirements	request_commissions,acknowledge_requirements,leave	en_us
++understood normal quest rules still apply	conversations.topic.guild_contact.more.respond	scene.guild_contact.more.acknowledge_requirements	request_commissions,acknowledge_requirements,leave	en_us
++mostre as comissoes atuais	conversations.topic.guild_contact.more.respond	scene.guild_contact.more.request_commissions	request_commissions,acknowledge_requirements,leave	pt_br
++show me the current commissions	conversations.topic.guild_contact.more.respond	scene.guild_contact.more.request_commissions	request_commissions,acknowledge_requirements,leave	en_us
++show me the current commissions	conversations.topic.guild_contact.more.respond	scene.guild_contact.more.request_commissions	request_commissions,acknowledge_requirements,leave	en_us
++o que permanece privado	conversations.topic.guild_contact.open.respond	scene.guild_contact.open.ask_about_privacy	request_introduction,ask_about_privacy,leave	pt_br
++what stays private	conversations.topic.guild_contact.open.respond	scene.guild_contact.open.ask_about_privacy	request_introduction,ask_about_privacy,leave	en_us
++what stays private	conversations.topic.guild_contact.open.respond	scene.guild_contact.open.ask_about_privacy	request_introduction,ask_about_privacy,leave	en_us
++request an introduction for me	conversations.topic.guild_contact.open.respond	scene.guild_contact.open.request_introduction	request_introduction,ask_about_privacy,leave	en_us
++request an introduction for me	conversations.topic.guild_contact.open.respond	scene.guild_contact.open.request_introduction	request_introduction,ask_about_privacy,leave	en_us
++solicite uma apresentacao para mim	conversations.topic.guild_contact.open.respond	scene.guild_contact.open.request_introduction	request_introduction,ask_about_privacy,leave	pt_br
++entendi vou consultar o registro	conversations.scene.guild_contact.qualification_recovery.respond	scene.guild_contact.qualification_recovery.acknowledge_recovery	ask_where_to_check,acknowledge_recovery,leave	pt_br
++understood i will check the record	conversations.scene.guild_contact.qualification_recovery.respond	scene.guild_contact.qualification_recovery.acknowledge_recovery	ask_where_to_check,acknowledge_recovery,leave	en_us
++understood ill check the record	conversations.scene.guild_contact.qualification_recovery.respond	scene.guild_contact.qualification_recovery.acknowledge_recovery	ask_where_to_check,acknowledge_recovery,leave	en_us
++onde posso verificar os requisitos	conversations.scene.guild_contact.qualification_recovery.respond	scene.guild_contact.qualification_recovery.ask_where_to_check	ask_where_to_check,acknowledge_recovery,leave	pt_br
++where can i check the requirements	conversations.scene.guild_contact.qualification_recovery.respond	scene.guild_contact.qualification_recovery.ask_where_to_check	ask_where_to_check,acknowledge_recovery,leave	en_us
++where can i check the requirements	conversations.scene.guild_contact.qualification_recovery.respond	scene.guild_contact.qualification_recovery.ask_where_to_check	ask_where_to_check,acknowledge_recovery,leave	en_us
++entendi nao vou insistir	conversations.scene.guild_contact.workshop_unavailable.respond	scene.guild_contact.workshop_unavailable.acknowledge_unavailable	ask_when_to_return,acknowledge_unavailable,leave	pt_br
++understood i will not press the matter	conversations.scene.guild_contact.workshop_unavailable.respond	scene.guild_contact.workshop_unavailable.acknowledge_unavailable	ask_when_to_return,acknowledge_unavailable,leave	en_us
++understood i wont press the matter	conversations.scene.guild_contact.workshop_unavailable.respond	scene.guild_contact.workshop_unavailable.acknowledge_unavailable	ask_when_to_return,acknowledge_unavailable,leave	en_us
++quando devo perguntar de novo	conversations.scene.guild_contact.workshop_unavailable.respond	scene.guild_contact.workshop_unavailable.ask_when_to_return	ask_when_to_return,acknowledge_unavailable,leave	pt_br
++when should i ask again	conversations.scene.guild_contact.workshop_unavailable.respond	scene.guild_contact.workshop_unavailable.ask_when_to_return	ask_when_to_return,acknowledge_unavailable,leave	en_us
++when should i ask again	conversations.scene.guild_contact.workshop_unavailable.respond	scene.guild_contact.workshop_unavailable.ask_when_to_return	ask_when_to_return,acknowledge_unavailable,leave	en_us
+ does it need a reason	conversations.scene.happy.a_good_stretch.respond	scene.happy.a_good_stretch.ask_what_did_it	share_the_pleasure,ask_what_did_it,leave	en_us
+ does it need a reason	conversations.scene.happy.a_good_stretch.respond	scene.happy.a_good_stretch.ask_what_did_it	share_the_pleasure,ask_what_did_it,leave	en_us
+ precisa ter um motivo	conversations.scene.happy.a_good_stretch.respond	scene.happy.a_good_stretch.ask_what_did_it	share_the_pleasure,ask_what_did_it,leave	pt_br

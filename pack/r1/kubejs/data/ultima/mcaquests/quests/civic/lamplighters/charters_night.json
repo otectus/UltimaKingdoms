@@ -1,0 +1,108 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/charters_night",
+  "weight": 8,
+  "category": "Lamplighters",
+  "difficulty": "medium",
+  "priority": 1,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:cleric",
+      "minecraft:fletcher"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "The Charter's Night"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The guild's promise fits in one sentence: keep the rows burning. Bring rope, mesh, and reinforced fiber for a full route."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Pack each separately. Repairs made in darkness must be found by touch."
+    },
+    "decline": {
+      "text": "Then the guild will shorten tonight's route. Thank you for answering plainly."
+    },
+    "in_progress": {
+      "text": "Four rope, four mesh, two reinforced bundles. The dark charges interest on omissions."
+    },
+    "ready": {
+      "text": "Every piece is here. Hand me the kit before the first torch gutters."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The lanes will remain roads tonight, and no Grue will mistake them for a hunting ground."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "plantfiber:rope",
+      "count": 4,
+      "consume": true
+    },
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "plantfiber:plant_mesh",
+      "count": 4,
+      "consume": true
+    },
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "plantfiber:reinforced_fibers",
+      "count": 2,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 30
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 3
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "all_of": [
+      {
+        "type": "mcaquests:quest_completed",
+        "quest": "ultima:civic/lamplighters/reinforce_the_ladder",
+        "scope": "global"
+      },
+      {
+        "type": "mcaquests:quest_completed",
+        "quest": "ultima:civic/lamplighters/warmth_at_the_gate",
+        "scope": "global"
+      }
+    ]
+  }
+}

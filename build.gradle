@@ -24,6 +24,7 @@ def stageExplicitRuntimeJar = { String propertyName, String moduleName ->
 }
 def localMcaModule = stageExplicitRuntimeJar('mcaJar', 'minecraft-comes-alive')
 def localArchitecturyModule = stageExplicitRuntimeJar('architecturyJar', 'architectury')
+def localTownsteadModule = stageExplicitRuntimeJar('townsteadJar', 'townstead')
 
 base {
     archivesName = mod_id
@@ -101,7 +102,7 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
-    if (localMcaModule != null || localArchitecturyModule != null) {
+    if (localMcaModule != null || localArchitecturyModule != null || localTownsteadModule != null) {
         flatDir {
             name = 'ExplicitLocalRuntime'
             dirs explicitLocalRuntimeDirectory
@@ -133,6 +134,9 @@ dependencies {
     if (localArchitecturyModule != null) {
         runtimeOnly fg.deobf(localArchitecturyModule)
     }
+    if (localTownsteadModule != null) {
+        runtimeOnly fg.deobf(localTownsteadModule)
+    }
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
@@ -155,6 +159,9 @@ tasks.named('processResources', ProcessResources).configure {
             forge_version_range    : forge_version_range,
             loader_version_range   : loader_version_range,
             mca_version_range      : mca_version_range,
+            mcaquests_version_range: mcaquests_version_range,
+            townstead_version_range: townstead_version_range,
+            politics_townstead_version: politics_townstead_version,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
@@ -164,7 +171,7 @@ tasks.named('processResources', ProcessResources).configure {
     ]
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta', 'ultima_kingdoms-politics.properties']) {
         expand replaceProperties + [project: project]
     }
 }
@@ -178,6 +185,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'     : project.name,
                 'Implementation-Version'   : project.jar.archiveVersion,
                 'Implementation-Vendor'    : mod_authors,
+                'MixinConfigs'             : 'ultima_kingdoms.mixins.json',
         ])
     }
     finalizedBy 'reobfJar'

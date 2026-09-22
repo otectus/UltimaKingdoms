@@ -1,0 +1,13 @@
+{
+  "title": "Concord Charter Schism",
+  "kind": "SCHISM",
+  "outcomes": ["FOUND_SCHISM", "EXIT"],
+  "goal": null,
+  "objective": "Found a separate civic charter through political recognition while every member keeps standing and chooses membership independently.",
+  "durationTicks": 216000,
+  "maxParticipants": 2,
+  "operationBudget": 2,
+  "requiresOccupation": false,
+  "organizationTemplate": "ultima_kingdoms:lamplighters",
+  "organizationName": "Concord Fellowship"
+}

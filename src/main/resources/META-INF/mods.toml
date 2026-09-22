@@ -29,3 +29,17 @@ mandatory=false
 versionRange="${mca_version_range}"
 ordering="AFTER"
 side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="mcaquests"
+mandatory=false
+versionRange="${mcaquests_version_range}"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="townstead"
+mandatory=false
+versionRange="${townstead_version_range}"
+ordering="AFTER"
+side="BOTH"

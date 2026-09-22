@@ -21,31 +21,49 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Cached, loader-relocated access to the exact MCA 7.6.26 surface used by the bridge. */
+/** Cached, loader-relocated access to the supported MCA 7.x village and residency capabilities. */
 final class McaAccess {
-    static final String EXACT_VERSION = "7.6.26+1.20.1";
     static final ResourceLocation SOURCE = new ResourceLocation("ultima_kingdoms", "mca");
     static final String EXTERNAL_REF = "mca";
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final String ROOT = "forge.net.mca";
+    private static final String[] CANDIDATE_ROOTS = {
+            "forge.net.conczin.mca",
+            "forge.net.mca",
+            "net.conczin.mca",
+            "net.mca"
+    };
     private static final Resolved RESOLVED = resolve();
-    private static final AtomicBoolean ENABLED = new AtomicBoolean(RESOLVED.missing().isEmpty());
-    private static final AtomicBoolean FAILURE_REPORTED = new AtomicBoolean();
+    private static final AtomicBoolean DETECTOR_ENABLED = new AtomicBoolean(RESOLVED.detectorMissing().isEmpty());
+    private static final AtomicBoolean EVIDENCE_ENABLED = new AtomicBoolean(RESOLVED.evidenceMissing().isEmpty());
+    private static final AtomicBoolean DETECTOR_FAILURE_REPORTED = new AtomicBoolean();
+    private static final AtomicBoolean EVIDENCE_FAILURE_REPORTED = new AtomicBoolean();
 
     private McaAccess() {
     }
 
-    static boolean available() {
-        return ENABLED.get();
+    static boolean detectorAvailable() {
+        return DETECTOR_ENABLED.get();
     }
 
-    static List<String> missing() {
-        return RESOLVED.missing();
+    static boolean evidenceAvailable() {
+        return EVIDENCE_ENABLED.get();
+    }
+
+    static String root() {
+        return RESOLVED.root();
+    }
+
+    static List<String> detectorMissing() {
+        return RESOLVED.detectorMissing();
+    }
+
+    static List<String> evidenceMissing() {
+        return RESOLVED.evidenceMissing();
     }
 
     static boolean isVillager(Entity entity) {
-        return available() && RESOLVED.villager() != null && RESOLVED.villager().isInstance(entity);
+        return evidenceAvailable() && RESOLVED.villager() != null && RESOLVED.villager().isInstance(entity);
     }
 
     static Optional<Object> homeVillage(Entity entity) {
@@ -58,14 +76,14 @@ final class McaAccess {
             if (result instanceof Optional<?> optional) {
                 return optional.map(Object.class::cast);
             }
-            return fail("Residency#getHomeVillage returned a non-Optional value", null);
+            return failEvidence("Residency#getHomeVillage returned a non-Optional value", null);
         } catch (Throwable throwable) {
-            return fail("MCA home-village lookup failed", throwable);
+            return failEvidence("MCA home-village lookup failed", throwable);
         }
     }
 
     static Optional<Object> nearestVillage(ServerLevel level, BlockPos center, int margin) {
-        if (!available()) {
+        if (!detectorAvailable()) {
             return Optional.empty();
         }
         try {
@@ -74,33 +92,34 @@ final class McaAccess {
             if (result instanceof Optional<?> optional) {
                 return optional.map(Object.class::cast);
             }
-            return fail("VillageManager#findNearestVillage returned a non-Optional value", null);
+            return failDetector("VillageManager#findNearestVillage returned a non-Optional value", null);
         } catch (Throwable throwable) {
-            return fail("MCA nearest-village lookup failed", throwable);
+            return failDetector("MCA nearest-village lookup failed", throwable);
         }
     }
 
     static List<Object> villages(ServerLevel level) {
-        if (!available()) {
+        if (!detectorAvailable()) {
             return List.of();
         }
         try {
             Object manager = RESOLVED.managerGet().invoke(level);
             if (!(manager instanceof Iterable<?> iterable)) {
-                fail("VillageManager is no longer Iterable", null);
+                failDetector("VillageManager is no longer Iterable", null);
                 return List.of();
             }
             List<Object> villages = new ArrayList<>();
             iterable.forEach(villages::add);
             return List.copyOf(villages);
         } catch (Throwable throwable) {
-            fail("MCA village iteration failed", throwable);
+            failDetector("MCA village iteration failed", throwable);
             return List.of();
         }
     }
 
     static Optional<SettlementCandidate> candidate(ServerLevel level, Object village) {
-        if (!available() || village == null || !RESOLVED.village().isInstance(village)) {
+        if ((!detectorAvailable() && !evidenceAvailable())
+                || village == null || !RESOLVED.village().isInstance(village)) {
             return Optional.empty();
         }
         try {
@@ -123,37 +142,70 @@ final class McaAccess {
                     level.dimension(), anchor, radius, bounds, SOURCE, external, DetectionSource.EXTERNAL,
                     Optional.empty(), Optional.empty(), Map.of(EXTERNAL_REF, external), Optional.empty()));
         } catch (Throwable throwable) {
-            return fail("MCA village conversion failed", throwable);
+            return failShared("MCA village conversion failed", throwable);
         }
     }
 
     private static Resolved resolve() {
-        List<String> missing = new ArrayList<>();
-        Class<?> villager = type(missing, ROOT + ".entity.VillagerEntityMCA");
-        Class<?> residency = type(missing, ROOT + ".entity.ai.Residency");
-        Class<?> village = type(missing, ROOT + ".server.world.data.Village");
-        Class<?> manager = type(missing, ROOT + ".server.world.data.VillageManager");
+        String root = null;
+        Class<?> villager = null;
+        for (String candidate : CANDIDATE_ROOTS) {
+            villager = type(candidate + ".entity.VillagerEntityMCA");
+            if (villager != null) {
+                root = candidate;
+                break;
+            }
+        }
+        if (root == null) {
+            List<String> absent = List.of("class <known MCA root>.entity.VillagerEntityMCA");
+            return new Resolved("unresolved", null, null, null, null, null, null, null, null, null, null,
+                    absent, absent);
+        }
+
+        List<String> sharedMissing = new ArrayList<>();
+        Class<?> village = requiredType(sharedMissing, root + ".server.world.data.Village");
+        MethodHandle villageGetId = method(sharedMissing, village, "getId");
+        MethodHandle villageGetCenter = method(sharedMissing, village, "getCenter");
+        MethodHandle villageGetBox = method(sharedMissing, village, "getBox");
+        MethodHandle villageIsVillage = method(sharedMissing, village, "isVillage");
+
+        List<String> detectorMissing = new ArrayList<>(sharedMissing);
+        Class<?> manager = requiredType(detectorMissing, root + ".server.world.data.VillageManager");
+        MethodHandle managerGet = method(detectorMissing, manager, "get", ServerLevel.class);
+        MethodHandle managerFindNearest = method(detectorMissing, manager, "findNearestVillage", BlockPos.class, int.class);
+
+        List<String> evidenceMissing = new ArrayList<>(sharedMissing);
+        Class<?> residency = requiredType(evidenceMissing, root + ".entity.ai.Residency");
+        MethodHandle getResidency = method(evidenceMissing, villager, "getResidency");
+        MethodHandle getHomeVillage = method(evidenceMissing, residency, "getHomeVillage");
         return new Resolved(
+                root,
                 villager,
                 village,
-                method(missing, villager, "getResidency"),
-                method(missing, residency, "getHomeVillage"),
-                method(missing, village, "getId"),
-                method(missing, village, "getCenter"),
-                method(missing, village, "getBox"),
-                method(missing, village, "isVillage"),
-                method(missing, manager, "get", ServerLevel.class),
-                method(missing, manager, "findNearestVillage", BlockPos.class, int.class),
-                List.copyOf(missing));
+                getResidency,
+                getHomeVillage,
+                villageGetId,
+                villageGetCenter,
+                villageGetBox,
+                villageIsVillage,
+                managerGet,
+                managerFindNearest,
+                List.copyOf(detectorMissing),
+                List.copyOf(evidenceMissing));
     }
 
-    private static Class<?> type(List<String> missing, String name) {
+    private static Class<?> type(String name) {
         try {
             return Class.forName(name, false, McaAccess.class.getClassLoader());
         } catch (Throwable throwable) {
-            missing.add("class " + name);
             return null;
         }
+    }
+
+    private static Class<?> requiredType(List<String> missing, String name) {
+        Class<?> type = type(name);
+        if (type == null) missing.add("class " + name);
+        return type;
     }
 
     private static MethodHandle method(List<String> missing, Class<?> owner, String name, Class<?>... parameters) {
@@ -169,19 +221,38 @@ final class McaAccess {
         }
     }
 
-    private static <T> Optional<T> fail(String message, Throwable throwable) {
-        ENABLED.set(false);
-        if (FAILURE_REPORTED.compareAndSet(false, true)) {
-            if (throwable == null) {
-                LOGGER.error("[Ultima Kingdoms] {}; disabling MCA integration", message);
-            } else {
-                LOGGER.error("[Ultima Kingdoms] {}; disabling MCA integration", message, throwable);
-            }
-        }
+    private static <T> Optional<T> failDetector(String message, Throwable throwable) {
+        DETECTOR_ENABLED.set(false);
+        reportFailure(DETECTOR_FAILURE_REPORTED, "MCA settlement detection", message, throwable);
         return Optional.empty();
     }
 
+    private static <T> Optional<T> failEvidence(String message, Throwable throwable) {
+        EVIDENCE_ENABLED.set(false);
+        reportFailure(EVIDENCE_FAILURE_REPORTED, "MCA civic evidence", message, throwable);
+        return Optional.empty();
+    }
+
+    private static <T> Optional<T> failShared(String message, Throwable throwable) {
+        DETECTOR_ENABLED.set(false);
+        EVIDENCE_ENABLED.set(false);
+        reportFailure(DETECTOR_FAILURE_REPORTED, "MCA settlement detection", message, throwable);
+        reportFailure(EVIDENCE_FAILURE_REPORTED, "MCA civic evidence", message, throwable);
+        return Optional.empty();
+    }
+
+    private static void reportFailure(AtomicBoolean reported, String capability, String message, Throwable throwable) {
+        if (reported.compareAndSet(false, true)) {
+            if (throwable == null) {
+                LOGGER.error("[Ultima Kingdoms] {}; disabling {}", message, capability);
+            } else {
+                LOGGER.error("[Ultima Kingdoms] {}; disabling {}", message, capability, throwable);
+            }
+        }
+    }
+
     private record Resolved(
+            String root,
             Class<?> villager,
             Class<?> village,
             MethodHandle getResidency,
@@ -192,7 +263,8 @@ final class McaAccess {
             MethodHandle villageIsVillage,
             MethodHandle managerGet,
             MethodHandle managerFindNearest,
-            List<String> missing
+            List<String> detectorMissing,
+            List<String> evidenceMissing
     ) {
     }
 }

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "offices": [
+    "ultima_kingdoms:leader",
+    "ultima_kingdoms:chancellor",
+    "ultima_kingdoms:envoy",
+    "ultima_kingdoms:herald",
+    "ultima_kingdoms:keeper_of_records",
+    "ultima_kingdoms:local_steward"
+  ],
+  "permissions": [],
+  "requires": [],
+  "buildingTypes": [],
+  "durationTicks": 720000,
+  "maxOffices": 2,
+  "independentApproval": true,
+  "commissionPool": "",
+  "kind": "government",
+  "title": "politics.ultima_kingdoms.shimaguni_charter"
+}

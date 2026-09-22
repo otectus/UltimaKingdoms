@@ -1,0 +1,86 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/warmth_at_the_gate",
+  "weight": 8,
+  "category": "Lamplighters",
+  "difficulty": "medium",
+  "priority": 1,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:cleric",
+      "minecraft:fletcher"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Warmth at the Gate"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The gatehouse loses heat faster than courage. Craft a heater prototype and demonstrate it before the next frost."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Test it well. You will keep this costly heater; the watch needs a pattern it can trust."
+    },
+    "decline": {
+      "text": "Understood. The watch has blankets and will make do without resentment."
+    },
+    "in_progress": {
+      "text": "A working heater, please. The gate cannot come indoors for the lesson."
+    },
+    "ready": {
+      "text": "I can feel it from here. The prototype has proved its worth."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Keep it for cold roads. The watch now knows what it must build."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:craft_item",
+      "item": "legendarysurvivaloverhaul:heater",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 30
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 3
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "type": "mcaquests:quest_completed",
+    "quest": "ultima:civic/lamplighters/weather_eye",
+    "scope": "global"
+  }
+}

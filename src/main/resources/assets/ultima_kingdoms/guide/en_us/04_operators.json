@@ -1,0 +1,106 @@
+{
+  "entries": [
+    {
+      "id": "operator_overview",
+      "category": "operators",
+      "title": "Run a world safely",
+      "summary": "Keep setup, player authority, and recovery as separate jobs.",
+      "body": [
+        "Operator commands typically require permission level 2. The K menu shows operators additional administration and standing tasks. These use named settlement, person, region, migration, and reconciliation choices. Revisions and reconciliation fingerprints travel with the reviewed selection and cannot be typed or guessed in the GUI.",
+        "Some useful tasks still require a connected player because they use that player’s location, selected entity, private knowledge, or political authority. Running from the server console is not always equivalent. Commands remain an optional equivalent interface for automation.",
+        "Start with definitions and integrations, then register or discover actual settlements, establish needed governments, recognize suitable institutions, and appoint real contacts. Enable optional world evolution only when you want it, and select eligible regions deliberately. Do not give yourself every political role merely to make a diagnostic pass.",
+        "Before migration or repair, stop normal play and back up the entire world together: level data, world/data sidecars, dimensions, entity regions, and playerdata. Native quests, inventories, political records, and troops can span several files. Restoring only one receipt ledger is not a world rollback.",
+        "A save or provider failure should preserve a pending operation rather than invent success. Read the exact owner record and identify whether the native effect already happened. Use the relevant retry, confirm, restore, release, novation, or administrative reconciliation task. Never delete the evidence just to remove an error message.",
+        "Keep player explanations short and private. Detailed version, migration, and schema diagnostics belong with the operator; they should not be broadcast into NPC dialogue or used to reveal another player's private choices."
+      ],
+      "commands": [
+        "/ultima integrations",
+        "/ultima reload",
+        "/ultima faction diagnostics",
+        "/ultima politics diagnose \"<kingdom name>\""
+      ]
+    },
+    {
+      "id": "configuration",
+      "category": "operators",
+      "title": "Configuration and feature switches",
+      "summary": "Know which setting controls each part before diagnosing missing behavior.",
+      "body": [
+        "The base common config, ultima_kingdoms-common.toml, controls settlement discovery. Defaults include a 64-block settlement radius, 48-block point-of-interest search radius, three village points of interest to recognize a cluster, two queued chunk scans per tick, and a 32-block weak-candidate matching distance. Positive NPC home evidence is checked at a default interval of 200 ticks.",
+        "The client entry-overlay config controls whether entry titles appear, whether only kingdom changes trigger them, duration (default 80 ticks), and vertical position (default 54). This is presentation, not discovery or sovereignty. A hidden entry title does not delete a settlement.",
+        "The faction common config controls reputation synchronization and migration policy. The integrations common config controls kingdom-gated addon content, with gating enabled and unknown identity denied by default. An explicitly authored predicate can state its own unknown policy; do not globally treat missing evidence as a successful qualification.",
+        "Civic configuration controls the regional network and institutional services. Warfare configuration controls native political warfare and its subordinate features. These are independent of the per-world evolution opt-in. Evolution's common config sets evaluation interval, regional sampling budget, maximum concurrent scenarios, and personal digest cadence; the default values are 1,200 ticks, four sampled players/regions, eight scenarios, and 24,000 ticks.",
+        "Read the generated comments in the actual config files for current names and limits; different modules intentionally use their registered filenames. Stop and restart when required by the setting. A datapack reload changes authored definitions, not every startup config or a player's installed mod version."
+      ],
+      "commands": []
+    },
+    {
+      "id": "standing_sync",
+      "category": "operators",
+      "title": "Kingdom standing and MCA reputation",
+      "summary": "Sovereign reputation is separate from guild credit and local personal affection.",
+      "body": [
+        "The sovereign standing system stores a player's reputation with a kingdom. Guild standing belongs to an organization, and MCA local reputation or personal hearts belongs to its provider. Use the separate Standing tasks to inspect or correct the intended score; no score proves membership, citizenship, office, or command authority.",
+        "The default reputation sync mode is SHADOW: the integration observes and diagnoses supported events without treating them as ordinary faction-score writes. OFF disables synchronization. MCA_TO_FACTION can contribute supported local changes to kingdom standing. BIDIRECTIONAL_SEMANTIC supports the integration's explicitly scoped semantic effects; it is not permission to indiscriminately copy every score both ways.",
+        "By default, local contribution uses a factor of 0.50, and decay and administrator changes do not propagate. Overlay contribution is bounded. The integration retains event identities and recorded jurisdiction so a repeated delivery does not apply an incident twice and a later settlement reassignment does not rewrite where old incidents happened.",
+        "Operator get inspects a player's kingdom score. Add applies an explicit administrative delta, from -2,000 to 2,000. Local_effect addresses a real MCA community by dimension and numeric village ID, with a delta from -100 to 100. It is an explicit local operation, not a guild deed or quest reward.",
+        "Pending_map assigns an unresolved event to a verified kingdom after the operator fixes a missing mapping. Do not guess the mapping from a present-day biome alone. Diagnose the recorded event context first."
+      ],
+      "commands": [
+        "/ultima faction diagnostics",
+        "/ultima faction get <player name> <kingdom definition id>",
+        "/ultima faction add <player name> <kingdom definition id> <delta>",
+        "/ultima faction local_effect <player name> <dimension> <MCA village number> <delta>",
+        "/ultima faction pending_map \"<event name>\" <kingdom definition id>"
+      ]
+    },
+    {
+      "id": "migration_and_backups",
+      "category": "operators",
+      "title": "Import old standing and protect saves",
+      "summary": "Preview first, resolve conflicts, then make one deliberate import.",
+      "body": [
+        "Faction migration imports supported legacy local reputation into kingdom baselines. First run migration dry_run and inspect source availability, already-imported status, groups, unmapped communities, and conflicts with existing records. The default aggregation is MEAN; the configured alternatives include MEDIAN, MAX, MIN, and SUM.",
+        "Resolve every unavailable source, missing community mapping, and conflicting existing baseline before import. A completed import marker prevents treating the same old data as new repeatedly. Import creates baselines without fabricating a stream of historical incidents or guild deeds.",
+        "For any migration, use a whole-world backup and a quiet maintenance window. Settlement merges, kingdom reassignment, organization mergers, and provider removal are different operations with different owners. Choose the tool matching the change; one operation is not a substitute for the others.",
+        "Unknown future or malformed data is retained read-only by affected ledgers. Restore a compatible version or a coherent backup; overwriting that file with an empty one can orphan native effects that already happened. Capacity limits also stop new writes rather than silently erasing retained proof.",
+        "Removing a mod that owns entities can cause vanilla to discard unknown entity types when their chunks load. Test optional-provider absence on a copy. Reinstall tests that need those entities must use the retained pre-removal world snapshot. Ultima preserves its own suspended records; it does not reconstruct native mobs deleted by vanilla."
+      ],
+      "commands": [
+        "/ultima faction migration dry_run",
+        "/ultima faction migration import"
+      ]
+    },
+    {
+      "id": "datapack_authoring",
+      "category": "operators",
+      "title": "Customize definitions and content",
+      "summary": "Use definitions to author choices; saved accepted terms are not silently rewritten.",
+      "body": [
+        "Ultima reads kingdom identities, biome rules, structure styles, naming pools, political definitions, guilds, civic rules, world sites/routes, and evolution templates from resources. Copy a shipped example of the same domain and schema rather than guessing fields from a different feature.",
+        "Core and political definitions live under data/<namespace>/ultima_kingdoms/ with domain folders such as kingdoms, biome_rules, governments, offices, agreements, petitions, honors, and institution_charters. Organizational definitions use data/<namespace>/ultima_factions/factions/; civic contact rules use ultima_factions/civic_network/. The ID must agree with its path where that loader requires it.",
+        "Evolution scenarios use data/<namespace>/evolution/scenarios/; authored drama uses evolution/drama/. World-context selectors use the warfare/world resource domain. Define real supported prerequisites and a peaceful exit; a new JSON outcome name does not implement a new native operation.",
+        "Reload validates the relevant domain before publishing its new snapshot. Invalid definitions retain the last valid set where supported, while missing references can suspend dependent actions. Check reload diagnostics. An accepted quest, proposal, or scenario retains frozen terms rather than becoming a different bargain because its template changed.",
+        "Author new rewards through the owning quest/economy provider. Author guild credit through an exact eligible quest and bounded credit definition. Never grant standing simply because a client claims that it completed a job.",
+        "The book itself uses resource-pack files at assets/ultima_kingdoms/guide/<language>/*.json. English is the fallback. Entries contain id, category, title, summary, body paragraphs, and command references. Stable entry IDs let a translation replace its English counterpart. These book resources describe play; they grant no game authority."
+      ],
+      "commands": [
+        "/ultima reload"
+      ]
+    },
+    {
+      "id": "addon_api",
+      "category": "operators",
+      "title": "For addon developers",
+      "summary": "Use the public owner API and authenticated server context instead of editing sidecars.",
+      "body": [
+        "The normal mod JAR belongs on both client and server. The separate -api.jar is a classes-only development dependency; the -sources.jar is for source attachments. Do not install those extra artifacts as runtime mods to get more content.",
+        "UltimaKingdomsApi provides settlement and civic identity access. UltimaPoliticsApi provides government, institution, permission, history, and political transaction surfaces. UltimaFactionsApi handles sovereign standing; OrganizationApi handles voluntary organizations; ProgressionApi evaluates optional private qualifications. WarfareApi supplies its defined military-facing view. Their records describe distinct domains.",
+        "Mutating operations must run in the supported server context and use the actual authenticated player, current permissions, and revision. Keep stable request IDs when retrying a committed operation. A client display or a live event notification is not proof that a reward, troop handoff, or external save completed.",
+        "Use typed capability results. Missing integration, unknown evidence, and a negative qualification are different states. Keep optional-provider classes out of public contracts and out of dedicated-server client initialization. Never make a display lookup load distant entities or reveal private knowledge.",
+        "Inspect the shipped source/Javadocs for current signatures and bounds, and use the matching API artifact for the installed version. The guide explains the ownership model; it does not promise that a resource definition can add a capability no provider implements."
+      ],
+      "commands": []
+    }
+  ]
+}

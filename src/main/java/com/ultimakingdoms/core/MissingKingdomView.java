@@ -13,6 +13,11 @@ record MissingKingdomView(ResourceLocation id) implements KingdomView {
     }
 
     @Override
+    public boolean defined() {
+        return false;
+    }
+
+    @Override
     public String translationKey() {
         return "kingdom." + UltimaKingdomsApi.MOD_ID + ".missing";
     }

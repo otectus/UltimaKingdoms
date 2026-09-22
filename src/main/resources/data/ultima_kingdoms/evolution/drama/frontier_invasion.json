@@ -1,0 +1,13 @@
+{
+  "title": "Authored Frontier Invasion",
+  "kind": "INVASION",
+  "outcomes": ["DECLARE", "NEGOTIATE", "EXIT", "RECOVER"],
+  "goal": "TRANSFER",
+  "objective": "Contest the named frontier objective through the provider campaign endpoint after both involved native leaders opt in.",
+  "durationTicks": 144000,
+  "maxParticipants": 2,
+  "operationBudget": 4,
+  "requiresOccupation": false,
+  "organizationTemplate": null,
+  "organizationName": null
+}

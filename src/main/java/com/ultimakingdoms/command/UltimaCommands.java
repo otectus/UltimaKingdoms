@@ -134,7 +134,9 @@ public final class UltimaCommands {
         Optional<KingdomView> result = service(context).getKingdom(id);
         if (result.isEmpty()) return failure(context, "command.ultima_kingdoms.error.kingdom_missing", id);
         KingdomView kingdom = result.get();
-        long settlements = service(context).getSettlements(id).size();
+        long settlements = context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player
+                ? com.ultimakingdoms.knowledge.SettlementKnowledge.get(player.getServer()).count(player, service(context), id)
+                : service(context).getSettlements(id).size();
         context.getSource().sendSuccess(() -> Component.translatable("command.ultima_kingdoms.kingdom.info",
                 Component.translatable(kingdom.translationKey()), kingdom.id().toString(), settlements), false);
         return 1;
@@ -291,6 +293,13 @@ public final class UltimaCommands {
     }
 
     private static int sendSettlement(CommandContext<CommandSourceStack> context, SettlementView settlement) {
+        if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            var knowledge = com.ultimakingdoms.knowledge.SettlementKnowledge.get(player.getServer());
+            if (player.level().dimension().equals(settlement.dimension()) && settlement.bounds().contains(player.blockPosition()))
+                knowledge.discover(player.getUUID(), settlement.id());
+            if (!knowledge.visible(player, settlement.id()))
+                return failure(context, "command.ultima_kingdoms.error.village_missing", "");
+        }
         context.getSource().sendSuccess(() -> Component.translatable("command.ultima_kingdoms.village.info",
                 settlement.displayName(), settlement.slug(), settlement.id(), settlement.kingdomId(),
                 settlement.dimension().location(), settlement.anchor().toShortString(), settlement.biomeAtCreation(),
@@ -304,6 +313,8 @@ public final class UltimaCommands {
     }
 
     private static Optional<SettlementView> find(CommandContext<CommandSourceStack> context, String query) {
+        if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+            return com.ultimakingdoms.knowledge.SettlementKnowledge.get(player.getServer()).find(player, service(context), query);
         return service(context).findSettlement(query);
     }
 
@@ -341,7 +352,9 @@ public final class UltimaCommands {
                     .map(view -> view.id().toString()), builder);
 
     private static final SuggestionProvider<CommandSourceStack> SETTLEMENT_SUGGESTIONS = (context, builder) ->
-            SharedSuggestionProvider.suggest(service(context).getSettlementPage(Optional.empty(), 0, 64).stream()
+            SharedSuggestionProvider.suggest((context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player
+                    ? com.ultimakingdoms.knowledge.SettlementKnowledge.get(player.getServer()).page(player, service(context), Optional.empty(), 0, 64)
+                    : service(context).getSettlementPage(Optional.empty(), 0, 64)).stream()
                     .flatMap(view -> java.util.stream.Stream.of(view.slug().toString(), view.id().toString(),
                             StringArgumentType.escapeIfRequired(view.displayName()))), builder);
 }

@@ -18,7 +18,11 @@ public final class ProductionMcaHarness {
     public ProductionMcaHarness(){MinecraftForge.EVENT_BUS.register(this);}
     @SubscribeEvent public void start(ServerStartedEvent event){
         server=event.getServer();
+        if(Boolean.getBoolean("ultima.acceptance.r3Multiplayer")||Boolean.getBoolean("ultima.acceptance.r4Multiplayer")){finished=true;return;}
         try {
+            if(System.getProperty("ultima.acceptance.integration")!=null){
+                IntegrationScenario.run(server,(delay,action)->scheduled.computeIfAbsent(tick+delay,ignored->new ArrayList<>()).add(action),this::finish);return;
+            }
             if(Boolean.getBoolean("ultima.acceptance.commands")){
                 com.ultimakingdoms.test.KingdomGameTests.runCommandScenario(server.overworld(),new BlockPos(0,65,0));
                 finish("PASS packaged dispatcher: unquoted kingdom IDs/slugs, actual cross-kingdom mutation, quoted name/alias, executable suggestions");return;
@@ -32,7 +36,7 @@ public final class ProductionMcaHarness {
         if(event.phase!=TickEvent.Phase.END||server==null||finished)return;
         tick++;
         try {while(!scheduled.isEmpty()&&scheduled.firstKey()<=tick){for(Runnable action:scheduled.pollFirstEntry().getValue())action.run();}
-            if(tick>650)throw new IllegalStateException("MCA lifecycle timed out");}
+            if(tick>("politics-cycle".equals(System.getProperty("ultima.acceptance.integration"))?25000:650))throw new IllegalStateException("MCA lifecycle timed out");}
         catch(Throwable failure){fail(failure);}
     }
     private void fail(Throwable failure){failure.printStackTrace();finish("FAIL "+failure);}

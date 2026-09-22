@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "offices": [],
+  "permissions": [],
+  "requires": [],
+  "buildingTypes": [],
+  "durationTicks": 720000,
+  "maxOffices": 2,
+  "independentApproval": true,
+  "commissionPool": "",
+  "kind": "honor",
+  "title": "politics.ultima_kingdoms.greenwood"
+}

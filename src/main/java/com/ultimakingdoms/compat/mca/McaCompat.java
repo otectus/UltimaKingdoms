@@ -26,11 +26,21 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-/** Exact-version, read-only integration for MCA Reborn 7.6.26 on Forge 1.20.1. */
+/** Capability-probed, read-only integration for supported MCA Reborn 7.x package layouts. */
 public final class McaCompat {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private McaCompat() {
+    }
+
+    public record CommunityChoice(com.ultimakingdoms.api.McaCommunityRef reference,String label) {}
+    public static List<CommunityChoice> operatorCommunities(net.minecraft.server.level.ServerPlayer viewer) {
+        var server=viewer.getServer();if(!server.isSameThread()||viewer.hasDisconnected()||!viewer.hasPermissions(2))throw new IllegalArgumentException("Operator access required.");
+        if(!ModList.get().isLoaded("mca"))return List.of();var result=new ArrayList<CommunityChoice>();
+        var kingdoms=com.ultimakingdoms.api.UltimaKingdomsApi.get(server);
+        for(var level:server.getAllLevels())for(var village:McaAccess.villages(level))McaAccess.candidate(level,village).ifPresent(candidate->{
+            var reference=com.ultimakingdoms.api.McaCommunityRef.parse(candidate.externalRefs().get("mca"));reference.ifPresent(ref->result.add(new CommunityChoice(ref,kingdoms.getSettlementForMcaVillage(ref.dimension(),ref.villageId()).map(SettlementView::displayName).orElse("Native community at "+candidate.anchor().toShortString()))));
+        });return List.copyOf(result);
     }
 
     public static Registration attach(MinecraftServer server, KingdomsService service) {
@@ -41,44 +51,59 @@ public final class McaCompat {
         if (installed.isEmpty()) {
             return () -> { };
         }
-        if (!McaAccess.EXACT_VERSION.equals(installed.get())) {
-            LOGGER.error("[Ultima Kingdoms] MCA {} is installed, but this adapter targets exactly {}; integration disabled",
-                    installed.get(), McaAccess.EXACT_VERSION);
-            return () -> { };
+        List<Registration> registrations = new ArrayList<>();
+        if (McaAccess.detectorAvailable()) {
+            registrations.add(service.registerSettlementDetector(McaAccess.SOURCE, new McaDetector(server)));
+        } else {
+            LOGGER.error("[Ultima Kingdoms] MCA {} settlement detection capability unavailable: {}",
+                    installed.get(), McaAccess.detectorMissing());
         }
-        if (!McaAccess.available()) {
-            LOGGER.error("[Ultima Kingdoms] MCA {} integration surface did not resolve: {}",
-                    installed.get(), McaAccess.missing());
-            return () -> { };
-        }
-
-        McaDetector detector = new McaDetector(server);
-        McaEvidence evidence = new McaEvidence(server, service);
-        Registration detectorRegistration = service.registerSettlementDetector(McaAccess.SOURCE, detector);
         try {
-            Registration evidenceRegistration = service.registerCivicEvidenceProvider(McaAccess.SOURCE, evidence);
-            LOGGER.info("[Ultima Kingdoms] Attached MCA {} civic integration", installed.get());
-            return combined(evidenceRegistration, detectorRegistration);
+            if (McaAccess.evidenceAvailable()) {
+                registrations.add(service.registerCivicEvidenceProvider(
+                        McaAccess.SOURCE, new McaEvidence(server, service)));
+            } else {
+                LOGGER.error("[Ultima Kingdoms] MCA {} civic evidence capability unavailable: {}",
+                        installed.get(), McaAccess.evidenceMissing());
+            }
         } catch (RuntimeException exception) {
-            detectorRegistration.close();
+            closeAll(registrations);
             throw exception;
         }
+        if (registrations.isEmpty()) {
+            return () -> { };
+        }
+        LOGGER.info("[Ultima Kingdoms] Attached MCA {} integration through package root {} (detection={}, civicEvidence={})",
+                installed.get(), McaAccess.root(), McaAccess.detectorAvailable(), McaAccess.evidenceAvailable());
+        return combined(registrations);
     }
 
-    private static Registration combined(Registration first, Registration second) {
+    private static Registration combined(List<Registration> registrations) {
         AtomicBoolean open = new AtomicBoolean(true);
         return () -> {
             if (open.compareAndSet(true, false)) {
-                first.close();
-                second.close();
+                closeAll(registrations);
             }
         };
+    }
+
+    private static void closeAll(List<Registration> registrations) {
+        RuntimeException failure = null;
+        for (int index = registrations.size() - 1; index >= 0; index--) {
+            try {
+                registrations.get(index).close();
+            } catch (RuntimeException exception) {
+                if (failure == null) failure = exception;
+                else failure.addSuppressed(exception);
+            }
+        }
+        if (failure != null) throw failure;
     }
 
     private record McaDetector(MinecraftServer server) implements SettlementDetector {
         @Override
         public Stream<SettlementCandidate> detect(ServerLevel level, BlockPos center, int radiusChunks) {
-            if (level.getServer() != server || !McaAccess.available()) {
+            if (level.getServer() != server || !McaAccess.detectorAvailable()) {
                 return Stream.empty();
             }
             if (radiusChunks == 0) {

@@ -1,0 +1,88 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/fire_in_poor_hands",
+  "weight": 3,
+  "category": "Lamplighters",
+  "difficulty": "easy",
+  "priority": 0,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "cooldown",
+    "cooldown_ticks": 72000
+  },
+  "giver": {
+    "professions": [
+      "minecraft:cleric",
+      "minecraft:fletcher"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Fire in Poor Hands"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Not every household owns steel. Craft two firesticks for the old friction-fire lesson."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Choose dry wood and patient hands. A firestick is humble, not effortless."
+    },
+    "decline": {
+      "text": "Very well. There are many ways to keep a neighbor warm."
+    },
+    "in_progress": {
+      "text": "Two finished firesticks let each pair practice without waiting on the other."
+    },
+    "ready": {
+      "text": "Simple tools, honestly made. Lay them beside the practice hearth."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Tonight nobody goes home unable to make a flame."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:craft_item",
+      "item": "survival_firesticks:firestick",
+      "count": 2
+    },
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "survival_firesticks:firestick",
+      "count": 2,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 16
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 2
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  }
+}

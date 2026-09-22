@@ -1,0 +1,74 @@
+[
+  {
+    "quest_id": "ultima:civic/lamplighters/charters_night",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/charters_night.json",
+    "source_sha256": "a38d5eaaca334a8ae1662dc57642cbe96ab5e6320dd5d2e262d91fdf1d21c28f",
+    "overlay_sha256": "7f913d216d98c8d80c9d8711d419e699d858680bb145c7adf3226d02e4002096"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/fire_in_poor_hands",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/fire_in_poor_hands.json",
+    "source_sha256": "bc7f5023441507932f1bc2646717fb0bff36728afa47b91a0f1459440a3e86f4",
+    "overlay_sha256": "b5425d1934989c025447ad64a1b8feabf856601cfca4ddad1097f56dbcf6ea40"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/mesh_for_the_glass",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/mesh_for_the_glass.json",
+    "source_sha256": "ce427e40fac580a0c866e2f396cb9e3eb6281581982c8a1876268563d5961e8f",
+    "overlay_sha256": "700496cf96d9a1686364541ecf63b54cb1ee7f03e2eaaa402318ef62199d5aec"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/reinforce_the_ladder",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/reinforce_the_ladder.json",
+    "source_sha256": "3bc249f142d254011882931343463c6dedf02b6d582c47dd7731b3e92e4a4fd5",
+    "overlay_sha256": "dac2cc4f38f881cf09ce81ac3636264641572eef3b233678c39dcf6f817a7cf7"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/sootward_plaster",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/sootward_plaster.json",
+    "source_sha256": "9a7afca7c0d5e18cc02da83df7ca95376b8b5eaa9e92efe49dbcf5cfd3efd02e",
+    "overlay_sha256": "4ed56bd17e2cf1621bd1d16b594837cd99354832093a7ff36dcbda5904d6f661"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/twist_the_first_cord",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/twist_the_first_cord.json",
+    "source_sha256": "3b8c5a65c986a78ff412654b5197802dccae730d96786187908391fe897d41d7",
+    "overlay_sha256": "2ec8e447417e35e930bbc2c57d7ffb30f78abca760bb414de477f331573a9ac9"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/warmth_at_the_gate",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/warmth_at_the_gate.json",
+    "source_sha256": "d81d6e6b3b36de33e6c319bbf355aa1fc1ee96db9dc645e4def50ddd9ce6abd9",
+    "overlay_sha256": "4a98afcbc072e828948328783af1d8815ec47579bdfb260eddf7424c479a430d"
+  },
+  {
+    "quest_id": "ultima:civic/lamplighters/weather_eye",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/civic/lamplighters/weather_eye.json",
+    "source_sha256": "538902e60f8fa57ec246b9f8873f30fb9979a08d7610366945a8a705e5d89019",
+    "overlay_sha256": "36ec3b03ebb4478733c0edceb8e4abba7b7d87f563e8369b513555851ce953d8"
+  },
+  {
+    "quest_id": "ultima:arcana/green_compact/wood_and_stone_that_live",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/arcana/green_compact/wood_and_stone_that_live.json",
+    "source_sha256": "9996bf348cf5ea610aaf0db83b6d5bb6066bbb1af1f137a38f44155ae0462aab",
+    "overlay_sha256": "6348aa3c02a5cdb4e15867a11e36c20617f8cf0ff88ad44e3273f42dbe988457"
+  },
+  {
+    "quest_id": "ultima:arcana/green_compact/source_for_the_seed_vault",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/arcana/green_compact/source_for_the_seed_vault.json",
+    "source_sha256": "8c774a25b3090fc823ea6a3baa60b14b6b7d57c84cabb3a3a26bef8110ae1232",
+    "overlay_sha256": "ab7b714986ee3232c2e0132bfa3e0cad7eb7d13538aee09501602a8d24fc1078"
+  },
+  {
+    "quest_id": "ultima:expeditions/border_watch/rations_for_the_upper_stair",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/expeditions/border_watch/rations_for_the_upper_stair.json",
+    "source_sha256": "c702ca90e003ef0324aab22aaea9189bd42d2a3d70af754c072820ce356fdc43",
+    "overlay_sha256": "3ddef1ca5be55c6ee67073739f02509b0613393a47a8a67e4a6bca2b52f012b0"
+  },
+  {
+    "quest_id": "ultima:expeditions/fieldbook/teeth_in_the_lamplight",
+    "source_relative": "kubejs/data/ultima/mcaquests/quests/expeditions/fieldbook/teeth_in_the_lamplight.json",
+    "source_sha256": "bbac40b13af6501562822f5037b07910b03bf6e83867a3efad7a6953525b76cd",
+    "overlay_sha256": "6728d8c3b457fdcdcfc11aa00a0b5d24b1305772da6986e3e599109ba45fe046"
+  }
+]

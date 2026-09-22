@@ -1,0 +1,37 @@
+[
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/api/JurisdictionPolicyApi.java",
+    "before_sha256": null,
+    "after_sha256": "802487099659832d66acc55914e6d51a0d027cec7a466bfcffb711501fa887b9"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/api/McaCrimeApi.java",
+    "before_sha256": "852c2b8748c7aeab0d29332c9e2c3b101314a9d1ffe266d35dc86b7fe5d4a420",
+    "after_sha256": "817e392b37a2a5fb14e59115292bab3b74ad640feb5af2eb0b885de3bdeb86d7"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/api/jurisdiction/JurisdictionPolicies.java",
+    "before_sha256": null,
+    "after_sha256": "8de7151846e280fb152e186bad4569b15244e777d8bbb751937f881944a6d371"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/api/jurisdiction/JurisdictionPolicyProvider.java",
+    "before_sha256": null,
+    "after_sha256": "b00615e89cb37bc4737623ec48632246be7f0796fb0e293da6cdb4e19df0c86f"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/api/jurisdiction/JurisdictionSnapshot.java",
+    "before_sha256": null,
+    "after_sha256": "642431d6cda6c1a876715c43ef32a09d04b109a20b9f4da9dac806adefc4ff20"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/justice/JusticeService.java",
+    "before_sha256": "a82e5645b52e2a7cab62877450fda03e207942dec8c22688e1b6bbb865cd9e85",
+    "after_sha256": "f748ebc031f7fa3b6547c626bf5fc8b28f43d31ad3190a1bde2a5f00aa87aa22"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcacrime/JurisdictionPolicyTest.java",
+    "before_sha256": null,
+    "after_sha256": "ad2b49decf7ceb7a13471c800c4343fd7e0b419caf60d18b4b4f022a170a8ab5"
+  }
+]

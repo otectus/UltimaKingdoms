@@ -15,6 +15,9 @@ import static com.ultimakingdoms.test.TestAssertions.*;
 @PrefixGameTestTemplate(false)
 public class SettlementPersistenceTest {
     private SettlementRecord record(String name) {
+        return record(name, name.equals("Greenford") ? 52 : 42);
+    }
+    private SettlementRecord record(String name, int villageId) {
         SettlementRecord r = new SettlementRecord();
         r.id = UUID.randomUUID(); r.dimension = Level.OVERWORLD; r.anchor = new BlockPos(3,64,8);
         r.radius=32; r.bounds=SettlementBounds.around(r.anchor,32);
@@ -23,7 +26,8 @@ public class SettlementPersistenceTest {
         r.biomeAtCreation=new ResourceLocation("minecraft:plains");
         r.assignmentSource=AssignmentSource.EXACT_BIOME; r.detectionSource=DetectionSource.STRUCTURE;
         r.sourceId=new ResourceLocation("test:village"); r.sourceKey=name; r.nameLocked=true;
-        r.addExternalRef("mca", "minecraft:overworld#42");r.addExternalRef("mca", "minecraft:overworld#43");
+        r.addExternalRef("mca", "minecraft:overworld#"+villageId);
+        r.addExternalRef("mca", "minecraft:overworld#"+(villageId+1));
         r.addStrongStructureIdentity(r.sourceId,r.sourceKey);r.addStrongStructureIdentity(r.sourceId,"start-a");r.addStrongStructureIdentity(r.sourceId,"start-b");
         r.retiredSlugs.add(new ResourceLocation("ultima_kingdoms:retired"));r.aliases.add("Old " + name);
         return r;
@@ -39,11 +43,26 @@ public class SettlementPersistenceTest {
     @GameTest(template="empty") public void mergedIdentityRedirectSurvivesSerialization(GameTestHelper helper) throws Exception {
         helper.runAfterDelay(1, helper::succeed);
         var a=record("Aldwick"); var b=record("Greenford"); var data=new SettlementSavedData();
-        data.add(a); data.add(b); data.redirect(a.id,b.id);
+        data.add(a); data.add(b); data.validateMergeExternalRefs(a,b);
+        a.externalRefValues.forEach((namespace,values)->values.forEach(value->b.addExternalRef(namespace,value)));
+        b.aliases.add(a.displayName);b.aliases.addAll(a.aliases);
+        data.redirect(a.id,b.id);data.changed(b);
         Method load=SettlementSavedData.class.getDeclaredMethod("load",CompoundTag.class); load.setAccessible(true);
         var loaded=(SettlementSavedData)load.invoke(null,data.save(new CompoundTag()));
         assertEquals(b.id,loaded.get(a.id).orElseThrow().id);
+        assertEquals(b.id,loaded.getByExternalRef("mca","minecraft:overworld#42").orElseThrow().id);
+        assertEquals(b.id,loaded.getByExternalRef("mca","minecraft:overworld#53").orElseThrow().id);
+        assertTrue(loaded.get(b.id).orElseThrow().aliases.contains("Aldwick"));
+        assertTrue(loaded.get(b.id).orElseThrow().aliases.contains("Old Aldwick"));
         assertEquals(1,loaded.records().size());
+    }
+    @GameTest(template="empty") public void duplicateExternalReferenceIsRejectedAtomically(GameTestHelper helper) {
+        helper.runAfterDelay(1, helper::succeed);
+        var a=record("Aldwick",42);var b=record("Greenford",42);var data=new SettlementSavedData();
+        data.add(a);
+        assertThrows(IllegalStateException.class,()->data.add(b));
+        assertEquals(1,data.records().size());
+        assertEquals(a.id,data.getByExternalRef("mca","minecraft:overworld#42").orElseThrow().id);
     }
     @GameTest(template="empty") public void futureRootSchemaRefusesInitializationAndStaysClean(GameTestHelper helper) throws Exception {
         helper.runAfterDelay(1, helper::succeed);

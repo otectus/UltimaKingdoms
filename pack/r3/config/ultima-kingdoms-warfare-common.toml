@@ -1,0 +1,14 @@
+[political_warfare]
+enabled = true
+militaryActions = true
+civilianContracts = true
+targetProtection = true
+worldContext = true
+protectCapitals = true
+requireDefenderOnline = true
+campaignNoticeTicks = 1200
+campaignDurationTicks = 168000
+mobilizationTicks = 6000
+unitsPerCommander = 16
+reconcileInterval = 100
+claimsPerBatch = 8

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "offices": [],
+  "permissions": [],
+  "requires": [
+    "ultima_kingdoms:diplomatic_recognition"
+  ],
+  "buildingTypes": [],
+  "durationTicks": 720000,
+  "maxOffices": 2,
+  "independentApproval": true,
+  "commissionPool": "ultima_kingdoms:craft_market_charter",
+  "kind": "agreement",
+  "title": "politics.ultima_kingdoms.craft_market_charter"
+}

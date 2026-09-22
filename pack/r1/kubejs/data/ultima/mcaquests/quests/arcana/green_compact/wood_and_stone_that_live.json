@@ -1,0 +1,96 @@
+{
+  "format_version": 1,
+  "id": "ultima:arcana/green_compact/wood_and_stone_that_live",
+  "weight": 8,
+  "category": "The Green Compact",
+  "difficulty": "medium",
+  "priority": 1,
+  "offer_group": "ultima_arcana_green_compact",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:farmer",
+      "minecraft:cleric",
+      "minecraft:shepherd"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Wood and Stone That Live"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "A rain shelter for the seed archive needs living material that will not sour the work. Bring four livingwood and four livingrock."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Only a small frame is planned. Eight sound pieces are enough."
+    },
+    "decline": {
+      "text": "Then let the work wait. No living bargain is improved by reluctant hands."
+    },
+    "in_progress": {
+      "text": "Return four livingwood and four livingrock to the steward who measured the shelter."
+    },
+    "ready": {
+      "text": "The grain is awake and the stone rings clear."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "These pieces will become the archive's frame. You supplied exactly what the design can honor."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "botania:livingwood",
+      "count": 4,
+      "consume": true
+    },
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "botania:livingrock",
+      "count": 4,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency",
+      "min": 2,
+      "max": 4
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 30
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 2
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "type": "mcaquests:quest_completed",
+    "quest": "ultima:arcana/green_compact/the_daisy_keeps_its_name",
+    "scope": "global"
+  }
+}

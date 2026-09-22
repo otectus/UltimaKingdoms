@@ -1,0 +1,86 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/weather_eye",
+  "weight": 8,
+  "category": "Lamplighters",
+  "difficulty": "easy",
+  "priority": 0,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:cleric",
+      "minecraft:fletcher"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "A Weather Eye"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Wind changes the whole night route. Craft a personal thermometer and demonstrate a proper weather reading."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Bring the instrument unbroken, and keep it afterward for your own night rounds."
+    },
+    "decline": {
+      "text": "Then trust your own weather sense and leave the instrument to another."
+    },
+    "in_progress": {
+      "text": "One accurate instrument and your reading are enough."
+    },
+    "ready": {
+      "text": "The line is steady and your reading agrees. That is proof enough."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Keep the thermometer. Weather may surprise you, but it will not find you ignorant."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:craft_item",
+      "item": "legendarysurvivaloverhaul:thermometer",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 16
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 2
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "type": "mcaquests:quest_completed",
+    "quest": "ultima:civic/lamplighters/twist_the_first_cord",
+    "scope": "global"
+  }
+}

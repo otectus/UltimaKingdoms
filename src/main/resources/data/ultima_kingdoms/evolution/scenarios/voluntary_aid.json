@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "title": "A voluntary regional aid request",
+  "trigger": "DEMAND",
+  "outcomes": ["AID", "MEDIATE", "DECLINE"],
+  "duration": 72000,
+  "cooldown": 72000,
+  "contributions": 1,
+  "dramatic": false
+}

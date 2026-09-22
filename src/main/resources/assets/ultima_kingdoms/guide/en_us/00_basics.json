@@ -1,0 +1,84 @@
+{
+  "entries": [
+    {
+      "id": "start_here",
+      "category": "basics",
+      "title": "Start here",
+      "summary": "A peaceful first session, with no office, army, or guild required.",
+      "body": [
+        "Ultima Kingdoms gives settlements lasting names and kingdom identities. It also supports voluntary guild service, governments, diplomacy, and optional military and world events. You can explore, trade, build, and help people without becoming a ruler or joining an army.",
+        "1. Craft a Village Ledger: paper in all three top slots and both sides of a book in the middle row, with a compass below the book. Use the ledger to browse settlements you know. The Book of Kingdoms you are reading uses a separate shapeless recipe: one ordinary book and one paper.",
+        "2. Visit an existing village. An entry banner names a recognized settlement and its kingdom. Open the ledger, select that settlement, and read its details. A kingdom label describes civic identity; it does not mean an army owns all land in that biome.",
+        "3. Press K while playing to open Kingdom Tasks. Search for what you want to do, such as read a settlement, join a guild, hold an election, transfer a recruit, or browse routes. The server shows named choices that are known and available to you. You select readable names while the server carries revision and evidence details.",
+        "4. A task walks through one choice at a time and ends on a review page. Read the people, places, terms, deadlines, and consequences, then choose Apply reviewed action. Backing out changes nothing. If the record changes before you apply, the server refuses the stale form and asks you to review again.",
+        "5. If your pack supplies Lamplighters quests, do a service job you like. Search Guild in Kingdom Tasks to check your own credit. Joining is optional; an independent contributor can qualify for services through additional work.",
+        "6. Open Kingdom from a selected settlement when you want to understand its government. An unorganized kingdom needs an operator to establish its first government. Owning either book grants no political permission.",
+        "Read Chapters for the complete table of contents, or search a goal such as treaty, workshop, leave, election, or recovery. This book explains systems and prerequisites; Kingdom Tasks is the live interface. You can also open it from the Village Ledger, Kingdom pages, and War Room."
+      ],
+      "commands": []
+    },
+    {
+      "id": "using_the_book",
+      "category": "basics",
+      "title": "Using this book",
+      "summary": "Search by a goal, browse chapters, and read without changing the world.",
+      "body": [
+        "Chapters opens the subject list. Choose a subject, then a topic. The small arrows below the contents list show more topics; Previous and Next below the article move between topics. Search checks titles, descriptions, explanations, and optional command examples. Several search words must all occur in a topic.",
+        "Long articles scroll independently from the topic list. Put the pointer over the article and use the mouse wheel. You can click the article, then use Up, Down, Page Up, Page Down, Home, or End. Tab moves between controls; Enter or Space activates a focused button. Escape closes the book.",
+        "The Book explains behavior and never changes the world. Press K for Kingdom Tasks when you want to act. Search by goal, follow the server’s named choices, review the final page, and apply. No chat command or technical record value is needed for the supported task workflow.",
+        "Commands appear only as optional equivalent references. They never run from the Book. Their record selectors use readable names, while the task menu carries advanced revision and reconciliation evidence automatically.",
+        "This is a static guide to the shipped mod, not a live status screen. Your server can change definitions, requirements, and configuration. Use the relevant read or inspect task for current status. Resource packs can translate or replace the book; unavailable translations fall back to English.",
+        "The reader and task menu do not pause the world. Close them before fighting, travelling through danger, or responding to a time-sensitive event."
+      ],
+      "commands": []
+    },
+    {
+      "id": "roles_are_separate",
+      "category": "basics",
+      "title": "Understand your different roles",
+      "summary": "Home, guild membership, reputation, office, and military allegiance answer different questions.",
+      "body": [
+        "A settlement is a named place with a saved identity. Its civic kingdom is the society it belongs to in Ultima's records. An NPC's origin is their first known civic home; residence is their currently confirmed home. Passing through a village is not the same as moving there.",
+        "An organization, such as the Lamplighters, is a voluntary association. Membership, guild standing, completed deeds, and rank belong to that organization. They are separate from reputation with a sovereign kingdom and from a villager's affection for you.",
+        "An office is a political job, such as leader or steward. It supplies only the permissions defined for that office and jurisdiction. A mandate is a leader's explicit grant of permission to a player. A famous guild member does not automatically hold either.",
+        "A Recruits faction controls its own teams, troops, diplomacy, claims, and battles. A friendly relation is not a protection pact, and a protection pact does not give its ruler command of another player's troops. During occupation, military control and recognized civilian sovereignty can differ.",
+        "Race, deity, skills, family relationships, homes, and personal hearts remain with the mods that provide them. Ultima may read a supported qualification, but joining a guild or signing a treaty does not rewrite those personal choices."
+      ],
+      "commands": []
+    },
+    {
+      "id": "optional_features",
+      "category": "basics",
+      "title": "What your installation supports",
+      "summary": "Base settlement play works alone; some services need matching companion mods and content.",
+      "body": [
+        "Both server and client need Ultima Kingdoms for Minecraft 1.20.1 on Forge. The basic settlement identity, Village Ledger, kingdom definitions, and government records do not require an external guide-book mod. This book is included in Ultima Kingdoms itself.",
+        "MCA Reborn supplies people, family links, and home evidence. Townstead supplies recognized building and life-stage evidence for supported institutions. MCA Quests supplies real objectives, acceptance, item delivery, rewards, and saved completion evidence. A supported MCA Conversations integration offers private civic conversation choices. A mod merely being installed does not prove its required integration is available.",
+        "The Lamplighters quest catalog also needs its authored pack content. Ultima's guild definition can name an existing quest without supplying that entire quest. The matching pack overlays and companion builds matter. If no suitable jobs appear, ask the operator to check content and integrations before repeating unrelated jobs.",
+        "Recruits supplies military operations and negotiated troop handoff. MCA Crime supplies its own cases, enforcement, and amends. Runic Skills, Runic Gods, Runic Races, and RPG Lore may supply private qualifications. None is simulated when absent.",
+        "World evolution starts off and needs explicit operator opt-in per world and eligible region. Dramatic scenarios need a separate opt-in. Warfare and institutional service switches are separate: ask which features your server enables rather than assuming every chapter is currently available.",
+        "MCA: Capitals disables Ultima Kingdoms native governance. Use the Capitals government system on such servers; installing it does not add a second working Ultima government alongside it."
+      ],
+      "commands": [
+        "/ultima integrations"
+      ]
+    },
+    {
+      "id": "command_basics",
+      "category": "basics",
+      "title": "Commands are optional",
+      "summary": "Use Kingdom Tasks for named choices; commands remain a technical reference for operators and automation.",
+      "body": [
+        "Press K for the supported player workflow. Kingdom Tasks supplies settlements, kingdoms, players, NPCs, agreements, opportunities, transfers, and other records as readable choices. The server carries revision, terms, and reconciliation evidence with each reviewed choice.",
+        "Each task ends on a review page. If a record changes before Apply, the server refuses the stale form. Open the task again, read the updated details, and decide again. If an action reports a save or provider failure, inspect its status before repeating it.",
+        "Commands provide an equivalent interface for chat preference and console automation. Use tab completion and the focused reference. Record selectors accept readable names and use quotes when a name contains spaces. Stable request keys are readable idempotency names chosen for an authored request.",
+        "A new name at the end of create or rename consumes the rest of the command and is entered without quotes. Permission level 2 is required for rename. Advanced revision and reconciliation fingerprint arguments shown in command references are carried automatically by the GUI review; every current operation is available from Kingdom Tasks."
+      ],
+      "commands": [
+        "/ultima village info \"Old Bellmeadow\"",
+        "/ultima village rename \"Old Bellmeadow\" New Bellmeadow",
+        "/ultima kingdom list"
+      ]
+    }
+  ]
+}

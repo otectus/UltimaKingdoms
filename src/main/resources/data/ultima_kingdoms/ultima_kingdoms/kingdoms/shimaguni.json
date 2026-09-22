@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:shimaguni",
+  "translation_key": "kingdom.ultima_kingdoms.shimaguni",
+  "name_pool": "ultima_kingdoms:shimaguni",
+  "fallback": false,
+  "style_hints": [
+    "minecraft:jungle"
+  ],
+  "heraldry": {
+    "icon": "ultima_kingdoms:shimaguni",
+    "color": "#C85A54"
+  },
+  "metadata": {
+    "theme": "island_covenant",
+    "environment": "jungle_islands",
+    "historic_seat": "Akatsura",
+    "archive": "Tide Archive"
+  }
+}

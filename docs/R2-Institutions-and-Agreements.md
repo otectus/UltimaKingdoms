@@ -1,0 +1,63 @@
+# R2 — institutions and agreements
+
+R2 implements the agreed Phase 3 slice: a paid recognized-workshop commission, a receipt-backed civic honor, private local Crime service suspension and recovery, and an operational hospitality introduction. Warfare, taxes, currency conversion, extradition and vassalage are outside this release cut.
+
+## Gameplay
+
+The Village Ledger → Guilds page adds **Paid workshop** and **Hospitality introduction**. The same actions are available through `/ultima guild workshop ultima_kingdoms:lamplighters` and `/ultima guild hospitality ultima_kingdoms:lamplighters` near the actual appointed contact.
+
+A Lamplighters chapter must be chartered to an existing politically recognized Townstead workshop and have an appointed adult resident contact. The existing recognition, charter and appointment commands retain their authority checks. An automatically seeded R1 workshop is not sufficient for paid institutional work.
+
+The workshop commission asks for four vanilla lanterns and pays six vanilla emeralds through MCA Quests. It charges no fee and performs no conversion. The native quest menu presents the terms; the journal, delivery, cancellation, reward and completion history remain MCA Quests-owned. The commission is a once-only institutional variant with its own ID, `ultima:civic/lamplighters/workshop_lanterns`; existing R1 quest IDs and rewards remain intact. Member and independent-contributor qualification use the existing commission-access policy.
+
+Acceptance checks the actual actor, contact, institution, building snapshot, government revision, legal fingerprint and current qualification. A changed offer must be requested again. Accepted work survives guild departure even when departure removes qualification for new work. Unavailable/reclassified buildings and unresolved public local cases suspend completion before goods or currency change. Restoring the original eligible workshop or settling the relevant cases through Crime restores service. Native quest cancellation remains available.
+
+Crime owns cases, reports, restitution contracts and resolution. The new private institutional query distinguishes unavailable from allowed. It uses reported local knowledge, not global heat, ancestry, private accusations or personal affection. Institutional suspension does not replace ordinary Crime service rules and never denies food or shelter. Completed local Crime service contracts are shown only to their subject. Ultima cannot advance them or mint restitution credit. Personal memories remain with their existing owners after a legal case is settled.
+
+Two governments can explicitly agree to the `HOSPITALITY` clause. It opens one recipient-private introduction between recognized chapters of the same guild, within the configured regional radius, without requiring guild membership or standing. It neither creates chapters nor loads destination chunks. Termination prevents further hospitality use, including cooldown replay; already learned geography remains known. Ordinary R1 introductions retain their own qualification route.
+
+## Configuration and compatibility
+
+R2 defaults to **enabled** through `regional_civic_network.institutionalServices = true` in `ultima-kingdoms-civic-common.toml`. Existing explicitly saved `false` values are preserved; set them to `true` to enable R2 in those instances. The existing civic `enabled` switch also applies. Use the matching R2 MCA Quests and MCA Crime jars on server and clients. The R1 MCA Conversations integration remains available. Crime's existing Townstead/service-restriction switches must be enabled for an authoritative workshop decision; absence, disabled features and incompatible provider APIs suspend paid institutional work and preserve records.
+
+Old political definitions and saved agreement terms default to an empty clause set. Upgrading or reloading does not give an already accepted ceremonial agreement new powers. Newly proposed hospitality accords freeze `clauses: ["HOSPITALITY"]` in the signed terms. Unknown clause names fail validation; unsupported clause kinds are reported unavailable. Agreement cards distinguish ceremonial terms from operational status. The civic packet protocol changes to 3, requiring matching main-mod jars.
+
+## Persistence and ownership
+
+`ultima_kingdoms_institutional_commissions.dat` adds schema-1 contracts. Offers are durably saved before a native menu opens. The owner contract freezes the requester, issuer, institution, building/legal fingerprints, recognition/political revisions, native template and prospective honor terms. Acceptance binds one native quest instance, and MCA Quests verifies its saved player-capability entry before reporting success. A crash between the owner binding and native acceptance can leave an inert reserved contract; requesting a fresh offer recovers play without any fee or lost goods. Such accepted identities remain retained for safety. Unaccepted offers expire after 1,200 game ticks and may retire; accepted identities are never recycled. Native cancellation durably deletes the matching owner contract before removing the active quest, releasing its capacity and honor reservation. A missing owner contract cannot complete or prove an honor; a crash between those steps permits cancellation retry. Capacity is 16,384 contracts, with refusal instead of erasing replay protection. Offers reserve space in the 8,192-entry political honor store; other honor grants cannot consume those reservations. Unaccepted reservations expire with their offers; accepted reservations remain until the promised honor is recorded or the quest is cancelled. Malformed/future payloads remain untouched and read-only.
+
+MCA Quests persists the institutional binding and accepted definition fingerprint with its active quest and completion receipt. Ordinary legacy quests have no binding. The template includes a required institutional condition unknown to older providers, so they reject it instead of ignoring the new flag. Provider-side checks protect acceptance and item delivery/completion, including paths outside the newly opened menu. Definition drift suspends the accepted commission instead of changing its payout or requirements silently.
+
+Ultima subscribes its completion consumer before offering institutional work and renews it synchronously at validation, including immediate completion after login. MCA Quests refuses institutional completion unless the intended receipt consumer and outbox capacity are available. The existing provider player-file durability fence confirms native completion before receipt delivery. Ultima persists an intent, matches the provider receipt to the exact accepted instance and contract, and durably saves the frozen civic honor in the existing political store before acknowledgment. Duplicate delivery cannot pay or award again. Honor retries use accepted terms even after definition reload; a provider disappearance retains pending work. Save files and playerdata must be backed up and restored as one world snapshot; restoring an isolated receipt ledger is not rollback.
+
+The honored issuer is the recognized institution's appointed contact. Receipt-backed honors do not invent an officer signature or grant military authority. No political crime announcement is emitted by receipt consumption.
+
+## Acceptance and delivery
+
+Provider changes are built in isolated `build/r2-provider-work/` copies and exported under `pack/r2/providers/`. The delivery contains matching Ultima Kingdoms, MCA Quests, MCA Crime and R1 MCA Conversations jars, available API artifacts, layered R1/R2 content and provider source exports. No live instance, original world or sibling source checkout is modified.
+
+Validation commands and evidence (2026-09-20):
+
+Default-on follow-up: `check build productionTestJar -I tools/test/production-tests.gradle` passed (`/tmp/gradle-UltimaKingdoms-check-20260920-143704.log`). The packaged scenario ran again with no `institutionalServices` override and verified that it defaults true; gameplay, cancellation recovery and process restart passed in `build/r2-default-on/{r2,r2-restart}.log`. The exact command and current hashes are in `build/r2-validation.json`. Earlier UI/full-pack evidence below is retained for unchanged behavior.
+
+- `/home/otectus/Projects/.mcmod-tools/gradlew-quiet.sh /home/otectus/Projects/UltimaKingdoms check build productionTestJar productionClientTestJar -I tools/test/production-tests.gradle -I tools/client-test/client-test.gradle` — passed; 61 tests discovered, one skipped, no failures. Logs: `/tmp/gradle-UltimaKingdoms-check-20260920-140700.log`, final build `/tmp/gradle-UltimaKingdoms-build-20260920-140842.log`.
+- `python3 tools/test/run_gametests.py -PrunDir=build/r2-gametest-delivery` — all 36 GameTests passed. Log: `/tmp/gradle-UltimaKingdoms-runGameTestServer-20260920-140722.log`.
+- Provider `test` and `build` through the same quiet Gradle helper — Quests 1,343 tests, 16 skipped; Crime 2,628 tests, 16 skipped; no failures. Final logs: `/tmp/gradle-MCAQuests-test-20260920-140740.log`, `/tmp/gradle-MCAQuests-build-20260920-140758.log`, `/tmp/gradle-MCACrime-test-20260920-133834.log`, `/tmp/gradle-MCACrime-build-20260920-134055.log`.
+- `python3 tools/test/integration_runtime.py --work-dir build/r2-institutions-final --phase r2` with the R2 Quests/Crime jars and MCA 7.6.26, Architectury 9.2.14, Townstead 0.7.6 and Patchouli 85 — passed native acceptance/cancellation, stale legal/building refusal with unchanged inventory, Crime-owned amends recovery, guild departure, four-lantern/six-emerald payment, one honor under replay, private hospitality and treaty termination. Both `r2.log` and `r2-restart.log` pass; process restart verifies saved payment, honor and private knowledge. Exact jar hashes are in `build/r2-institutions-final/artifacts.sha256`.
+- `python3 tools/test/integration_runtime.py --work-dir build/r2-cancellation-recovery --phase r2` with the same provider tuple — passed the full loop and restart again, additionally restoring a native active after owner cancellation to verify completion refusal, unchanged inventory and idempotent cancellation recovery. Logs: `build/r2-cancellation-recovery/{r2,r2-restart}.log`.
+- `python3 tools/test/integration_runtime.py --work-dir build/r2-legacy-provider --phase r2-legacy` with the R1 Quests jar, MCA and Architectury — old provider rejects the institutional template and base kingdom gameplay remains available. Log: `build/r2-legacy-provider/r2-legacy.log`.
+- `python3 tools/client-test/civic_multiplayer.py --work-dir build/r2-civic-multiplayer --display :97` — two real clients passed membership isolation and the new button/refusal paths at normal and compact sizes. Reports: `build/r2-civic-multiplayer/{leader,peer}-PASS.txt`; screenshots in each client folder.
+- `python3 tools/client-test/r1_pack.py --r2 --work-dir build/r2-full-pack-final` — passed with 404 mods, the twelve R1 quest adaptations and R2 institutional template, both new provider APIs, installed progression reads and copied-world save. `build/r2-full-pack-final/R1_PACK_PASS.txt` records the result; `source-world-before.json` and `source-world-after.json` are identical. The first sandboxed attempt could not initialize the virtual display; the approved rerun above completed successfully.
+- `python3 tools/test/verify_artifacts.py` and `python3 tools/test/verify_r2_pack.py` — passed artifact boundaries and all 24 exact provider source exports plus fixed commission content.
+
+The automated legal loop seeds witnessed/reported cases and exercises Crime-owned amends contracts and duplicate-credit rejection; it does not claim a naturally played theft/property-return sequence. The full-pack copied-world check covers startup, content/provider presence and world save; the detailed R2 gameplay loop runs in the isolated packaged server. Player-file I/O failures retain unpublished provider receipts for retry; ordinary native reward behavior remains provider-owned. Delivery artifacts and evidence are pinned by `build/r2-validation.json` and the staged `sha256.json` manifest.
+
+
+Current delivery runtime artifacts (SHA-256; earlier UI/full-pack checks used the pre-default-change main jar recorded as `previous_artifacts` in validation.json):
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `ultima_kingdoms-0.1.0.jar` | `d3ad7e74593fb309f7cfbf06a9227827cef8e4afbb76ec3968e2e242e02eaaca` |
+| `mcaquests-1.6.6.jar` | `1ef50072a03df4dbdafaf53e6cb6c730cb955eff7f4f760ced81b194c596e33d` |
+| `mcacrime-0.7.5.jar` | `e851ed0cbb7abe2d4b556006f5972229035ec1d2dc4b9f4e0def46a5fa7d39c8` |
+| `mcaconversations-1.7.2.jar` | `6d071438ff0ee690f4117e86da687dd4b68c9b5c5af3552785d4774c148524b8` |

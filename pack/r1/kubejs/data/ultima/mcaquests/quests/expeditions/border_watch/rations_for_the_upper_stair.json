@@ -1,0 +1,82 @@
+{
+  "format_version": 1,
+  "id": "ultima:expeditions/border_watch/rations_for_the_upper_stair",
+  "weight": 8,
+  "category": "Border Watch",
+  "difficulty": "medium",
+  "priority": 0,
+  "offer_group": "ultima_expedition_border_watch",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:farmer",
+      "minecraft:cartographer"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Rations for the Upper Stair"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "A tower party needs two beef stews before it climbs. Deliver them to any village quartermaster on the route."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Seal the bowls well. Provisions spilled on the first stair feed nobody."
+    },
+    "decline": {
+      "text": "No fault. The expedition will leave later rather than climb hungry."
+    },
+    "in_progress": {
+      "text": "Two prepared stews are enough; this is provision, not a feast."
+    },
+    "ready": {
+      "text": "The rations are packed? Any village quartermaster may receive them."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The upper stair now begins with full hands and fuller stomachs."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "farmersdelight:beef_stew",
+      "count": 2,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 30
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 3
+    }
+  ],
+  "turn_in": {
+    "mode": "any_villager"
+  }
+}

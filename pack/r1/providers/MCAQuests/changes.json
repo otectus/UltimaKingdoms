@@ -1,0 +1,82 @@
+[
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java",
+    "before_sha256": "56828d2f2779e809892d6c966f9585ccf7a464110a2c1483d42872b142aed73b",
+    "after_sha256": "b1268e78c9e680c2219101a8ea6269e7ed71e2b5ed10746f55246fb6959c88d4"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/QuestCompletionReceipt.java",
+    "before_sha256": null,
+    "after_sha256": "8e80b59d27f038ab2430ac0aecc06008cccb19de86888b91b94791a31ea9f4ee"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/event/QuestCompletionReceiptReadyEvent.java",
+    "before_sha256": null,
+    "after_sha256": "7b54325705f3e8c7e9ad50d24ea4deaaff99e19a94169ecb76e6667fc3f1f271"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/mixin/PlayerListAccessor.java",
+    "before_sha256": null,
+    "after_sha256": "6b63f1522fa1dc5621f9ea689af81cad2e882a529735494b1fa17e7e60a6c3d2"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/OfferSessionService.java",
+    "before_sha256": "126bf175eecc0de20c889e9606b3b449df56f76670f9d37b2e62eefa44b00212",
+    "after_sha256": "415ba4378f5b68e9a2f84c2bf0102b355c639d73946ccb2d6b854c4c47609bb5"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/QuestManager.java",
+    "before_sha256": "90e4947e44583855990e2c2ff7f0aceaa334490018c09625bc2605c9e60a6cd7",
+    "after_sha256": "2ad374fc622a54cd2ca1346f1d3fe31af0173a576936377104287c04e2def536"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java",
+    "before_sha256": null,
+    "after_sha256": "7ccd2d68aa63044d785a7fff979a1ad5e5740653017471e3d2aa3f790fedb7fc"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/CompletionReceiptOutbox.java",
+    "before_sha256": null,
+    "after_sha256": "e79ba3eb7b96a455eb46e13dc120cb2a0624aa31a62c38093125a9ef4bb49160"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/OfferSession.java",
+    "before_sha256": "0daa051eaffdd0627bb96f252f5b1b7d36dedc58cef0dd950abd2be53d4f5251",
+    "after_sha256": "6c220e412a0692f5c0dd1208ba8f6a12e63c29838044355a9f3cca9f7fd1f7c4"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/PlayerQuestData.java",
+    "before_sha256": "94422bc1d7865796d267fc01229d973957596938b0fcbf363dd3769ebf4a6b29",
+    "after_sha256": "255872a16f5e9fca0ac5074e91778f42e8641e4c5280fbd47a812caeeeb98be3"
+  },
+  {
+    "path": "src/main/resources/assets/mcaquests/lang/en_us.json",
+    "before_sha256": "2eaca5e30d5cc28be4ef241277061b4f13214064bfa6045511d146d00cbd2119",
+    "after_sha256": "73d5401385a2ee9d8f2f01d84a38a53a62a73bc9a04e515cf87dec74fec8def7"
+  },
+  {
+    "path": "src/main/resources/assets/mcaquests/lang/pt_br.json",
+    "before_sha256": "2564d2a90ef8046627c80d8efc42f9afeb79968aa1132fa28dd5f5a55c6b5191",
+    "after_sha256": "70666f760165db3f0e28bd358e74e023c8536a44c89dbe970ca17f5220c04413"
+  },
+  {
+    "path": "src/main/resources/mcaquests.mixins.json",
+    "before_sha256": "9b5cee1f28a0cf65eb9f8b8440b72ce737bbc60a7362aa9759d22cd16172a5f0",
+    "after_sha256": "f72b27f6e1083805d61482d2e34863de00b0706e2b09409b2ebc7efff81ec907"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/CompletionReceiptDurabilitySourceTest.java",
+    "before_sha256": null,
+    "after_sha256": "e231a283a5b5cdd49b2c94ec70c46227b764563668a40ba6394fee5f594417ae"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/CompletionReceiptOutboxTest.java",
+    "before_sha256": null,
+    "after_sha256": "d4f3d910f3f523ba7b1ead345c7485bead86fdf4c956a269dfcdea7ea782c0a6"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/OfferSessionTest.java",
+    "before_sha256": "75ab65c7d8126e3156b93f820530cef50072992deb7f85423d190e946be36f0e",
+    "after_sha256": "c7143b3ad2f751d14e380bc421dc3d73962dee8f80ce0957ead64a0fd5ddc50c"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/InstitutionalCommissionBridge.java",
+    "before_sha256": "50e0e719fa5b877a05d40d0791989fa6ccd84e2554cf2b65687fc28f33c88104",
+    "after_sha256": "8fb283666298306b4a34dfccfc42c50dfbcbc7a599e0557318c8fe0ac4f6f432"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/quest/InstitutionalCommissionBridgeTest.java",
+    "before_sha256": "ebce4edc6c4bd3e4fd040638952fb427b50164404d5a31524b81eb739159c86f",
+    "after_sha256": "15b7fab3bf95ca4e2a1634cdbb8fa54c826ea94be818cd12b80ce2bc1cfda554"
+  }
+]

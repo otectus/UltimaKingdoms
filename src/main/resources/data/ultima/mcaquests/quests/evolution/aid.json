@@ -1,0 +1,60 @@
+{
+  "format_version": 1,
+  "id": "ultima:evolution/aid",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Civilian Relief",
+  "difficulty": "easy",
+  "priority": 10,
+  "repeat": {
+    "type": "cooldown",
+    "cooldown_ticks": 1200
+  },
+  "giver": {
+    "adult_only": true
+  },
+  "conditions": {
+    "type": "mcaquests:institutional_service_available"
+  },
+  "title": {
+    "text": "Regional Essential Food Relief"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "Bring sixteen loaves for local civilian relief. Anyone eligible for relief may serve, without joining a guild or faction. Payment: six emeralds. This commission answers one recorded regional opportunity or signed voluntary obligation."
+    },
+    "accept": {
+      "text": "Your issuer, settlement, and relief terms are now fixed. Bring the bread back to this contact."
+    },
+    "decline": {
+      "text": "Relief remains voluntary."
+    },
+    "in_progress": {
+      "text": "Sixteen loaves will complete the shipment. Provider absence pauses this contract without consuming it."
+    },
+    "ready": {
+      "text": "The relief shipment is ready for this issuer to receive."
+    },
+    "complete": {
+      "text": "The shipment is received. Six emeralds are paid by the native quest provider."
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "minecraft:bread",
+      "count": 16,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:item",
+      "item": "minecraft:emerald",
+      "count": 6
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  }
+}

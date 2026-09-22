@@ -1,0 +1,142 @@
+{
+  "structures": [
+    {
+      "id": "cataclysm:burning_arena",
+      "role": "encounter_site"
+    },
+    {
+      "id": "cataclysm:cursed_pyramid",
+      "role": "archaeological_site"
+    },
+    {
+      "id": "cataclysm:ancient_factory",
+      "role": "abandoned_institution"
+    },
+    {
+      "id": "cataclysm:ruined_citadel",
+      "role": "ruin"
+    },
+    {
+      "id": "cataclysm:sunken_city",
+      "role": "archaeological_site"
+    },
+    {
+      "id": "cataclysm:frosted_prison",
+      "role": "encounter_site"
+    },
+    {
+      "id": "mowziesmobs:wrought_chamber",
+      "role": "encounter_site"
+    },
+    {
+      "id": "mowziesmobs:monastery",
+      "role": "landmark"
+    },
+    {
+      "id": "mowziesmobs:umvuthana_grove",
+      "role": "landmark"
+    },
+    {
+      "id": "mowziesmobs:frostmaw_spawn",
+      "role": "habitat"
+    },
+    {
+      "id": "dungeons_arise:abandoned_temple",
+      "role": "ruin"
+    },
+    {
+      "id": "dungeons_arise:bandit_towers",
+      "role": "hostile_outpost"
+    },
+    {
+      "id": "dungeons_arise:bandit_village",
+      "role": "hostile_outpost"
+    },
+    {
+      "id": "dungeons_arise:foundry",
+      "role": "abandoned_workshop"
+    },
+    {
+      "id": "dungeons_arise:illager_campsite",
+      "role": "hostile_outpost"
+    },
+    {
+      "id": "dungeons_arise:illager_fort",
+      "role": "hostile_stronghold"
+    },
+    {
+      "id": "dungeons_arise:lighthouse",
+      "role": "landmark"
+    },
+    {
+      "id": "dungeons_arise:merchant_campsite",
+      "role": "trade_site"
+    },
+    {
+      "id": "dungeons_arise:mining_system",
+      "role": "resource_site"
+    },
+    {
+      "id": "dungeons_arise:monastery",
+      "role": "landmark"
+    },
+    {
+      "id": "dungeons_arise_seven_seas:small_yacht",
+      "role": "maritime_site"
+    },
+    {
+      "id": "dungeons_arise_seven_seas:pirate_junk",
+      "role": "maritime_site"
+    }
+  ],
+  "encounters": [
+    {
+      "id": "cataclysm:ender_guardian",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "cataclysm:netherite_monstrosity",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "cataclysm:ignis",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "cataclysm:the_harbinger",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "cataclysm:the_leviathan",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "cataclysm:ancient_remnant",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "mowziesmobs:ferrous_wroughtnaut",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    },
+    {
+      "id": "mowziesmobs:frostmaw",
+      "role": "encounter_service",
+      "repeat_budget": 1,
+      "contribution_window": 2400
+    }
+  ]
+}

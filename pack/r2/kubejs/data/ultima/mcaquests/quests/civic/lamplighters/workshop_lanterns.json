@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/workshop_lanterns",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Lamplighters",
+  "difficulty": "easy",
+  "priority": 0,
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "adult_only": true
+  },
+  "conditions": {
+    "type": "mcaquests:institutional_service_available"
+  },
+  "title": {
+    "text": "Lanterns for the Recognized Workshop"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "Deliver four lanterns to this recognized workshop. Payment: six emeralds and a civic service honor. There is no fee. Unavailable workshop services pause your work; leaving the guild does not cancel it."
+    },
+    "accept": {
+      "text": "The workshop reserves your commission. Bring four lanterns to this issuer."
+    },
+    "decline": {
+      "text": "You remain welcome to pursue ordinary guild service."
+    },
+    "in_progress": {
+      "text": "Four lanterns will supply the workshop. Your accepted terms remain unchanged."
+    },
+    "ready": {
+      "text": "Your lanterns are ready to inspect."
+    },
+    "complete": {
+      "text": "Four lanterns received; six emeralds paid. Your verified service will be recorded as a civic honor."
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "minecraft:lantern",
+      "count": 4,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:item",
+      "item": "minecraft:emerald",
+      "count": 6
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  }
+}

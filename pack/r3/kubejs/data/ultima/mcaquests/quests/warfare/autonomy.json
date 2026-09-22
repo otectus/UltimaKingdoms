@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "id": "ultima:warfare/autonomy",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Civilian Autonomy",
+  "difficulty": "medium",
+  "priority": 10,
+  "repeat": { "type": "once" },
+  "giver": { "adult_only": true },
+  "conditions": { "type": "mcaquests:institutional_service_available" },
+  "title": { "text": "Copies of the Autonomy Petition" },
+  "dialogue": {
+    "offer": { "text": "Bring four sheets for copies of a civilian autonomy petition. Payment: four emeralds. Completion may support a later proposal; it does not change sovereignty or diplomacy." },
+    "accept": { "text": "The petition service terms and control snapshot are now fixed." },
+    "decline": { "text": "No political position is inferred from declining." },
+    "in_progress": { "text": "Bring four sheets to the original issuer." },
+    "ready": { "text": "The petition copies are ready to receive." },
+    "complete": { "text": "The copying service is recorded. Sovereignty and native relations are unchanged. Four emeralds are paid." }
+  },
+  "objectives": [ { "type": "mcaquests:item_delivery", "item": "minecraft:paper", "count": 4, "consume": true } ],
+  "rewards": [ { "type": "mcaquests:item", "item": "minecraft:emerald", "count": 4 } ],
+  "turn_in": { "mode": "original_giver" }
+}

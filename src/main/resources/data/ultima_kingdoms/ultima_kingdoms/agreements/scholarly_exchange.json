@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "offices": [],
+  "permissions": [],
+  "requires": [
+    "ultima_kingdoms:diplomatic_recognition"
+  ],
+  "buildingTypes": [],
+  "durationTicks": 720000,
+  "maxOffices": 2,
+  "independentApproval": true,
+  "commissionPool": "ultima_kingdoms:scholarly_exchange",
+  "kind": "agreement",
+  "title": "politics.ultima_kingdoms.scholarly_exchange"
+}

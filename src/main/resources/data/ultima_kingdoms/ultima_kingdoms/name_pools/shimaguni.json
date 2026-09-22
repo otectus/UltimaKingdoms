@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:shimaguni",
+  "canonical": [
+    "Tidehaven",
+    "Reedharbour",
+    "Moonquay",
+    "Lantern Bay",
+    "Saltgrove",
+    "Jade Inlet",
+    "Bamboo Reach",
+    "Ironhaven",
+    "Crescent Cove",
+    "Quiet Anchorage",
+    "Rainwater",
+    "Mistferry",
+    "Deepwater",
+    "Stormhaven",
+    "Silver Shoal",
+    "Dawn Inlet",
+    "Lantern Quay",
+    "Reedwater"
+  ],
+  "reserved": [
+    "Akatsura"
+  ],
+  "blacklist": [],
+  "retries": 64,
+  "templates": [
+    {
+      "format": "{prefix}{suffix}",
+      "weight": 8
+    },
+    {
+      "format": "{descriptor} {noun}",
+      "weight": 2
+    }
+  ],
+  "tokens": {
+    "prefix": [
+      "Tide",
+      "Reed",
+      "Moon",
+      "Lantern",
+      "Salt",
+      "Jade",
+      "Iron",
+      "Mist",
+      "Rain",
+      "Storm"
+    ],
+    "suffix": [
+      "haven",
+      "harbour",
+      "quay",
+      "grove",
+      "water",
+      "ferry",
+      "shore",
+      "watch"
+    ],
+    "descriptor": [
+      "Quiet",
+      "Silver",
+      "Sheltered",
+      "Jade",
+      "Moonlit",
+      "Eastern"
+    ],
+    "noun": [
+      "Cove",
+      "Inlet",
+      "Anchorage",
+      "Shoal",
+      "Quay",
+      "Reach"
+    ]
+  }
+}

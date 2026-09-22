@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "title": "Relief and local autonomy talks",
+  "trigger": "OCCUPATION",
+  "outcomes": ["AID", "MEDIATE", "NEGOTIATE", "DECLINE"],
+  "duration": 168000,
+  "cooldown": 240000,
+  "contributions": 1,
+  "dramatic": false
+}

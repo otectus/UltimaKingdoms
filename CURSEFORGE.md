@@ -2,7 +2,7 @@
 
 Give every village a lasting place in the world.
 
-Ultima Kingdoms recognizes settlements, assigns each one a permanent name and kingdom, and keeps that identity stable across restarts and datapack changes. Villages become part of Serenum, Lunari, Madera, Anemosia, or Yew according to their biome and structure style when first discovered.
+Ultima Kingdoms recognizes settlements, assigns each one a permanent name and kingdom, and keeps that identity stable across restarts and datapack changes. Villages become part of Serenum, Lunari, Madera, Anemosia, Yew, or Shimaguni according to their biome and structure style when first discovered.
 
 ## Features
 

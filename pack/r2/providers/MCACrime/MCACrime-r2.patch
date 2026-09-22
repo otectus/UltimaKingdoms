@@ -1,0 +1,457 @@
+--- a/src/main/java/dev/otectus/mcacrime/api/InstitutionalServiceApi.java
++++ b/src/main/java/dev/otectus/mcacrime/api/InstitutionalServiceApi.java
+@@ -0,0 +1,203 @@
++package dev.otectus.mcacrime.api;
++
++import dev.otectus.mcacrime.McaCrime;
++import dev.otectus.mcacrime.McaCrimeConfig;
++import dev.otectus.mcacrime.api.model.CivicContractView;
++import dev.otectus.mcacrime.api.model.CrimeCommunityKey;
++import dev.otectus.mcacrime.api.model.CrimeRecordView;
++import dev.otectus.mcacrime.civic.InstitutionalWorkshopPolicy;
++import dev.otectus.mcacrime.civic.ServiceContract;
++import dev.otectus.mcacrime.detect.CrimeCommunityResolver;
++import dev.otectus.mcacrime.state.world.CrimeWorldData;
++import net.minecraft.server.MinecraftServer;
++import net.minecraft.server.level.ServerLevel;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.world.entity.Entity;
++
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Set;
++import java.util.UUID;
++
++/**
++ * Private, authenticated policy reads for optional institutional services.
++ *
++ * <p>This facade deliberately has no arbitrary subject-id overload. The subject is the online
++ * {@link ServerPlayer} making the request, the giver must be the same nearby loaded entity supplied by
++ * the interaction, and the community is resolved from that giver at call time. That makes the result
++ * suitable for a server-side workshop transaction without turning the crime ledger into a directory
++ * of other players' cases.
++ */
++public final class InstitutionalServiceApi {
++
++    /** Maximum number of the requester's completed local restitution contracts returned at once. */
++    public static final int MAX_RESTITUTION = 8;
++    /** A normal institutional service may proceed. */
++    public static final String ALLOWED = "allowed";
++    /** A public local case currently suspends the service. */
++    public static final String REFUSED = "refused";
++    /** Crime cannot authoritatively answer at this time. */
++    public static final String UNAVAILABLE = "unavailable";
++
++    private static final double MAX_INTERACTION_DISTANCE_SQUARED = 64.0D;
++
++    private InstitutionalServiceApi() {
++    }
++
++    /**
++     * The current workshop decision for this player and giver.
++     *
++     * <p>{@code fingerprint} binds the local public case ids and resolution revisions, policy flags,
++     * community, and the returned completed restitution rows. A caller must compare it with a fresh
++     * result before committing a paid commission. {@code restitution} belongs only to the requesting
++     * player, is limited to the giver's current community, contains completed Crime-owned contracts,
++     * and is an immutable list of at most {@link #MAX_RESTITUTION} rows.
++     */
++    public record WorkshopAccess(String status, String reason, String fingerprint,
++                                 List<CivicContractView> restitution) {
++
++        public WorkshopAccess {
++            status = ALLOWED.equals(status) || REFUSED.equals(status) || UNAVAILABLE.equals(status)
++                    ? status : UNAVAILABLE;
++            reason = bounded(reason, 96);
++            fingerprint = bounded(fingerprint, 64);
++            List<CivicContractView> bounded = new ArrayList<>(MAX_RESTITUTION);
++            if (restitution != null) {
++                for (CivicContractView contract : restitution) {
++                    if (contract != null && bounded.size() < MAX_RESTITUTION) {
++                        bounded.add(contract);
++                    }
++                }
++            }
++            restitution = List.copyOf(bounded);
++        }
++
++        private static String bounded(String value, int limit) {
++            if (value == null) {
++                return "";
++            }
++            return value.length() <= limit ? value : value.substring(0, limit);
++        }
++    }
++
++    /**
++     * Checks whether a paid recognized-workshop service may proceed right now.
++     *
++     * <p>This is separate from ordinary {@link McaCrimeApi#serviceRefusal} policy. It never gates food
++     * or shelter, does not consult personal victim memory or global standing, and fails unavailable
++     * instead of allowing a paid transaction when Crime cannot establish the answer. Any unresolved
++     * or escaped case that is public knowledge in the giver's current community refuses the workshop;
++     * resolving all such cases restores access immediately.
++     */
++    public static WorkshopAccess workshop(ServerPlayer player, Entity giver) {
++        if (player == null || giver == null) {
++            return unavailable("invalid_request");
++        }
++        MinecraftServer server = player.getServer();
++        if (server == null || !server.isSameThread()
++                || server.getPlayerList().getPlayer(player.getUUID()) != player) {
++            return unavailable("requester_unavailable");
++        }
++        if (!(player.level() instanceof ServerLevel level) || giver.level() != level
++                || giver.isRemoved() || !giver.isAlive()
++                || level.getEntity(giver.getUUID()) != giver
++                || player.distanceToSqr(giver) > MAX_INTERACTION_DISTANCE_SQUARED) {
++            return unavailable("giver_unavailable");
++        }
++
++        try {
++            boolean townsteadEnabled = McaCrimeConfig.COMMON.townsteadEnabled.get();
++            boolean serviceRestrictions = McaCrimeConfig.COMMON.townsteadServiceRestrictions.get();
++            boolean observationsEnabled = McaCrimeConfig.COMMON.enableObservations.get();
++            double confidence = McaCrimeConfig.COMMON.reportConfidenceThreshold.get();
++            InstitutionalWorkshopPolicy.Flags flags = new InstitutionalWorkshopPolicy.Flags(
++                    townsteadEnabled, serviceRestrictions, observationsEnabled, confidence);
++
++            if (!townsteadEnabled || !serviceRestrictions) {
++                return from(InstitutionalWorkshopPolicy.decide(flags, null, List.of(), Set.of(),
++                        List.of()));
++            }
++            CrimeCommunityKey community = CrimeCommunityResolver.resolve(giver, level).orElse(null);
++            if (community == null) {
++                return from(InstitutionalWorkshopPolicy.decide(flags, community, List.of(), Set.of(),
++                        List.of()));
++            }
++
++            CrimeWorldData data = CrimeWorldData.get(server);
++            if (data == null) {
++                return unavailable("crime_data_unavailable");
++            }
++            if (data.isLoadFailed()) {
++                return unavailable("crime_data_load_failed");
++            }
++            if (data.isReadOnlyFutureData()) {
++                return unavailable("crime_data_read_only");
++            }
++
++            UUID requester = player.getUUID();
++            List<CrimeRecordView> cases = data.recordsForOffender(requester).stream()
++                    .map(record -> record.view())
++                    .toList();
++            Set<UUID> acceptedReports = new HashSet<>();
++            data.reportsAgainst(requester).stream()
++                    .filter(report -> report.supportsArrest(confidence))
++                    .forEach(report -> acceptedReports.add(report.incidentId()));
++
++            List<CivicContractView> restitution = completedLocalRestitution(data, requester, community);
++            return from(InstitutionalWorkshopPolicy.decide(flags, community, cases, acceptedReports,
++                    restitution));
++        } catch (Throwable t) {
++            McaCrime.LOGGER.debug("MCA: Crime - institutional workshop query failed; unavailable", t);
++            return unavailable("provider_error");
++        }
++    }
++
++    private static List<CivicContractView> completedLocalRestitution(CrimeWorldData data, UUID requester,
++                                                                     CrimeCommunityKey community) {
++        List<ServiceContract> completed = data.serviceContractsFor(requester).stream()
++                .filter(ServiceContract::offenderIsPlayer)
++                .filter(contract -> community.equals(contract.community()))
++                .filter(contract -> contract.state() == ServiceContract.State.COMPLETED)
++                .sorted(Comparator.comparingLong(ServiceContract::resolvedAt).reversed()
++                        .thenComparing(contract -> contract.contractId().toString()))
++                .limit(MAX_RESTITUTION)
++                .toList();
++        List<CivicContractView> views = new ArrayList<>(completed.size());
++        for (ServiceContract contract : completed) {
++            views.add(new CivicContractView(contract.contractId(), contract.caseId(),
++                    contract.offender(), contract.community().asString(), contract.task().id(),
++                    contract.requiredUnits(), contract.completedUnits(), contract.deadline(),
++                    contract.state().id()));
++        }
++        return List.copyOf(views);
++    }
++
++    private static WorkshopAccess from(InstitutionalWorkshopPolicy.Decision decision) {
++        return new WorkshopAccess(decision.status(), decision.reason(), decision.fingerprint(),
++                decision.restitution());
++    }
++
++    private static WorkshopAccess unavailable(String reason) {
++        return new WorkshopAccess(UNAVAILABLE, reason, digest("institutional-workshop-v1\n" + reason),
++                List.of());
++    }
++
++    private static String digest(String value) {
++        try {
++            byte[] hash = MessageDigest.getInstance("SHA-256")
++                    .digest(value.getBytes(StandardCharsets.UTF_8));
++            StringBuilder result = new StringBuilder(hash.length * 2);
++            for (byte current : hash) {
++                result.append(String.format(java.util.Locale.ROOT, "%02x", current & 0xff));
++            }
++            return result.toString();
++        } catch (NoSuchAlgorithmException impossible) {
++            throw new IllegalStateException("SHA-256 is required by Java", impossible);
++        }
++    }
++}
+--- a/src/main/java/dev/otectus/mcacrime/civic/InstitutionalWorkshopPolicy.java
++++ b/src/main/java/dev/otectus/mcacrime/civic/InstitutionalWorkshopPolicy.java
+@@ -0,0 +1,122 @@
++package dev.otectus.mcacrime.civic;
++
++import dev.otectus.mcacrime.api.InstitutionalServiceApi;
++import dev.otectus.mcacrime.api.model.CivicContractView;
++import dev.otectus.mcacrime.api.model.CrimeCommunityKey;
++import dev.otectus.mcacrime.api.model.CrimePublicView;
++import dev.otectus.mcacrime.api.model.CrimeRecordView;
++
++import javax.annotation.Nullable;
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.List;
++import java.util.Set;
++import java.util.UUID;
++
++/** Pure public-knowledge policy behind the authenticated institutional workshop API. */
++public final class InstitutionalWorkshopPolicy {
++
++    private InstitutionalWorkshopPolicy() {
++    }
++
++    /** Every configuration fact that can change this policy's meaning. */
++    public record Flags(boolean townsteadEnabled, boolean serviceRestrictions,
++                        boolean observationsEnabled, double reportConfidence) {
++    }
++
++    /** Immutable decision assembled without reading a server or mutable store. */
++    public record Decision(String status, String reason, String fingerprint,
++                           List<CivicContractView> restitution) {
++        public Decision {
++            restitution = restitution == null ? List.of() : List.copyOf(restitution.stream()
++                    .filter(java.util.Objects::nonNull)
++                    .limit(InstitutionalServiceApi.MAX_RESTITUTION)
++                    .toList());
++        }
++    }
++
++    /**
++     * Evaluates only cases this community is allowed to know under the existing public-view rule.
++     * The report set must already have been restricted to accepted reports at {@code reportConfidence}.
++     */
++    public static Decision decide(Flags flags, @Nullable CrimeCommunityKey community,
++                                  List<CrimeRecordView> cases, Set<UUID> acceptedReports,
++                                  List<CivicContractView> restitution) {
++        if (flags == null) {
++            return unavailable("policy_unavailable", "no_flags");
++        }
++        if (!flags.townsteadEnabled() || !flags.serviceRestrictions()) {
++            return unavailable("service_disabled", fingerprintSeed(flags, community));
++        }
++        if (community == null) {
++            return unavailable("community_unavailable", fingerprintSeed(flags, null));
++        }
++        if (cases == null || acceptedReports == null) {
++            return unavailable("evidence_unavailable", fingerprintSeed(flags, community));
++        }
++
++        List<CrimeRecordView> relevant = new ArrayList<>();
++        for (CrimeRecordView view : cases) {
++            if (CrimePublicView.isPublic(view, community, flags.observationsEnabled(),
++                    acceptedReports::contains)) {
++                relevant.add(view);
++            }
++        }
++        relevant.sort(Comparator.comparing(view -> view.id().toString()));
++
++        boolean refused = relevant.stream().anyMatch(CrimeRecordView::actionable);
++        List<CivicContractView> boundedRestitution = restitution == null ? List.of()
++                : restitution.stream().filter(java.util.Objects::nonNull)
++                        .limit(InstitutionalServiceApi.MAX_RESTITUTION).toList();
++        String fingerprint = fingerprint(flags, community, relevant, boundedRestitution);
++        return new Decision(refused ? InstitutionalServiceApi.REFUSED : InstitutionalServiceApi.ALLOWED,
++                refused ? "public_local_case_unresolved" : "clear", fingerprint, boundedRestitution);
++    }
++
++    private static Decision unavailable(String reason, String seed) {
++        return new Decision(InstitutionalServiceApi.UNAVAILABLE, reason, sha256(seed + "\n" + reason),
++                List.of());
++    }
++
++    private static String fingerprint(Flags flags, CrimeCommunityKey community,
++                                      List<CrimeRecordView> relevant,
++                                      List<CivicContractView> restitution) {
++        StringBuilder value = new StringBuilder(fingerprintSeed(flags, community));
++        for (CrimeRecordView view : relevant) {
++            value.append("case=").append(view.id()).append(':')
++                    .append(view.resolutionRevision()).append(':')
++                    .append(view.resolution().name()).append('\n');
++        }
++        for (CivicContractView contract : restitution) {
++            value.append("restitution=").append(contract.contractId()).append(':')
++                    .append(contract.caseId()).append(':').append(contract.state()).append('\n');
++        }
++        return sha256(value.toString());
++    }
++
++    private static String fingerprintSeed(Flags flags, @Nullable CrimeCommunityKey community) {
++        return "institutional-workshop-v1\n"
++                + "townstead=" + flags.townsteadEnabled() + '\n'
++                + "restrictions=" + flags.serviceRestrictions() + '\n'
++                + "observations=" + flags.observationsEnabled() + '\n'
++                + "confidence=" + Double.toHexString(flags.reportConfidence()) + '\n'
++                + "community=" + (community == null ? "" : community.asString()) + '\n';
++    }
++
++    private static String sha256(String value) {
++        try {
++            byte[] hash = MessageDigest.getInstance("SHA-256")
++                    .digest(value.getBytes(StandardCharsets.UTF_8));
++            StringBuilder result = new StringBuilder(hash.length * 2);
++            for (byte current : hash) {
++                result.append(String.format(java.util.Locale.ROOT, "%02x", current & 0xff));
++            }
++            return result.toString();
++        } catch (NoSuchAlgorithmException impossible) {
++            throw new IllegalStateException("SHA-256 is required by Java", impossible);
++        }
++    }
++}
+--- a/src/test/java/dev/otectus/mcacrime/civic/InstitutionalWorkshopPolicyTest.java
++++ b/src/test/java/dev/otectus/mcacrime/civic/InstitutionalWorkshopPolicyTest.java
+@@ -0,0 +1,123 @@
++package dev.otectus.mcacrime.civic;
++
++import dev.otectus.mcacrime.api.InstitutionalServiceApi;
++import dev.otectus.mcacrime.api.model.CivicContractView;
++import dev.otectus.mcacrime.api.model.CrimeCommunityKey;
++import dev.otectus.mcacrime.api.model.CrimeRecordView;
++import dev.otectus.mcacrime.ledger.Resolution;
++import net.minecraft.resources.ResourceLocation;
++import org.junit.jupiter.api.Test;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Map;
++import java.util.Optional;
++import java.util.Set;
++import java.util.UUID;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertNotEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++
++class InstitutionalWorkshopPolicyTest {
++
++    private static final CrimeCommunityKey LOCAL =
++            new CrimeCommunityKey(new ResourceLocation("minecraft", "overworld"), 4);
++    private static final CrimeCommunityKey REMOTE =
++            new CrimeCommunityKey(new ResourceLocation("minecraft", "overworld"), 9);
++    private static final UUID PLAYER = UUID.nameUUIDFromBytes("workshop-player".getBytes());
++    private static final InstitutionalWorkshopPolicy.Flags NO_REPORT_LAYER =
++            new InstitutionalWorkshopPolicy.Flags(true, true, false, 0.75D);
++    private static final InstitutionalWorkshopPolicy.Flags REPORT_LAYER =
++            new InstitutionalWorkshopPolicy.Flags(true, true, true, 0.75D);
++
++    @Test
++    void onlyPublicCasesInTheGiversCommunitySuspendTheWorkshop() {
++        CrimeRecordView local = caseOf("local", LOCAL, true, Resolution.UNRESOLVED, 0L);
++        CrimeRecordView remote = caseOf("remote", REMOTE, true, Resolution.UNRESOLVED, 0L);
++        CrimeRecordView masked = caseOf("masked", LOCAL, false, Resolution.UNRESOLVED, 0L);
++
++        assertEquals(InstitutionalServiceApi.REFUSED,
++                decide(NO_REPORT_LAYER, List.of(local)).status());
++        assertEquals(InstitutionalServiceApi.ALLOWED,
++                decide(NO_REPORT_LAYER, List.of(remote, masked)).status());
++    }
++
++    @Test
++    void aWitnessedCaseWaitsForAnAcceptedReportWhenObservationsAreEnabled() {
++        CrimeRecordView seen = caseOf("seen", LOCAL, true, Resolution.UNRESOLVED, 0L);
++        assertEquals(InstitutionalServiceApi.ALLOWED,
++                InstitutionalWorkshopPolicy.decide(REPORT_LAYER, LOCAL, List.of(seen), Set.of(),
++                        List.of()).status());
++        assertEquals(InstitutionalServiceApi.REFUSED,
++                InstitutionalWorkshopPolicy.decide(REPORT_LAYER, LOCAL, List.of(seen), Set.of(seen.id()),
++                        List.of()).status());
++    }
++
++    @Test
++    void resolvingThePublicCaseRestoresAccessAndChangesTheFingerprint() {
++        CrimeRecordView open = caseOf("repair", LOCAL, true, Resolution.ESCAPED, 2L);
++        CrimeRecordView resolved = caseOf("repair", LOCAL, true, Resolution.SERVED, 3L);
++        InstitutionalWorkshopPolicy.Decision before = decide(NO_REPORT_LAYER, List.of(open));
++        InstitutionalWorkshopPolicy.Decision after = decide(NO_REPORT_LAYER, List.of(resolved));
++
++        assertEquals(InstitutionalServiceApi.REFUSED, before.status());
++        assertEquals(InstitutionalServiceApi.ALLOWED, after.status());
++        assertNotEquals(before.fingerprint(), after.fingerprint());
++    }
++
++    @Test
++    void unknownCommunityAndDisabledPolicyAreUnavailable() {
++        InstitutionalWorkshopPolicy.Flags disabled =
++                new InstitutionalWorkshopPolicy.Flags(false, true, false, 0.75D);
++        assertEquals(InstitutionalServiceApi.UNAVAILABLE,
++                InstitutionalWorkshopPolicy.decide(disabled, LOCAL, List.of(), Set.of(), List.of()).status());
++        assertEquals("service_disabled",
++                InstitutionalWorkshopPolicy.decide(disabled, LOCAL, List.of(), Set.of(), List.of()).reason());
++        assertEquals(InstitutionalServiceApi.UNAVAILABLE,
++                InstitutionalWorkshopPolicy.decide(NO_REPORT_LAYER, null, List.of(), Set.of(), List.of()).status());
++    }
++
++    @Test
++    void remoteAndPrivateCasesCannotPerturbTheLocalFingerprint() {
++        InstitutionalWorkshopPolicy.Decision empty = decide(NO_REPORT_LAYER, List.of());
++        InstitutionalWorkshopPolicy.Decision hidden = decide(NO_REPORT_LAYER, List.of(
++                caseOf("remote-revision", REMOTE, true, Resolution.ESCAPED, 47L),
++                caseOf("private-revision", LOCAL, false, Resolution.ESCAPED, 91L)));
++        assertEquals(empty.fingerprint(), hidden.fingerprint());
++    }
++
++    @Test
++    void restitutionIsDefensivelyCopiedAndBounded() {
++        List<CivicContractView> source = new ArrayList<>();
++        for (int index = 0; index < 12; index++) {
++            source.add(contract(index));
++        }
++        InstitutionalWorkshopPolicy.Decision decision =
++                InstitutionalWorkshopPolicy.decide(NO_REPORT_LAYER, LOCAL, List.of(), Set.of(), source);
++        source.clear();
++
++        assertEquals(InstitutionalServiceApi.MAX_RESTITUTION, decision.restitution().size());
++        assertThrows(UnsupportedOperationException.class,
++                () -> decision.restitution().add(contract(99)));
++    }
++
++    private static InstitutionalWorkshopPolicy.Decision decide(InstitutionalWorkshopPolicy.Flags flags,
++                                                                List<CrimeRecordView> cases) {
++        return InstitutionalWorkshopPolicy.decide(flags, LOCAL, cases, Set.of(), List.of());
++    }
++
++    private static CrimeRecordView caseOf(String seed, CrimeCommunityKey community, boolean witnessed,
++                                           Resolution resolution, long revision) {
++        return new CrimeRecordView(UUID.nameUUIDFromBytes(seed.getBytes()), PLAYER, Optional.empty(),
++                new ResourceLocation("mcacrime", "theft"), Optional.ofNullable(community),
++                witnessed ? Set.of(UUID.nameUUIDFromBytes((seed + "-witness").getBytes())) : Set.of(),
++                witnessed, 100L, 10L, -2L, 5L, 0L, resolution, revision, Optional.empty(), Map.of());
++    }
++
++    private static CivicContractView contract(int index) {
++        return new CivicContractView(UUID.nameUUIDFromBytes(("contract-" + index).getBytes()),
++                UUID.nameUUIDFromBytes(("case-" + index).getBytes()), PLAYER, LOCAL.asString(),
++                "victim_amends", 2, 2, 1000L, "completed");
++    }
++}

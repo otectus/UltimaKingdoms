@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "id": "ultima_kingdoms:lamplighters",
+  "kind": "guild",
+  "military": false,
+  "name_key": "organization.ultima_kingdoms.lamplighters",
+  "description_key": "organization.ultima_kingdoms.lamplighters.description",
+  "membership": {
+    "exclusive_group": null,
+    "conflicts": []
+  },
+  "ranks": [
+    {
+      "id": "ultima_kingdoms:lamplighter_volunteer",
+      "minimum_standing": 0,
+      "permissions": [
+        "ultima_kingdoms:route_introductions"
+      ]
+    },
+    {
+      "id": "ultima_kingdoms:lamplighter",
+      "minimum_standing": 60,
+      "permissions": [
+        "ultima_kingdoms:route_introductions",
+        "ultima_kingdoms:commission_access"
+      ]
+    },
+    {
+      "id": "ultima_kingdoms:route_warden",
+      "minimum_standing": 100,
+      "permissions": [
+        "ultima_kingdoms:route_introductions",
+        "ultima_kingdoms:commission_access"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "permission": "ultima_kingdoms:route_introductions",
+      "minimum_rank": "ultima_kingdoms:lamplighter_volunteer",
+      "minimum_standing": 20,
+      "required_deeds": 1,
+      "neutral_minimum_standing": 40,
+      "neutral_required_deeds": 2
+    },
+    {
+      "permission": "ultima_kingdoms:commission_access",
+      "minimum_rank": "ultima_kingdoms:lamplighter",
+      "minimum_standing": 60,
+      "required_deeds": 3,
+      "neutral_minimum_standing": 100,
+      "neutral_required_deeds": 5
+    }
+  ],
+  "deeds": [
+    {
+      "quest_id": "ultima:civic/lamplighters/charters_night",
+      "credit": 20
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/fire_in_poor_hands",
+      "credit": 10
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/mesh_for_the_glass",
+      "credit": 10
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/reinforce_the_ladder",
+      "credit": 20
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/sootward_plaster",
+      "credit": 10
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/twist_the_first_cord",
+      "credit": 10
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/warmth_at_the_gate",
+      "credit": 20
+    },
+    {
+      "quest_id": "ultima:civic/lamplighters/weather_eye",
+      "credit": 10
+    },
+    {
+      "quest_id": "ultima:arcana/green_compact/wood_and_stone_that_live",
+      "credit": 20
+    },
+    {
+      "quest_id": "ultima:arcana/green_compact/source_for_the_seed_vault",
+      "credit": 20
+    },
+    {
+      "quest_id": "ultima:expeditions/border_watch/rations_for_the_upper_stair",
+      "credit": 20
+    },
+    {
+      "quest_id": "ultima:expeditions/fieldbook/teeth_in_the_lamplight",
+      "credit": 20
+    }
+  ]
+}

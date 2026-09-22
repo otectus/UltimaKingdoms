@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "title": "A named successor may take office",
+  "trigger": "INTERREGNUM",
+  "outcomes": ["SUCCEED", "DECLINE"],
+  "duration": 168000,
+  "cooldown": 168000,
+  "contributions": 1,
+  "dramatic": false
+}

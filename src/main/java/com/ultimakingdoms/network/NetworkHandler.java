@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "2";
+    private static final String PROTOCOL = "3";
     private static final int PAGE_SIZE_WITH_SENTINEL = 21;
     private static final int MAX_OFFSET = 1_000_000;
     private static final int REQUEST_COOLDOWN_TICKS = 4;
@@ -66,6 +66,7 @@ public final class NetworkHandler {
                 .decoder(OverlayPacket::decode)
                 .consumerMainThread((packet, ignored) -> overlayReceiver.accept(packet))
                 .add();
+        com.ultimakingdoms.politics.PoliticalNetwork.init();
         initialized = true;
     }
 
@@ -125,12 +126,15 @@ public final class NetworkHandler {
         }
         LAST_LEDGER_REQUEST.put(player.getUUID(), now);
 
-        long revision = service.revision();
+        var knowledge = com.ultimakingdoms.knowledge.SettlementKnowledge.get(player.getServer());
+        service.getSettlementAt(player.serverLevel(), player.blockPosition())
+                .ifPresent(s -> knowledge.discover(player.getUUID(), s.id()));
+        long revision = service.revision() + knowledge.revision();
         boolean revisionReset = packet.expectedRegistryRevision() != 0
                 && packet.expectedRegistryRevision() != revision;
         int actualOffset = revisionReset ? 0 : offset;
-        List<SettlementSummary> settlements = service
-                .getSettlementPage(kingdom, actualOffset, PAGE_SIZE_WITH_SENTINEL)
+        List<SettlementSummary> settlements = knowledge
+                .page(player, service, kingdom, actualOffset, PAGE_SIZE_WITH_SENTINEL)
                 .stream().map(SettlementSummary::from).toList();
         List<KingdomSummary> kingdoms = service.getKingdoms().stream()
                 .sorted(Comparator.comparing(view -> view.id().toString()))

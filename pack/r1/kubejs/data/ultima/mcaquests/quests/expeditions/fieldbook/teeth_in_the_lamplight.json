@@ -1,0 +1,82 @@
+{
+  "format_version": 1,
+  "id": "ultima:expeditions/fieldbook/teeth_in_the_lamplight",
+  "weight": 4,
+  "category": "Marra's Fieldbook",
+  "difficulty": "medium",
+  "priority": 0,
+  "offer_group": "ultima_expedition_fieldbook",
+  "repeat": {
+    "type": "cooldown",
+    "cooldown_ticks": 96000
+  },
+  "giver": {
+    "professions": [
+      "minecraft:leatherworker",
+      "minecraft:cartographer"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Teeth in the Lamplight"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Darklings gather below the last safe lamps. Kill three hostile specimens and submit the field note at any village."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Stay underground, keep a retreat lit, and count the eyes before the teeth."
+    },
+    "decline": {
+      "text": "Then close the book for tonight. Good fieldwork begins with consent."
+    },
+    "in_progress": {
+      "text": "These are cave threats, not tameable companions. Record where the light failed."
+    },
+    "ready": {
+      "text": "Three Darklings ended and the margin filled? Any village may archive it."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The page now warns plainly: the dark below has teeth."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:kill_entity",
+      "entity": "lycanitesmobs:darkling",
+      "count": 3
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 30
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 3
+    }
+  ],
+  "turn_in": {
+    "mode": "any_villager"
+  }
+}

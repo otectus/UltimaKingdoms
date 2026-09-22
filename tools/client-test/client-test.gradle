@@ -18,6 +18,7 @@ allprojects {
                 workingDirectory p.file('build/client-validation/run')
                 property 'forge.logging.console.level', 'info'
                 property 'ultima.clientTest.output', p.file('build/client-validation').absolutePath
+                property 'ultima.clientTest.politics', p.findProperty('clientTestPolitics') ?: 'false'
                 property 'ultima.clientTest.focused', p.findProperty('clientTestFocused') ?: 'false'
                 property 'ultima.clientTest.commandsOnly', p.findProperty('clientTestCommands') ?: 'false'
                 args '--width', '1280', '--height', '800', '--username', 'ClientTest'
@@ -29,15 +30,27 @@ allprojects {
         }
         p.tasks.matching { it.name == 'runClientTest' }.configureEach {
             doFirst {
-                def marker = p.findProperty('clientTestCommands') == 'true' ? 'COMMANDS_PASS.txt' : 'PASS.txt'
+                def marker = p.findProperty('clientTestPolitics') == 'true' ? 'POLITICS_PASS.txt' : p.findProperty('clientTestCommands') == 'true' ? 'COMMANDS_PASS.txt' : 'PASS.txt'
                 p.delete p.file("build/client-validation/${marker}"), p.file('build/client-validation/FAIL.txt'), p.file('build/client-validation/STOP')
             }
             doLast {
-                def marker = p.findProperty('clientTestCommands') == 'true' ? 'COMMANDS_PASS.txt' : 'PASS.txt'
+                def marker = p.findProperty('clientTestPolitics') == 'true' ? 'POLITICS_PASS.txt' : p.findProperty('clientTestCommands') == 'true' ? 'COMMANDS_PASS.txt' : 'PASS.txt'
                 if (!p.file("build/client-validation/${marker}").isFile()) {
                     throw new GradleException('Client integration did not pass; inspect build/client-validation/FAIL.txt and the runtime log')
                 }
             }
         }
     }
+}
+
+gradle.projectsEvaluated {
+    def p = gradle.rootProject
+    p.tasks.register('productionClientTestJar', Jar) {
+        dependsOn p.tasks.named('clientTestClasses')
+        archiveClassifier = 'client-acceptance'
+        destinationDirectory = p.layout.buildDirectory.dir('test-artifacts')
+        from p.sourceSets.clientTest.output
+        finalizedBy 'reobfProductionClientTestJar'
+    }
+    p.reobf { productionClientTestJar {} }
 }

@@ -1,0 +1,88 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/sootward_plaster",
+  "weight": 3,
+  "category": "Lamplighters",
+  "difficulty": "easy",
+  "priority": 0,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "cooldown",
+    "cooldown_ticks": 48000
+  },
+  "giver": {
+    "professions": [
+      "minecraft:cleric",
+      "minecraft:fletcher"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Sootward Plaster"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Hot glass and hurried hands make the same small burns each week. Bring four grass plasters for the lamp cart."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Wrap them flat. A crumpled plaster helps only the pocket carrying it."
+    },
+    "decline": {
+      "text": "No offense taken. I would rather have an honest no than a missing plaster."
+    },
+    "in_progress": {
+      "text": "Four plasters keep the crew working without pretending fire is gentle."
+    },
+    "ready": {
+      "text": "These will do. Tuck them beneath the clean cloth."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "A small mercy belongs beside every working flame."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "plantfiber:grass_plaster",
+      "count": 4,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 16
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 2
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "type": "mcaquests:quest_completed",
+    "quest": "ultima:civic/lamplighters/twist_the_first_cord",
+    "scope": "global"
+  }
+}

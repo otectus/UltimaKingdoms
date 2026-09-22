@@ -1,8 +1,10 @@
 # Ultima Kingdoms
 
-Ultima Kingdoms is a server-authoritative settlement identity mod for Minecraft 1.20.1 and Forge. It recognizes villages, gives each one a persistent name and one of five kingdoms, and exposes that civic identity through a ledger, entry overlays, commands, datapacks, and a Java API.
+Ultima Kingdoms is a server-authoritative settlement identity mod for Minecraft 1.20.1 and Forge. It recognizes villages, gives each one a persistent name and one of six kingdoms, and exposes that civic identity through in-game tasks, a ledger, entry overlays, optional commands, datapacks, and a Java API.
 
-The initial release includes Serenum, Lunari, Madera, Anemosia, and Yew. A settlement's biome and structure style influence its first kingdom assignment. After creation, its UUID, name, kingdom, bounds, aliases, and discovery information are saved with the world rather than recalculated on every lookup.
+The initial release includes Serenum, Lunari, Madera, Anemosia, Yew, and Shimaguni. A settlement's biome and structure style influence its first kingdom assignment. After creation, its stable identity, name, kingdom, bounds, aliases, and discovery information are saved with the world rather than recalculated on every lookup.
+
+Shimaguni (`ultima_kingdoms:shimaguni`) follows the pack's seven Shimaguni histories: an island empire, the Island Covenant, and the Tide Archive at Akatsura. New jungle, sparse-jungle and bamboo-jungle settlements default to Shimaguni; datapacks can extend its biome tag. Existing saved settlements keep their assignments. Its red heraldry uses a moon above waves, and its political profile is `ultima_kingdoms:shimaguni_charter`. Akatsura is reserved from random naming so it can be designated deliberately; no capital or historical alliance is created automatically. Generated village names and the civic honor are new thematic content inspired by those histories.
 
 ## Requirements
 
@@ -11,7 +13,7 @@ The initial release includes Serenum, Lunari, Madera, Anemosia, and Yew. A settl
 - Java 17
 - Ultima Kingdoms must be installed on both the client and server
 
-Minecraft Comes Alive Reborn is optional. The included adapter and dependency metadata target exactly MCA Reborn `7.6.26+1.20.1`; the tested MCA setup also uses Architectury API `9.2.14`. Ultima Kingdoms runs without either mod. Do not install a different MCA version alongside this release.
+Minecraft Comes Alive Reborn is optional. The dependency metadata accepts MCA Reborn versions from `7.6` inclusive to `8.0` exclusive (`[7.6,8)`), while the adapter capability-probes four known MCA 7.x package roots. Runtime validation used exactly MCA Reborn `7.6.26+1.20.1` with Architectury API `9.2.14`; other versions in the accepted range have not been runtime-validated. Ultima Kingdoms runs without either mod.
 
 ## Installation
 
@@ -23,6 +25,10 @@ For MCA integration, also install MCA Reborn `7.6.26+1.20.1` and its Architectur
 
 Ultima Kingdoms examines loaded chunks for structures in Minecraft's village structure tag and for clusters of village points of interest. A newly recognized settlement receives a stable identity and a kingdom based on the supplied biome and structure-style definitions. Administrators can also create or discover settlements explicitly.
 
+Craft a **Book of Kingdoms** from one ordinary book and one paper in any crafting grid. Use it for searchable chapters covering every system, from first steps to advanced government, warfare, world evolution and server administration. Chapter contents, search, and previous/next controls navigate the guide; scroll or focus the article and use the arrow/Page Up/Page Down keys to read. Command examples are optional reference text and do not execute.
+
+Press **K** while playing to open **Kingdom Tasks**. Search for what you want to do, then follow the server's named choices. Consequential tasks show a review page with the selected people, places, terms, and effects before **Apply reviewed action**. The server carries record identity, revision, and evidence metadata with each choice, so players select readable names instead of copying technical values into chat. The Village Ledger, Kingdom pages, and War Room also open relevant tasks. See the [player experience guide](docs/Player-Experience-Review.md).
+
 Craft the Village Ledger and use it to browse known settlements, filter them by kingdom, and inspect settlement details. Its recipe is:
 
 ```text
@@ -33,7 +39,15 @@ Paper  Book     Paper
 
 When a player enters a recognized settlement, the client shows its name, kingdom, and heraldry. This overlay is enabled by default and can be adjusted in `config/ultima-kingdoms-client.toml`.
 
-The initial release provides civic identity and presentation. It does not implement reputation, diplomacy, warfare, roads, capitals, or settlement-history simulation.
+The initial release provides civic identity and presentation plus persistent kingdom/faction standing, with optional MCA Reputation integration. Reputation synchronization defaults to `SHADOW`. The current development tree also adds a political layer with explicit capital charters, secondary offices, petitions, institution recognition, honors, and peaceful agreements. R3 adds temporary native military orders and discovered route guidance. R4 adds opt-in evolving-world scenarios, political history, constitutional transitions, voluntary protection duties, organization lifecycle, family introductions, and negotiated native recruit transfers. See [political usage](docs/politics/usage.md), [ownership](docs/politics/ownership.md), and [compatibility evidence](docs/politics/compatibility-matrix.md).
+
+The R1 civic network adds voluntary Lamplighters membership, verified quest service, independent qualification, workshop contacts, private regional introductions and native curated commissions. See [R1 implementation, provider requirements and validation](docs/R1-Civic-Foundation.md); the complete delivery includes companion-provider changes and twelve pack quest overlays.
+
+R2 adds paid recognized-workshop commissions, receipt-backed civic honors, private Crime service suspension and restitution recovery, and signed hospitality introductions. See [R2 implementation and delivery](docs/R2-Institutions-and-Agreements.md) for the matching provider changes and configuration. R2 institutional services default to enabled.
+
+R3 adds enabled-by-default campaigns, native diplomacy acknowledgment, occupation and settlement decisions, temporary mobilization, civilian recovery contracts, local jurisdiction, discovered world sites/routes and atlas/ledger views. See [R3 setup, commands, ownership and recovery](docs/R3-Native-Control.md).
+
+R4 world evolution defaults off. Its authored scenarios and campaigns require explicit world opt-in, factual prerequisites, consent, and bounded outcomes. See [R4 setup, commands, provider extensions and recovery](docs/R4-Evolving-World.md).
 
 ## MCA Reborn integration
 
@@ -41,39 +55,40 @@ With the supported MCA version installed, Ultima Kingdoms reads MCA's village re
 
 The integration adds separate Ultima civic data to entities. It does not write MCA personal names, family relationships, homes, genetics, personalities, dialogue state, or relationship values. Renaming an Ultima settlement therefore changes its civic label without renaming its residents or changing their MCA family and home data.
 
-## Commands
+## Optional command reference
 
-Settlement arguments accept a UUID, slug, or quoted display name. Kingdom arguments use namespaced IDs such as `ultima_kingdoms:serenum`. To supply a name when creating a settlement, provide the radius first. The new name for `create` or `rename` consumes the rest of the command as plain text, so do not quote it; quotes there become part of the name. For example:
+Kingdom Tasks is the normal player interface. The commands below remain useful for console automation and players who prefer chat. Record selectors use readable names; quote a name when it contains spaces. Kingdom arguments in this basic command tree use namespaced definition names such as `ultima_kingdoms:serenum`. To supply a new settlement name, provide the radius first. The new name for `create` or `rename` consumes the rest of the command as plain text, so do not quote it; quotes there become part of the name. For example:
 
 ```text
-/ultima village create 64 New Bellmeadow
 /ultima village rename "Old Bellmeadow" New Bellmeadow
+/ultima village info "Old Bellmeadow"
+/ultima village create 64 New Bellmeadow
 ```
 
 The following inspection commands are available to players:
 
 ```text
 /ultima kingdom list
-/ultima kingdom info <kingdom>
+/ultima kingdom info <kingdom-definition-id>
 /ultima village here
-/ultima village info [village]
+/ultima village info ["settlement name"]
 ```
 
 The remaining commands require permission level 2:
 
 ```text
 /ultima village create [radius] [name]
-/ultima village rename <village> <name>
-/ultima village setkingdom <village> <kingdom>
-/ultima village reclassify <village>
-/ultima village lock <village>
-/ultima village unlock <village>
+/ultima village rename "Old Bellmeadow" <new name...>
+/ultima village setkingdom "Old Bellmeadow" <kingdom-definition-id>
+/ultima village reclassify "Old Bellmeadow"
+/ultima village lock "Old Bellmeadow"
+/ultima village unlock "Old Bellmeadow"
 /ultima village discover [radiusChunks]
-/ultima village merge <source> <target>
-/ultima village debug [village]
+/ultima village merge "Old Bellmeadow" "New Bellmeadow"
+/ultima village debug ["settlement name"]
 /ultima citizen info <entity>
-/ultima citizen setorigin <entity> <village>
-/ultima citizen setresidence <entity> <village>
+/ultima citizen setorigin <entity> "Old Bellmeadow"
+/ultima citizen setresidence <entity> "Old Bellmeadow"
 /ultima reload
 ```
 
@@ -100,6 +115,8 @@ The client config is `config/ultima-kingdoms-client.toml`:
 | `entryOverlay.kingdomBordersOnly` | `false` | — | Show it only when the kingdom changes |
 | `entryOverlay.durationTicks` | 80 | 20–400 | Display duration in client ticks |
 | `entryOverlay.y` | 54 | 0–1000 | Vertical screen position in pixels |
+
+Optional integrations use separate common configs. `config/ultima_kingdoms-integrations-common.toml` enables the optional `ultima_kingdoms:kingdom` condition registered with MCA Quests by default, and `config/ultima_kingdoms-townstead-common.toml` enables the Townstead adapter by default. Quest definitions use `kingdom_lifecycle`; conversation topics use `kingdom_gate`. A quest lifecycle defaults to `offer_only`, so authors must select `mode: "live"` explicitly when an accepted quest should follow current political state. MCA Reputation synchronization is configured in `config/ultima_kingdoms-factions-common.toml` and defaults to `reputationSync.mode = SHADOW`.
 
 ## Datapacks
 

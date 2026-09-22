@@ -1,0 +1,13 @@
+{
+  "title": "Occupied Settlement Rebellion",
+  "kind": "REBELLION",
+  "outcomes": ["DECLARE", "NEGOTIATE", "EXIT", "RECOVER"],
+  "goal": "AUTONOMY",
+  "objective": "Seek autonomy from a saved occupation through authorized native operations; do not erase residents, buildings, or civic records.",
+  "durationTicks": 216000,
+  "maxParticipants": 2,
+  "operationBudget": 4,
+  "requiresOccupation": true,
+  "organizationTemplate": null,
+  "organizationName": null
+}

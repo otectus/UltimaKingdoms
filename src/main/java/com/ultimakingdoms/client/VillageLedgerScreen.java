@@ -7,6 +7,7 @@ import com.ultimakingdoms.presentation.SettlementSummary;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -34,6 +35,7 @@ public final class VillageLedgerScreen extends Screen {
     private Button scrollUpButton;
     private Button scrollDownButton;
     private Button backButton;
+    private Button warRoomButton;
     private final List<Button> rowButtons = new ArrayList<>();
     private boolean loading = true;
     private boolean initialRequestSent;
@@ -61,9 +63,24 @@ public final class VillageLedgerScreen extends Screen {
     @Override
     protected void init() {
         rowButtons.clear();
+        addRenderableWidget(Button.builder(Component.literal("Tasks"), b -> InteractionClient.open(this,"","")).bounds(panelLeft()+8,panelTop()+7,62,18).build());
+        addRenderableWidget(Button.builder(Component.translatable("civic.ultima_kingdoms.title"),
+                button -> minecraft.setScreen(new GuildScreen(this))).bounds(panelLeft() + 10, panelTop() + 30, 70, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("politics.ultima_kingdoms.kingdom"), button -> {
+            if(selected==null&&filter.isEmpty()){InteractionClient.open(this,"","Government");return;}
+            String kingdom = selected != null ? selected.kingdomId().toString() : filter.map(Object::toString).orElse("ultima_kingdoms:serenum");
+            minecraft.setScreen(new com.ultimakingdoms.client.politics.KingdomScreen(this, kingdom, selected == null ? "" : selected.id().toString()));
+        }).bounds(panelRight() - 90, panelTop() + 30, 80, 20).build());
+        warRoomButton = addRenderableWidget(Button.builder(Component.literal("War room"), button -> {
+            if (selected != null) minecraft.setScreen(new WarRoomScreen(this, selected.id(), selected.displayName()));
+        }).bounds(width / 2 - 40, panelBottom() - 54, 80, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("civic.ultima_kingdoms.refresh"), b -> request(offset))
+                .bounds(width / 2 - 36, panelTop() + 30, 72, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("×"), b -> onClose())
+                .bounds(panelRight() - 28, panelTop() + 7, 18, 18).tooltip(Tooltip.create(Component.translatable("menu.ultima_kingdoms.close"))).build());
         int left = panelLeft();
         int right = panelRight();
-        int footerY = height - 27;
+        int footerY = panelBottom() - 30;
         int availableWidth = right - left - 8;
         int sideWidth = Math.max(54, (availableWidth - 146) / 2);
         int filterWidth = availableWidth - sideWidth * 2 - 8;
@@ -77,7 +94,7 @@ public final class VillageLedgerScreen extends Screen {
         backButton = addRenderableWidget(Button.builder(Component.translatable("gui.ultima_kingdoms.back"),
                 button -> showList()).bounds(width / 2 - 50, footerY, 100, 20).build());
 
-        int listTop = 40;
+        int listTop = panelTop() + 72;
         int listBottom = footerY - 5;
         visibleRows = Math.max(1, Math.min(PAGE_SIZE, (listBottom - listTop) / ROW_HEIGHT));
         int rowWidth = Math.max(60, right - left - 31);
@@ -152,20 +169,21 @@ public final class VillageLedgerScreen extends Screen {
         renderBackground(graphics);
         int left = panelLeft();
         int right = panelRight();
-        graphics.fill(left, 10, right, height - 32, 0xE0181512);
-        graphics.fill(left + 1, 11, right - 1, 35, 0xFF332A20);
-        graphics.drawCenteredString(font, title, width / 2, 18, 0xFFF1DEB3);
+        VanillaGui.panel(graphics, left, panelTop(), right - left, panelBottom() - panelTop());
+        VanillaGui.title(graphics, font, title, width / 2, panelTop() + 12, right - left - 66);
 
+        if (selected == null) VanillaGui.title(graphics, font,
+                Component.translatable("menu.ultima_kingdoms.settlements"), width / 2, panelTop() + 57, right - left - 20);
         if (selected != null) {
             renderDetails(graphics, selected, left);
         } else if (loading) {
             graphics.drawCenteredString(font, Component.translatable("screen.ultima_kingdoms.ledger.loading"),
-                    width / 2, 54, 0xFFD0C7B8);
+                    width / 2, panelTop() + 80, VanillaGui.SECONDARY);
         } else if (requestError != null) {
-            graphics.drawCenteredString(font, requestError, width / 2, 54, 0xFFFF8A80);
+            graphics.drawCenteredString(font, requestError, width / 2, panelTop() + 80, VanillaGui.ERROR);
         } else if (page == null || page.settlements().isEmpty()) {
             graphics.drawCenteredString(font, Component.translatable("screen.ultima_kingdoms.ledger.empty"),
-                    width / 2, 54, 0xFFD0C7B8);
+                    width / 2, panelTop() + 80, VanillaGui.SECONDARY);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
@@ -256,9 +274,9 @@ public final class VillageLedgerScreen extends Screen {
 
     private void renderDetails(GuiGraphics graphics, SettlementSummary settlement, int left) {
         KingdomSummary kingdom = kingdom(settlement.kingdomId());
-        int y = 43;
+        int y = panelTop() + 65;
         if (kingdom != null) HeraldryRenderer.render(graphics, kingdom, left + 12, y - 3, 24);
-        graphics.drawString(font, settlement.displayName(), left + 43, y + 5, 0xFFF1E8D5, false);
+        graphics.drawString(font, font.plainSubstrByWidth(settlement.displayName(), panelRight() - left - 58), left + 43, y + 5, VanillaGui.TEXT, false);
         y += 34;
         Component kingdomName = kingdom == null ? Component.literal(settlement.kingdomId().toString())
                 : Component.translatable(kingdom.translationKey());
@@ -306,8 +324,8 @@ public final class VillageLedgerScreen extends Screen {
     }
 
     private int detailLine(GuiGraphics graphics, int left, int y, String labelKey, Component value) {
-        graphics.drawString(font, Component.translatable(labelKey), left + 13, y, 0xFFC0A878, false);
-        graphics.drawString(font, value, left + 96, y, 0xFFE5DED1, false);
+        graphics.drawString(font, Component.translatable(labelKey), left + 13, y, VanillaGui.SECONDARY, false);
+        graphics.drawString(font, value, left + 96, y, VanillaGui.TEXT, false);
         return y + 15;
     }
 
@@ -349,6 +367,8 @@ public final class VillageLedgerScreen extends Screen {
         filterButton.setMessage(filterLabel());
         backButton.visible = !listMode;
         backButton.active = !listMode;
+        warRoomButton.active = selected != null;
+        warRoomButton.visible = selected != null;
 
         int count = resultCount();
         int maxScroll = Math.max(0, count - visibleRows);
@@ -359,7 +379,11 @@ public final class VillageLedgerScreen extends Screen {
             boolean show = listMode && !loading && requestError == null && index < count;
             row.visible = show;
             row.active = show;
-            if (show) row.setMessage(rowLabel(page.settlements().get(index)));
+            if (show) {
+                Component label = rowLabel(page.settlements().get(index));
+                row.setMessage(label);
+                row.setTooltip(Tooltip.create(label));
+            }
         }
         scrollUpButton.visible = listMode && !loading && maxScroll > 0;
         scrollDownButton.visible = scrollUpButton.visible;
@@ -367,11 +391,15 @@ public final class VillageLedgerScreen extends Screen {
         scrollDownButton.active = scrollIndex < maxScroll;
     }
 
+    private int panelTop() { return (height - Math.min(360, height - 12)) / 2; }
+
+    private int panelBottom() { return height - panelTop(); }
+
     private int panelLeft() {
-        return Math.max(5, width / 2 - 180);
+        return Math.max(5, width / 2 - 250);
     }
 
     private int panelRight() {
-        return Math.min(width - 5, width / 2 + 180);
+        return Math.min(width - 5, width / 2 + 250);
     }
 }

@@ -40,7 +40,18 @@ public final class ClientIntegrationHarness {
     private volatile boolean seeded;
     private long started = System.currentTimeMillis();
 
-    public ClientIntegrationHarness() { MinecraftForge.EVENT_BUS.register(this); }
+    public ClientIntegrationHarness() {
+        if (Boolean.getBoolean("ultima.clientTest.interactions")) MinecraftForge.EVENT_BUS.register(new InteractionClientHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.bookGuide")) MinecraftForge.EVENT_BUS.register(new BookGuideClientHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.r1Pack")) MinecraftForge.EVENT_BUS.register(new FullPackCivicHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.evolutionMultiplayer")) MinecraftForge.EVENT_BUS.register(new EvolutionMultiplayerHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.warfareMultiplayer")) MinecraftForge.EVENT_BUS.register(new WarfareMultiplayerHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.civicMultiplayer")) MinecraftForge.EVENT_BUS.register(new CivicClientHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.multiplayer")) MinecraftForge.EVENT_BUS.register(new PoliticalMultiplayerHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.politics")) MinecraftForge.EVENT_BUS.register(new PoliticalClientHarness());
+        else if (Boolean.getBoolean("ultima.clientTest.blueprint")) MinecraftForge.EVENT_BUS.register(new BlueprintAcceptanceHarness());
+        else MinecraftForge.EVENT_BUS.register(this);
+    }
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {

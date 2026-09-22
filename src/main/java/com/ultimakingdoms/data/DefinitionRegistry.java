@@ -37,6 +37,7 @@ public final class DefinitionRegistry {
     private static final String NAME_POOLS = "name_pools/";
     private static final String BIOME_RULES = "biome_rules/";
     private static final String STRUCTURE_STYLES = "structure_styles/";
+    private static final String KINGDOM_GATES = "kingdom_gates/";
 
     private final AtomicReference<DefinitionSnapshot> active = new AtomicReference<>(DefinitionSnapshot.empty());
     private final AtomicReference<DefinitionSnapshot> pending = new AtomicReference<>();
@@ -96,6 +97,9 @@ public final class DefinitionRegistry {
                 .forEach(entry -> {
                     ResourceLocation file = entry.getKey();
                     String relative = file.getPath().substring(ROOT.length());
+                    // Shared gates have their own transactional integration registry.
+                    if (relative.startsWith(KINGDOM_GATES) || java.util.Set.of("governments", "offices", "agreements", "petitions", "honors", "institution_charters")
+                            .contains(relative.split("/", 2)[0])) return;
                     try (Reader reader = entry.getValue().openAsReader()) {
                         JsonElement parsed = JsonParser.parseReader(reader);
                         if (!parsed.isJsonObject()) {

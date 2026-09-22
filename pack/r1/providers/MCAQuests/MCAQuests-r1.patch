@@ -1,0 +1,1666 @@
+--- a/src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java
++++ b/src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java
+@@ -11,9 +11,16 @@
+ import dev.otectus.mcaquests.quest.reward.QuestReward;
+ import dev.otectus.mcaquests.quest.reward.QuestRewardType;
+ import dev.otectus.mcaquests.quest.reward.RewardTypes;
++import dev.otectus.mcaquests.state.CompletionReceiptDurability;
++import dev.otectus.mcaquests.state.PlayerQuestData;
++import dev.otectus.mcaquests.state.QuestCapabilities;
+ import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.entity.Entity;
++
++import java.util.List;
++import java.util.Set;
++import java.util.UUID;
+ 
+ /**
+  * Public registration API for MCA: Quests add-ons (spec section 28).
+@@ -52,4 +59,84 @@
+     public static void notifyVillagerConversation(ServerPlayer player, Entity villager) {
+         QuestEventHandlers.creditConversation(player, villager);
+     }
++
++    /**
++     * Returns up to {@code limit} oldest durable completion receipts this loaded player has not yet
++     * delivered to {@code consumerId}. Reads never scan offline player files. A consumer must durably
++     * accept a receipt under {@link QuestCompletionReceipt#receiptId()} before acknowledging it here.
++     *
++     * <p>The call opportunistically retries the provider's player-file durability fence for a completion
++     * whose first save failed. This call also subscribes the consumer for future completions; receipts
++     * freeze the consumers active at completion, so a later installation cannot claim older quest work.
++     * Polling renews a short lease. If every consumer stops polling, normal quest completion stops
++     * producing receipts and cannot be blocked by an unused outbox. Limits are 1..64. Call on the
++     * logical server thread.
++     */
++    public static List<QuestCompletionReceipt> readCompletionReceipts(ServerPlayer player,
++                                                                      ResourceLocation consumerId,
++                                                                      int limit) {
++        if (player == null || consumerId == null) throw new NullPointerException("player and consumerId");
++        if (limit < 1 || limit > 64) throw new IllegalArgumentException("limit must be between 1 and 64");
++        return QuestCapabilities.get(player).map(data -> {
++            CompletionReceiptDurability.flushPending(player, data);
++            return data.readCompletionReceipts(consumerId, limit, player.serverLevel().getGameTime());
++        }).orElseGet(List::of);
++    }
++
++    /**
++     * Durably acknowledges one receipt after {@code consumerId} has durably accepted it. The exact
++     * provider epoch and receipt id prevent an acknowledgement from crossing a restored/replaced source.
++     * Returns false for an unknown receipt, an epoch mismatch, an unavailable capability, or when the
++     * acknowledgement could not be confirmed in the on-disk player NBT. Retrying is safe.
++     * Fully acknowledged receipts may be retired early under capacity pressure; a bounded 512-entry
++     * tombstone window keeps those acknowledgement retries idempotent until their original retention
++     * deadline (oldest tombstones are reclaimed first if that separate bound is reached).
++     */
++    public static boolean acknowledgeCompletionReceipt(ServerPlayer player, ResourceLocation consumerId,
++                                                        UUID providerEpoch, UUID receiptId) {
++        if (player == null || consumerId == null || providerEpoch == null || receiptId == null) {
++            throw new NullPointerException("completion receipt acknowledgement argument");
++        }
++        return QuestCapabilities.get(player).map(data -> {
++            boolean alreadyAcknowledged = data.completionReceiptWasAcknowledged(consumerId, receiptId);
++            if (!data.acknowledgeCompletionReceipt(consumerId, providerEpoch, receiptId)) return false;
++            if (alreadyAcknowledged) return true;
++            CompletionReceiptDurability.ResourceLocationAck key =
++                    new CompletionReceiptDurability.ResourceLocationAck(consumerId, providerEpoch, receiptId);
++            if (CompletionReceiptDurability.flushAcknowledgement(player, key)) return true;
++            data.rollbackCompletionReceiptAcknowledgement(consumerId, receiptId, false);
++            return false;
++        }).orElse(false);
++    }
++
++    /**
++     * Human-readable provider health for diagnostics: {@code ready}, {@code pending_save}, {@code full},
++     * {@code corrupt}, {@code future_schema:N}, or {@code unavailable}. This call also retries a pending
++     * save fence and never scans offline data.
++     */
++    public static String completionReceiptStatus(ServerPlayer player) {
++        if (player == null) throw new NullPointerException("player");
++        return QuestCapabilities.get(player).map(data -> {
++            CompletionReceiptDurability.flushPending(player, data);
++            return data.completionReceiptStatus();
++        }).orElse("unavailable");
++    }
++
++    /**
++     * Opens MCA: Quests' native offer UI for a trusted server-side commission service, drawing only from
++     * {@code allowedQuestIds}. The set may contain at most 32 existing template ids. This does not accept a
++     * quest or bypass its giver, conditions, chain, cooldown, capacity, target, or acceptance revalidation.
++     * Returns false when the caller is off-thread or the player cannot currently interact with the giver.
++     */
++    public static boolean openCommissionMenu(ServerPlayer player, Entity giver,
++                                             Set<ResourceLocation> allowedQuestIds) {
++        if (player == null || giver == null || allowedQuestIds == null) {
++            throw new NullPointerException("commission menu argument");
++        }
++        if (allowedQuestIds.isEmpty() || allowedQuestIds.size() > 32) {
++            throw new IllegalArgumentException("allowedQuestIds must contain between 1 and 32 ids");
++        }
++        Set<ResourceLocation> scope = Set.copyOf(allowedQuestIds);
++        return dev.otectus.mcaquests.quest.QuestManager.openCommissionMenu(player, giver, scope);
++    }
+ }
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/api/QuestCompletionReceipt.java
+@@ -0,0 +1,79 @@
++package dev.otectus.mcaquests.api;
++
++import net.minecraft.resources.ResourceLocation;
++
++import java.util.Objects;
++import java.util.Optional;
++import java.util.UUID;
++
++/**
++ * Immutable evidence that one accepted quest instance reached MCA: Quests' completed state.
++ *
++ * <p>Instances returned by {@link McaQuestsApi#readCompletionReceipts} have crossed the player-data
++ * durability fence: the receipt, completion history, removed active quest, inventory and other player
++ * state were present in the same on-disk player NBT snapshot. This does not make mutations to a
++ * villager or another mod's saved data part of that player-file transaction.
++ */
++public record QuestCompletionReceipt(UUID providerEpoch, UUID receiptId, UUID playerId,
++                                     ResourceLocation questId, long completionRevision,
++                                     Outcome outcome, long completedGameTime, long acceptedGameTime,
++                                     UUID giverId, ResourceLocation acceptedDimension,
++                                     Optional<Integer> acceptedVillageId,
++                                     Optional<KingdomBinding> kingdomBinding,
++                                     Optional<CivicBuildingBinding> civicBuildingBinding) {
++
++    public QuestCompletionReceipt {
++        Objects.requireNonNull(providerEpoch, "providerEpoch");
++        Objects.requireNonNull(receiptId, "receiptId");
++        Objects.requireNonNull(playerId, "playerId");
++        Objects.requireNonNull(questId, "questId");
++        Objects.requireNonNull(outcome, "outcome");
++        Objects.requireNonNull(giverId, "giverId");
++        Objects.requireNonNull(acceptedDimension, "acceptedDimension");
++        acceptedVillageId = Objects.requireNonNull(acceptedVillageId, "acceptedVillageId");
++        kingdomBinding = Objects.requireNonNull(kingdomBinding, "kingdomBinding");
++        civicBuildingBinding = Objects.requireNonNull(civicBuildingBinding, "civicBuildingBinding");
++        if (completionRevision <= 0L || completedGameTime < 0L || acceptedGameTime < 0L
++                || acceptedVillageId.filter(value -> value < 0).isPresent()) {
++            throw new IllegalArgumentException("invalid quest completion receipt number");
++        }
++    }
++
++    public enum Outcome {
++        COMPLETED
++    }
++
++    /** Frozen sovereign settlement context captured when the quest was accepted. */
++    public record KingdomBinding(UUID settlementId, ResourceLocation kingdomId,
++                                 long settlementRevision, ResourceLocation dimension,
++                                 Optional<ResourceLocation> localDimension,
++                                 Optional<Integer> localVillageId) {
++        public KingdomBinding {
++            Objects.requireNonNull(settlementId, "settlementId");
++            Objects.requireNonNull(kingdomId, "kingdomId");
++            Objects.requireNonNull(dimension, "dimension");
++            localDimension = Objects.requireNonNull(localDimension, "localDimension");
++            localVillageId = Objects.requireNonNull(localVillageId, "localVillageId");
++            if (settlementRevision < 0L || localVillageId.filter(value -> value < 0).isPresent()
++                    || localDimension.isPresent() != localVillageId.isPresent()) {
++                throw new IllegalArgumentException("invalid frozen kingdom binding");
++            }
++        }
++    }
++
++    /** Frozen civic-building context captured when the quest was accepted. */
++    public record CivicBuildingBinding(UUID bindingId, UUID settlementId,
++                                       ResourceLocation dimension, int villageId, int buildingId,
++                                       String family, String typeAtBinding) {
++        public CivicBuildingBinding {
++            Objects.requireNonNull(bindingId, "bindingId");
++            Objects.requireNonNull(settlementId, "settlementId");
++            Objects.requireNonNull(dimension, "dimension");
++            Objects.requireNonNull(family, "family");
++            Objects.requireNonNull(typeAtBinding, "typeAtBinding");
++            if (villageId < 0 || buildingId < 0 || family.isBlank() || typeAtBinding.isBlank()) {
++                throw new IllegalArgumentException("invalid frozen civic-building binding");
++            }
++        }
++    }
++}
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/api/event/QuestCompletionReceiptReadyEvent.java
+@@ -0,0 +1,29 @@
++package dev.otectus.mcaquests.api.event;
++
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraftforge.eventbus.api.Event;
++
++import java.util.Objects;
++
++/**
++ * Optional wake-up notification fired after a completion receipt crosses its player-file durability
++ * fence. Consumers must still use the read/ack API as their replay source; this event is not an outbox.
++ */
++public final class QuestCompletionReceiptReadyEvent extends Event {
++    private final ServerPlayer player;
++    private final QuestCompletionReceipt receipt;
++
++    public QuestCompletionReceiptReadyEvent(ServerPlayer player, QuestCompletionReceipt receipt) {
++        this.player = Objects.requireNonNull(player, "player");
++        this.receipt = Objects.requireNonNull(receipt, "receipt");
++    }
++
++    public ServerPlayer getPlayer() {
++        return player;
++    }
++
++    public QuestCompletionReceipt getReceipt() {
++        return receipt;
++    }
++}
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/mixin/PlayerListAccessor.java
+@@ -0,0 +1,13 @@
++package dev.otectus.mcaquests.mixin;
++
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.server.players.PlayerList;
++import org.spongepowered.asm.mixin.Mixin;
++import org.spongepowered.asm.mixin.gen.Invoker;
++
++/** Narrow access to vanilla's protected single-player save used by the receipt durability fence. */
++@Mixin(PlayerList.class)
++public interface PlayerListAccessor {
++    @Invoker("save")
++    void mcaquests$savePlayer(ServerPlayer player);
++}
+--- a/src/main/java/dev/otectus/mcaquests/quest/OfferSessionService.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/OfferSessionService.java
+@@ -86,6 +86,12 @@
+      * so the answer is the same on the next open.
+      */
+     public static List<Offer> currentOffers(ServerPlayer player, Entity villager, PlayerQuestData data) {
++        return currentOffers(player, villager, data, null);
++    }
++
++    /** Same native offer session, restricted to an authorized caller's bounded commission catalogue. */
++    public static List<Offer> currentOffers(ServerPlayer player, Entity villager, PlayerQuestData data,
++                                            @javax.annotation.Nullable Set<ResourceLocation> allowedQuestIds) {
+         ServerLevel level = (ServerLevel) player.level();
+         long now = level.getGameTime();
+         int refreshTicks = McaQuestsConfig.COMMON.offerRefreshTicks.get();
+@@ -96,8 +102,9 @@
+         session.pruneDeclines(now);
+ 
+         OfferFilters.Pass pass = OfferFilters.Pass.of(player, villager, data);
+-        if (session.isStale(now, refreshTicks, QuestRegistry.generation())) {
+-            redraw(pass, session, now, refreshTicks);
++        if (!session.scopeMatches(allowedQuestIds)
++                || session.isStale(now, refreshTicks, QuestRegistry.generation())) {
++            redraw(pass, session, now, refreshTicks, allowedQuestIds);
+         } else {
+             revalidate(pass, session, now);
+         }
+@@ -144,19 +151,24 @@
+     // ---------------------------------------------------------------- drawing
+ 
+     private static void redraw(OfferFilters.Pass pass, OfferSession session, long now, int refreshTicks) {
++        redraw(pass, session, now, refreshTicks, null);
++    }
++
++    private static void redraw(OfferFilters.Pass pass, OfferSession session, long now, int refreshTicks,
++                               @javax.annotation.Nullable Set<ResourceLocation> allowedQuestIds) {
+         // OfferSession#redraw drops the refusals that were only meant to last as long as the old set --
+         // turning something down is meant to last until the villager has something new to say, not to ban
+         // it. A refusal given an explicit declineCooldownTicks is about the clock rather than about this
+         // menu, so it survives.
+         long epoch = refreshTicks <= 0 ? 0L : now / refreshTicks;
+         long seed = offerSeed(pass.player(), session.villagerUuid(), epoch);
+-        List<QuestDefinition> pool = offerablePool(pass, session, now);
++        List<QuestDefinition> pool = offerablePool(pass, session, now, allowedQuestIds);
+         List<QuestDefinition> chosen = QuestManager.selectOffers(pass, pool, seed);
+         List<OfferSession.Slot> slots = new ArrayList<>();
+         for (QuestDefinition def : chosen) {
+             freeze(pass, def).ifPresent(slots::add);
+         }
+-        session.redraw(slots, now, QuestRegistry.generation(), seed);
++        session.redraw(slots, now, QuestRegistry.generation(), seed, allowedQuestIds);
+     }
+ 
+     /**
+@@ -237,6 +249,15 @@
+     private static List<QuestDefinition> offerablePool(OfferFilters.Pass pass, OfferSession session, long now) {
+         return QuestManager.eligibleOffers(pass).stream()
+                 .filter(def -> !session.isDeclined(def.id(), now))
++                .filter(def -> session.allowsInCurrentScope(def.id()))
++                .toList();
++    }
++
++    private static List<QuestDefinition> offerablePool(OfferFilters.Pass pass, OfferSession session, long now,
++                                                       @javax.annotation.Nullable Set<ResourceLocation> allowed) {
++        return QuestManager.eligibleOffers(pass).stream()
++                .filter(def -> !session.isDeclined(def.id(), now))
++                .filter(def -> allowed == null || allowed.contains(def.id()))
+                 .toList();
+     }
+ 
+--- a/src/main/java/dev/otectus/mcaquests/quest/QuestManager.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/QuestManager.java
+@@ -4,11 +4,13 @@
+ import dev.otectus.mcaquests.McaQuestsConfig;
+ import dev.otectus.mcaquests.McaQuestsConfig.ProfessionMatchingMode;
+ import dev.otectus.mcaquests.api.ExternalSignalObjective;
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
+ import dev.otectus.mcaquests.api.QuestDialogueHooks;
+ import dev.otectus.mcaquests.api.event.QuestAbandonedEvent;
+ import dev.otectus.mcaquests.api.event.QuestAcceptedEvent;
+ import dev.otectus.mcaquests.api.event.QuestDeclinedEvent;
+ import dev.otectus.mcaquests.api.event.QuestCompletedEvent;
++import dev.otectus.mcaquests.api.event.QuestCompletionReceiptReadyEvent;
+ import dev.otectus.mcaquests.api.event.QuestFailedEvent;
+ import dev.otectus.mcaquests.api.event.QuestReadyEvent;
+ import dev.otectus.mcaquests.compat.McaCompat;
+@@ -66,6 +68,7 @@
+ import dev.otectus.mcaquests.quest.escort.EscortHoldRegistry;
+ import dev.otectus.mcaquests.quest.turnin.GiverPresence;
+ import dev.otectus.mcaquests.state.ActiveQuest;
++import dev.otectus.mcaquests.state.CompletionReceiptDurability;
+ import dev.otectus.mcaquests.state.OfferSession;
+ import dev.otectus.mcaquests.state.PlayerQuestData;
+ import dev.otectus.mcaquests.state.QuestCapabilities;
+@@ -136,7 +139,7 @@
+         } else {
+             decline(player, villager, questId);
+         }
+-        sendMenu(player, villager);
++        resendCurrentMenu(player, villager);
+         syncLog(player);
+     }
+ 
+@@ -146,7 +149,7 @@
+             return;
+         }
+         turnIn(player, villager, questId);
+-        sendMenu(player, villager);
++        resendCurrentMenu(player, villager);
+         syncLog(player);
+     }
+ 
+@@ -156,7 +159,7 @@
+             return;
+         }
+         abandon(player, villager, questId);
+-        sendMenu(player, villager);
++        resendCurrentMenu(player, villager);
+         syncLog(player);
+     }
+ 
+@@ -212,6 +215,29 @@
+     }
+ 
+     /**
++     * Opens the native quest menu with its offer draw restricted to an authorized commission catalogue.
++     * All ordinary giver, condition, cooldown, active-cap and target checks still run here and again on
++     * acceptance. The caller supplies eligibility scope, not permission to accept any quest.
++     */
++    public static boolean openCommissionMenu(ServerPlayer player, Entity villager,
++                                             Set<ResourceLocation> allowedQuestIds) {
++        if (player.getServer() == null || !player.getServer().isSameThread()
++                || player.level() != villager.level() || !McaCompat.canPlayerInteract(player, villager)) {
++            return false;
++        }
++        sendMenu(player, villager, Component.empty(), Set.copyOf(allowedQuestIds));
++        return true;
++    }
++
++    /** Keeps a curated session curated while its own buttons refresh the open screen. */
++    private static void resendCurrentMenu(ServerPlayer player, Entity villager) {
++        Optional<Set<ResourceLocation>> restriction = QuestCapabilities.get(player)
++                .flatMap(data -> data.offers().find(villager.getUUID()))
++                .flatMap(OfferSession::restrictedQuestIds);
++        sendMenu(player, villager, Component.empty(), restriction.orElse(null));
++    }
++
++    /**
+      * The villager's screen, with a line reporting whatever the player just did.
+      *
+      * <p>The notice travels with the cards it changed rather than only into the chat behind the screen:
+@@ -219,6 +245,11 @@
+      * message the player cannot see is barely better than none.
+      */
+     public static void sendMenu(ServerPlayer player, Entity villager, Component notice) {
++        sendMenu(player, villager, notice, null);
++    }
++
++    private static void sendMenu(ServerPlayer player, Entity villager, Component notice,
++                                 @Nullable Set<ResourceLocation> allowedQuestIds) {
+         // Co-send community-project cards first so the client cache is populated before the quest menu
+         // opens (drives the "View Project" button). Individual quests stay visually unchanged.
+         ProjectManager.sendProjectMenu(player, villager);
+@@ -290,12 +321,15 @@
+         // reopening the menu shows the same quests, the same numbers and the same words — and so a
+         // decline has somewhere to be recorded (0.8.0 recomputed all of it on every open, which is why
+         // declining an offer brought the very same three straight back).
+-        List<OfferSessionService.Offer> offers = OfferSessionService.currentOffers(player, villager, data);
++        List<OfferSessionService.Offer> offers = allowedQuestIds == null
++                ? OfferSessionService.currentOffers(player, villager, data)
++                : OfferSessionService.currentOffers(player, villager, data, allowedQuestIds);
+         if (offers.isEmpty()) {
+             // "I do not need anything right now" is true but unhelpful when the reason is "you did that
+             // yesterday" or "not until you have done something else first". Every quest already authors a
+             // `cooldown` and a `locked` line for exactly this, and both were parsed and never shown.
+-            List<QuestCard> explanation = whyNothingIsOffered(player, villager, data);
++            List<QuestCard> explanation = allowedQuestIds == null
++                    ? whyNothingIsOffered(player, villager, data) : List.of();
+             send(player, notice, explanation.isEmpty()
+                     ? QuestMenuDataS2CPacket.noQuest(villagerUuid, name, profession, hearts, QuestMenuStatus.NO_QUESTS)
+                     : QuestMenuDataS2CPacket.cards(villagerUuid, name, profession, hearts,
+@@ -1004,6 +1038,17 @@
+                 && !townsteadRewardsCanApply(player, def, grantVillager)) {
+             return false;
+         }
++        long now = ((ServerLevel) player.level()).getGameTime();
++        // A polling add-on opts this player into receipts. Standalone MCA: Quests never accumulates an
++        // outbox merely because a possible future consumer could be installed. Once subscribed, refuse
++        // before delivery or rewards rather than evict evidence its frozen consumer cohort has not acked.
++        boolean captureCompletionReceipt = data.shouldCaptureCompletionReceipt(now);
++        if (captureCompletionReceipt && !data.canCaptureCompletionReceipt(now)) {
++            McaQuests.LOGGER.error("[MCA: Quests] Refusing completion of '{}' for {}: completion receipt "
++                    + "outbox status is {}", def.id(), player.getUUID(), data.completionReceiptStatus());
++            player.sendSystemMessage(Component.translatable("mcaquests.message.completion_receipts_unavailable"));
++            return false;
++        }
+         // A delivery with nowhere to go always blocks, whatever the reward policy says: consuming the
+         // goods into a villager who cannot hold them would take them off the player for nothing.
+         DeliveryService.TurnInPlan deliveries = prepareDeliveries(player, def, active, grantVillager);
+@@ -1070,7 +1115,6 @@
+         grantQuestReputation(player, grantVillager, def, active, "complete");
+         TownsteadLifecycle.dispatch(player, active, grantVillager, TownsteadLifecycle.Phase.COMPLETED);
+ 
+-        long now = ((ServerLevel) player.level()).getGameTime();
+         data.history().recordCompletion(def.id(), active.villagerUuid());
+         switch (def.repeat().type()) {
+             case COOLDOWN -> data.history().setCooldownUntil(def.id(), active.villagerUuid(), now + def.cooldownTicks());
+@@ -1089,6 +1133,15 @@
+         }
+         releaseEscortMovement(player, def, active);
+         data.remove(active);
++        // Capture only after the authoritative history/cooldown transition and active removal. The API
++        // hides this object until the complete player snapshot is reread from the on-disk .dat file.
++        if (captureCompletionReceipt) {
++            QuestCompletionReceipt completionReceipt =
++                    data.captureCompletionReceipt(player.getUUID(), active, now);
++            if (CompletionReceiptDurability.flushPending(player, data)) {
++                MinecraftForge.EVENT_BUS.post(new QuestCompletionReceiptReadyEvent(player, completionReceipt));
++            }
++        }
+         MinecraftForge.EVENT_BUS.post(new QuestCompletedEvent(player, grantVillager, def));
+         if (McaQuestsConfig.COMMON.questChatMessages.get()) {
+             PlaceholderResolver resolver = active.textResolver(player);
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java
+@@ -0,0 +1,95 @@
++package dev.otectus.mcaquests.state;
++
++import dev.otectus.mcaquests.McaQuests;
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
++import dev.otectus.mcaquests.mixin.PlayerListAccessor;
++import net.minecraft.nbt.CompoundTag;
++import net.minecraft.nbt.NbtIo;
++import net.minecraft.nbt.Tag;
++import net.minecraft.server.MinecraftServer;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.world.level.storage.LevelResource;
++
++import java.io.IOException;
++import java.nio.file.Path;
++import java.util.List;
++
++/** Forces and verifies the player-file fence used by the public completion receipt API. */
++public final class CompletionReceiptDurability {
++    private CompletionReceiptDurability() {
++    }
++
++    /**
++     * Forces vanilla's targeted save for this player, then exposes every pending receipt found in the
++     * resulting player file. Vanilla catches player-data IO failures internally, so the explicit
++     * reread and semantic verification are the success signal.
++     */
++    public static boolean flushPending(ServerPlayer player, PlayerQuestData data) {
++        List<QuestCompletionReceipt> pending = data.pendingCompletionReceiptDurability();
++        if (pending.isEmpty()) return true;
++        MinecraftServer server = player.getServer();
++        if (server == null || !server.isSameThread()) return false;
++        savePlayer(server, player);
++        PlayerQuestData disk = readPlayerQuestData(server, player);
++        if (disk == null) return false;
++        boolean all = true;
++        for (QuestCompletionReceipt expected : pending) {
++            if (containsCompletedSnapshot(disk, expected)) {
++                data.markCompletionReceiptDurable(expected.receiptId());
++            } else {
++                all = false;
++            }
++        }
++        if (!all) {
++            McaQuests.LOGGER.error("[MCA: Quests] Player save did not contain the completed quest receipt "
++                    + "and state for {}; receipt delivery remains fenced", player.getUUID());
++        }
++        return all;
++    }
++
++    /** Forces and verifies an acknowledgement. The caller rolls its in-memory mutation back on false. */
++    public static boolean flushAcknowledgement(ServerPlayer player, ResourceLocationAck acknowledgement) {
++        MinecraftServer server = player.getServer();
++        if (server == null || !server.isSameThread()) return false;
++        savePlayer(server, player);
++        PlayerQuestData disk = readPlayerQuestData(server, player);
++        return disk != null && disk.completionReceiptAcknowledged(acknowledgement.consumer(),
++                acknowledgement.epoch(), acknowledgement.receiptId());
++    }
++
++    private static boolean containsCompletedSnapshot(PlayerQuestData disk, QuestCompletionReceipt expected) {
++        if (!disk.completionReceiptDurable(expected.receiptId())
++                || !disk.completionReceipt(expected.receiptId()).filter(expected::equals).isPresent()
++                || disk.history().completionCountByGiver(expected.questId(), expected.giverId()) <= 0) {
++            return false;
++        }
++        return disk.active().stream().noneMatch(active -> active.isInstance(expected.receiptId()));
++    }
++
++    private static void savePlayer(MinecraftServer server, ServerPlayer player) {
++        ((PlayerListAccessor) server.getPlayerList()).mcaquests$savePlayer(player);
++    }
++
++    private static PlayerQuestData readPlayerQuestData(MinecraftServer server, ServerPlayer player) {
++        Path file = server.getWorldPath(LevelResource.PLAYER_DATA_DIR)
++                .resolve(player.getStringUUID() + ".dat");
++        try {
++            CompoundTag root = NbtIo.readCompressed(file.toFile());
++            if (!root.contains("ForgeCaps", Tag.TAG_COMPOUND)) return null;
++            CompoundTag forgeCaps = root.getCompound("ForgeCaps");
++            String key = QuestCapabilities.ID.toString();
++            if (!forgeCaps.contains(key, Tag.TAG_COMPOUND)) return null;
++            PlayerQuestData disk = new PlayerQuestData();
++            disk.load(forgeCaps.getCompound(key));
++            return disk;
++        } catch (IOException | RuntimeException failure) {
++            McaQuests.LOGGER.error("[MCA: Quests] Could not verify durable player quest data at {}", file, failure);
++            return null;
++        }
++    }
++
++    /** Immutable ack verification key, kept here so no mutable outbox state crosses the disk reread. */
++    public record ResourceLocationAck(net.minecraft.resources.ResourceLocation consumer,
++                                      java.util.UUID epoch, java.util.UUID receiptId) {
++    }
++}
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/state/CompletionReceiptOutbox.java
+@@ -0,0 +1,566 @@
++package dev.otectus.mcaquests.state;
++
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
++import net.minecraft.nbt.CompoundTag;
++import net.minecraft.nbt.ListTag;
++import net.minecraft.nbt.StringTag;
++import net.minecraft.nbt.Tag;
++import net.minecraft.resources.ResourceLocation;
++
++import java.util.ArrayList;
++import java.util.HashSet;
++import java.util.LinkedHashMap;
++import java.util.LinkedHashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Optional;
++import java.util.Set;
++import java.util.UUID;
++
++/** Persisted, bounded per-player completion outbox. Package-private; add-ons use {@code McaQuestsApi}. */
++final class CompletionReceiptOutbox {
++    static final int SCHEMA = 3;
++    static final int MAX_RECEIPTS = 256;
++    static final int MAX_ACK_TOMBSTONES = 512;
++    static final int MAX_CONSUMERS = 32;
++    /** Seven real-time days at the normal 20 TPS. Only fully acknowledged entries can age out. */
++    static final long ACKNOWLEDGED_RETENTION_TICKS = 12_096_000L;
++    /** Consumers renew this through normal polling; expiry stops future capture but never drops evidence. */
++    static final long SUBSCRIPTION_LEASE_TICKS = 6_000L;
++
++    private enum Health { READY, FUTURE_SCHEMA, CORRUPT }
++
++    private Health health = Health.READY;
++    private int unreadableSchema;
++    private CompoundTag preservedUnreadable;
++    private boolean unreadableRequiresFence;
++    private UUID providerEpoch;
++    private long revision;
++    private final Map<UUID, Entry> entries = new LinkedHashMap<>();
++    private final Map<UUID, AckTombstone> ackTombstones = new LinkedHashMap<>();
++    private final Map<String, Long> registeredConsumers = new LinkedHashMap<>();
++    /** Loaded entries are durable by definition. Newly appended entries join only after disk verification. */
++    private final Set<UUID> durable = new HashSet<>();
++
++    boolean canAppend(long now) {
++        prune(now);
++        if (health == Health.READY && entries.size() >= MAX_RECEIPTS) {
++            retireAcknowledgedUnderPressure(now);
++        }
++        return health == Health.READY && entries.size() < MAX_RECEIPTS;
++    }
++
++    boolean shouldCapture(long now) {
++        return health == Health.READY ? !activeConsumers(now).isEmpty() : unreadableRequiresFence;
++    }
++
++    QuestCompletionReceipt append(UUID playerId, ActiveQuest active, long completedGameTime) {
++        if (!canAppend(completedGameTime)) {
++            throw new IllegalStateException("completion receipt outbox is not writable: " + status());
++        }
++        Set<String> intendedConsumers = activeConsumers(completedGameTime);
++        if (intendedConsumers.isEmpty()) {
++            throw new IllegalStateException("completion receipt outbox has no active consumer subscription");
++        }
++        if (entries.containsKey(active.instance()) || ackTombstones.containsKey(active.instance())) {
++            throw new IllegalStateException("duplicate completion receipt id " + active.instance());
++        }
++        if (providerEpoch == null) providerEpoch = UUID.randomUUID();
++        if (revision == Long.MAX_VALUE) {
++            health = Health.CORRUPT;
++            throw new IllegalStateException("completion receipt revision exhausted");
++        }
++        QuestCompletionReceipt receipt = new QuestCompletionReceipt(providerEpoch, active.instance(), playerId,
++                active.questId(), ++revision, QuestCompletionReceipt.Outcome.COMPLETED,
++                completedGameTime, active.startGameTime(), active.villagerUuid(), active.dimension(),
++                active.villageId().isPresent() ? Optional.of(active.villageId().getAsInt()) : Optional.empty(),
++                active.kingdomBinding().map(binding -> new QuestCompletionReceipt.KingdomBinding(
++                        binding.settlementId(), binding.kingdomId(), binding.settlementRevision(),
++                        binding.dimension(), binding.localDimension(),
++                        binding.localVillageId().isPresent()
++                                ? Optional.of(binding.localVillageId().getAsInt()) : Optional.empty())),
++                active.civicBuildingBinding().map(binding -> new QuestCompletionReceipt.CivicBuildingBinding(
++                        binding.bindingId(), binding.settlementId(), binding.dimension(), binding.villageId(),
++                        binding.buildingId(), binding.family(), binding.typeAtBinding())));
++        if (entries.putIfAbsent(receipt.receiptId(), new Entry(receipt, intendedConsumers)) != null) {
++            throw new IllegalStateException("duplicate completion receipt id " + receipt.receiptId());
++        }
++        return receipt;
++    }
++
++    List<QuestCompletionReceipt> read(ResourceLocation consumer, int limit, long now) {
++        if (health != Health.READY) return List.of();
++        String id = consumer.toString();
++        if (!registeredConsumers.containsKey(id) && registeredConsumers.size() >= MAX_CONSUMERS) {
++            throw new IllegalStateException("completion receipt consumer capacity reached");
++        }
++        registeredConsumers.put(id, now);
++        List<QuestCompletionReceipt> result = new ArrayList<>(Math.min(limit, entries.size()));
++        for (Entry entry : entries.values()) {
++            if (entry.intendedConsumers.contains(id) && durable.contains(entry.receipt.receiptId())
++                    && !entry.acknowledgedBy.contains(id)) {
++                result.add(entry.receipt);
++                if (result.size() == limit) break;
++            }
++        }
++        return List.copyOf(result);
++    }
++
++    boolean acknowledge(ResourceLocation consumer, UUID epoch, UUID receiptId) {
++        if (health != Health.READY || providerEpoch == null || !providerEpoch.equals(epoch)) return false;
++        Entry entry = entries.get(receiptId);
++        String id = consumer.toString();
++        if (entry == null) {
++            AckTombstone tombstone = ackTombstones.get(receiptId);
++            return tombstone != null && tombstone.intendedConsumers.contains(id);
++        }
++        if (!durable.contains(receiptId)) return false;
++        if (!entry.intendedConsumers.contains(id)) return false;
++        entry.acknowledgedBy.add(id);
++        return true;
++    }
++
++    void rollbackAcknowledgement(ResourceLocation consumer, UUID receiptId, boolean previouslyAcknowledged) {
++        Entry entry = entries.get(receiptId);
++        if (entry == null || previouslyAcknowledged) return;
++        entry.acknowledgedBy.remove(consumer.toString());
++    }
++
++    boolean isAcknowledged(ResourceLocation consumer, UUID epoch, UUID receiptId) {
++        Entry entry = entries.get(receiptId);
++        return health == Health.READY && providerEpoch != null && providerEpoch.equals(epoch)
++                && (entry != null && entry.acknowledgedBy.contains(consumer.toString())
++                || entry == null && Optional.ofNullable(ackTombstones.get(receiptId))
++                .map(tombstone -> tombstone.intendedConsumers.contains(consumer.toString())).orElse(false));
++    }
++
++    boolean wasAcknowledged(ResourceLocation consumer, UUID receiptId) {
++        Entry entry = entries.get(receiptId);
++        return entry != null && entry.acknowledgedBy.contains(consumer.toString())
++                || entry == null && Optional.ofNullable(ackTombstones.get(receiptId))
++                .map(tombstone -> tombstone.intendedConsumers.contains(consumer.toString())).orElse(false);
++    }
++
++    void markDurable(UUID receiptId) {
++        if (entries.containsKey(receiptId)) durable.add(receiptId);
++    }
++
++    Optional<QuestCompletionReceipt> receipt(UUID receiptId) {
++        Entry entry = entries.get(receiptId);
++        return entry == null ? Optional.empty() : Optional.of(entry.receipt);
++    }
++
++    boolean isDurable(UUID receiptId) {
++        return durable.contains(receiptId);
++    }
++
++    List<QuestCompletionReceipt> pendingDurability() {
++        if (health != Health.READY) return List.of();
++        return entries.values().stream().map(entry -> entry.receipt)
++                .filter(receipt -> !durable.contains(receipt.receiptId())).toList();
++    }
++
++    String status() {
++        if (health == Health.FUTURE_SCHEMA) return "future_schema:" + unreadableSchema;
++        if (health == Health.CORRUPT) return "corrupt";
++        if (entries.size() >= MAX_RECEIPTS) return "full";
++        if (durable.size() < entries.size()) return "pending_save";
++        return "ready";
++    }
++
++    int size() {
++        return entries.size();
++    }
++
++    boolean shouldSave() {
++        return providerEpoch != null || preservedUnreadable != null || !entries.isEmpty()
++                || !ackTombstones.isEmpty() || !registeredConsumers.isEmpty();
++    }
++
++    private void prune(long now) {
++        if (health != Health.READY || registeredConsumers.isEmpty()) return;
++        entries.entrySet().removeIf(value -> {
++            Entry entry = value.getValue();
++            boolean expired = now >= entry.receipt.completedGameTime()
++                    && now - entry.receipt.completedGameTime() >= ACKNOWLEDGED_RETENTION_TICKS;
++            if (expired && entry.acknowledgedBy.containsAll(entry.intendedConsumers)) {
++                durable.remove(value.getKey());
++                return true;
++            }
++            return false;
++        });
++        ackTombstones.entrySet().removeIf(value -> now >= value.getValue().expiresAt);
++    }
++
++    private void retireAcknowledgedUnderPressure(long now) {
++        var iterator = entries.entrySet().iterator();
++        while (entries.size() >= MAX_RECEIPTS && iterator.hasNext()) {
++            Map.Entry<UUID, Entry> value = iterator.next();
++            Entry entry = value.getValue();
++            if (!entry.acknowledgedBy.containsAll(entry.intendedConsumers)) continue;
++            long expiresAt = saturatedAdd(entry.receipt.completedGameTime(), ACKNOWLEDGED_RETENTION_TICKS);
++            if (now < expiresAt) addTombstone(new AckTombstone(value.getKey(), expiresAt,
++                    entry.intendedConsumers), now);
++            durable.remove(value.getKey());
++            iterator.remove();
++        }
++    }
++
++    private void addTombstone(AckTombstone tombstone, long now) {
++        ackTombstones.entrySet().removeIf(value -> now >= value.getValue().expiresAt);
++        while (ackTombstones.size() >= MAX_ACK_TOMBSTONES) {
++            UUID oldest = ackTombstones.keySet().iterator().next();
++            ackTombstones.remove(oldest);
++        }
++        ackTombstones.put(tombstone.receiptId, tombstone);
++    }
++
++    private static long saturatedAdd(long left, long right) {
++        return left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right;
++    }
++
++    CompoundTag save() {
++        if (preservedUnreadable != null) return preservedUnreadable.copy();
++        CompoundTag tag = new CompoundTag();
++        tag.putInt("schema", SCHEMA);
++        if (providerEpoch != null) tag.putUUID("provider_epoch", providerEpoch);
++        tag.putLong("revision", revision);
++        ListTag receipts = new ListTag();
++        entries.values().forEach(entry -> receipts.add(entry.save()));
++        tag.put("receipts", receipts);
++        ListTag tombstones = new ListTag();
++        ackTombstones.values().forEach(value -> tombstones.add(value.save()));
++        tag.put("ack_tombstones", tombstones);
++        ListTag consumers = new ListTag();
++        registeredConsumers.keySet().forEach(value -> consumers.add(StringTag.valueOf(value)));
++        tag.put("consumers", consumers);
++        ListTag subscriptions = new ListTag();
++        registeredConsumers.forEach((id, lastSeen) -> {
++            CompoundTag subscription = new CompoundTag();
++            subscription.putString("id", id);
++            subscription.putLong("last_seen", lastSeen);
++            subscriptions.add(subscription);
++        });
++        tag.put("subscriptions", subscriptions);
++        return tag;
++    }
++
++    void load(CompoundTag tag) {
++        clear();
++        if (tag == null || tag.isEmpty()) return;
++        int schema = tag.getInt("schema");
++        if (schema > SCHEMA) {
++            health = Health.FUTURE_SCHEMA;
++            unreadableSchema = schema;
++            preservedUnreadable = tag.copy();
++            // A future writer may have renamed its cohort fields. Never route around state we cannot
++            // understand: doing so could publish completion without evidence owed to a known consumer.
++            unreadableRequiresFence = true;
++            return;
++        }
++        if (schema < 1 || schema > SCHEMA) {
++            markCorrupt(tag);
++            return;
++        }
++        try {
++            UUID loadedEpoch = tag.hasUUID("provider_epoch") ? tag.getUUID("provider_epoch") : null;
++            long loadedRevision = tag.getLong("revision");
++            if (loadedRevision < 0L || (loadedRevision > 0L) != (loadedEpoch != null)) {
++                throw new IllegalArgumentException("invalid epoch/revision");
++            }
++            LinkedHashMap<UUID, Entry> loadedEntries = new LinkedHashMap<>();
++            long greatestRevision = 0L;
++            ListTag receipts = tag.getList("receipts", Tag.TAG_COMPOUND);
++            if (receipts.size() > MAX_RECEIPTS) throw new IllegalArgumentException("receipt capacity exceeded");
++            for (int i = 0; i < receipts.size(); i++) {
++                Entry entry = Entry.load(receipts.getCompound(i));
++                QuestCompletionReceipt receipt = entry.receipt;
++                if (loadedEpoch == null || !loadedEpoch.equals(receipt.providerEpoch())
++                        || loadedEntries.putIfAbsent(receipt.receiptId(), entry) != null) {
++                    throw new IllegalArgumentException("receipt epoch or identity mismatch");
++                }
++                greatestRevision = Math.max(greatestRevision, receipt.completionRevision());
++            }
++            if (greatestRevision > loadedRevision) throw new IllegalArgumentException("revision moved backwards");
++            LinkedHashMap<UUID, AckTombstone> loadedTombstones = new LinkedHashMap<>();
++            if (schema >= 3) {
++                ListTag tombstones = tag.getList("ack_tombstones", Tag.TAG_COMPOUND);
++                if (tombstones.size() > MAX_ACK_TOMBSTONES) {
++                    throw new IllegalArgumentException("ack tombstone capacity exceeded");
++                }
++                for (int i = 0; i < tombstones.size(); i++) {
++                    AckTombstone tombstone = AckTombstone.load(tombstones.getCompound(i));
++                    if (loadedEntries.containsKey(tombstone.receiptId)
++                            || loadedTombstones.putIfAbsent(tombstone.receiptId, tombstone) != null) {
++                        throw new IllegalArgumentException("duplicate ack tombstone identity");
++                    }
++                }
++            }
++            LinkedHashMap<String, Long> loadedConsumers = new LinkedHashMap<>();
++            ListTag consumers = tag.getList("consumers", Tag.TAG_STRING);
++            if (consumers.size() > MAX_CONSUMERS) throw new IllegalArgumentException("consumer capacity exceeded");
++            for (int i = 0; i < consumers.size(); i++) {
++                ResourceLocation id = ResourceLocation.tryParse(consumers.getString(i));
++                if (id == null || !id.toString().equals(consumers.getString(i))) {
++                    throw new IllegalArgumentException("invalid consumer id");
++                }
++                loadedConsumers.put(id.toString(), Long.MIN_VALUE);
++            }
++            if (schema >= 2) {
++                ListTag subscriptions = tag.getList("subscriptions", Tag.TAG_COMPOUND);
++                if (subscriptions.size() != loadedConsumers.size()) {
++                    throw new IllegalArgumentException("consumer subscription mismatch");
++                }
++                for (int i = 0; i < subscriptions.size(); i++) {
++                    CompoundTag subscription = subscriptions.getCompound(i);
++                    ResourceLocation id = ResourceLocation.tryParse(subscription.getString("id"));
++                    long lastSeen = subscription.getLong("last_seen");
++                    if (id == null || !id.toString().equals(subscription.getString("id"))
++                            || !loadedConsumers.containsKey(id.toString()) || lastSeen < 0L) {
++                        throw new IllegalArgumentException("invalid consumer subscription");
++                    }
++                    loadedConsumers.put(id.toString(), lastSeen);
++                }
++            }
++            for (Entry entry : loadedEntries.values()) {
++                if (schema == 1) entry.intendedConsumers.addAll(loadedConsumers.keySet());
++                if (!loadedConsumers.keySet().containsAll(entry.intendedConsumers)
++                        || !entry.intendedConsumers.containsAll(entry.acknowledgedBy)) {
++                    throw new IllegalArgumentException("acknowledgement names an unregistered consumer");
++                }
++            }
++            for (AckTombstone tombstone : loadedTombstones.values()) {
++                if (!loadedConsumers.keySet().containsAll(tombstone.intendedConsumers)) {
++                    throw new IllegalArgumentException("ack tombstone names an unregistered consumer");
++                }
++            }
++            providerEpoch = loadedEpoch;
++            revision = loadedRevision;
++            entries.putAll(loadedEntries);
++            ackTombstones.putAll(loadedTombstones);
++            registeredConsumers.putAll(loadedConsumers);
++            durable.addAll(loadedEntries.keySet());
++        } catch (RuntimeException malformed) {
++            clear();
++            markCorrupt(tag);
++        }
++    }
++
++    private void clear() {
++        health = Health.READY;
++        unreadableSchema = 0;
++        preservedUnreadable = null;
++        unreadableRequiresFence = false;
++        providerEpoch = null;
++        revision = 0L;
++        entries.clear();
++        ackTombstones.clear();
++        registeredConsumers.clear();
++        durable.clear();
++    }
++
++    private void markCorrupt(CompoundTag tag) {
++        health = Health.CORRUPT;
++        preservedUnreadable = tag.copy();
++        unreadableRequiresFence = nonEmptyOrMalformedList(tag, "receipts")
++                || nonEmptyOrMalformedList(tag, "ack_tombstones")
++                || nonEmptyOrMalformedList(tag, "consumers")
++                || nonEmptyOrMalformedList(tag, "subscriptions");
++    }
++
++    private static boolean nonEmptyOrMalformedList(CompoundTag tag, String key) {
++        if (!tag.contains(key)) return false;
++        Tag value = tag.get(key);
++        return !(value instanceof ListTag list) || !list.isEmpty();
++    }
++
++    private Set<String> activeConsumers(long now) {
++        Set<String> active = new LinkedHashSet<>();
++        registeredConsumers.forEach((id, lastSeen) -> {
++            if (lastSeen >= 0L && now >= lastSeen && now - lastSeen <= SUBSCRIPTION_LEASE_TICKS) {
++                active.add(id);
++            }
++        });
++        return active;
++    }
++
++    private static final class Entry {
++        private final QuestCompletionReceipt receipt;
++        private final Set<String> intendedConsumers = new LinkedHashSet<>();
++        private final Set<String> acknowledgedBy = new LinkedHashSet<>();
++
++        private Entry(QuestCompletionReceipt receipt, Set<String> intendedConsumers) {
++            this.receipt = receipt;
++            this.intendedConsumers.addAll(intendedConsumers);
++        }
++
++        private CompoundTag save() {
++            CompoundTag tag = saveReceipt(receipt);
++            ListTag acknowledgements = new ListTag();
++            acknowledgedBy.forEach(value -> acknowledgements.add(StringTag.valueOf(value)));
++            tag.put("acknowledged_by", acknowledgements);
++            ListTag intended = new ListTag();
++            intendedConsumers.forEach(value -> intended.add(StringTag.valueOf(value)));
++            tag.put("intended_for", intended);
++            return tag;
++        }
++
++        private static Entry load(CompoundTag tag) {
++            Entry entry = new Entry(loadReceipt(tag), Set.of());
++            ListTag intended = tag.getList("intended_for", Tag.TAG_STRING);
++            if (intended.size() > MAX_CONSUMERS) {
++                throw new IllegalArgumentException("intended consumer capacity exceeded");
++            }
++            for (int i = 0; i < intended.size(); i++) {
++                ResourceLocation id = ResourceLocation.tryParse(intended.getString(i));
++                if (id == null || !id.toString().equals(intended.getString(i))) {
++                    throw new IllegalArgumentException("invalid intended consumer id");
++                }
++                entry.intendedConsumers.add(id.toString());
++            }
++            ListTag acknowledgements = tag.getList("acknowledged_by", Tag.TAG_STRING);
++            if (acknowledgements.size() > MAX_CONSUMERS) {
++                throw new IllegalArgumentException("acknowledgement capacity exceeded");
++            }
++            for (int i = 0; i < acknowledgements.size(); i++) {
++                ResourceLocation id = ResourceLocation.tryParse(acknowledgements.getString(i));
++                if (id == null || !id.toString().equals(acknowledgements.getString(i))) {
++                    throw new IllegalArgumentException("invalid acknowledgement consumer id");
++                }
++                entry.acknowledgedBy.add(id.toString());
++            }
++            return entry;
++        }
++    }
++
++    private static final class AckTombstone {
++        private final UUID receiptId;
++        private final long expiresAt;
++        private final Set<String> intendedConsumers = new LinkedHashSet<>();
++
++        private AckTombstone(UUID receiptId, long expiresAt, Set<String> intendedConsumers) {
++            this.receiptId = receiptId;
++            this.expiresAt = expiresAt;
++            this.intendedConsumers.addAll(intendedConsumers);
++        }
++
++        private CompoundTag save() {
++            CompoundTag tag = new CompoundTag();
++            tag.putUUID("receipt_id", receiptId);
++            tag.putLong("expires_at", expiresAt);
++            ListTag intended = new ListTag();
++            intendedConsumers.forEach(value -> intended.add(StringTag.valueOf(value)));
++            tag.put("intended_for", intended);
++            return tag;
++        }
++
++        private static AckTombstone load(CompoundTag tag) {
++            if (!tag.hasUUID("receipt_id") || tag.getLong("expires_at") < 0L) {
++                throw new IllegalArgumentException("invalid ack tombstone");
++            }
++            Set<String> intended = readConsumerIds(tag.getList("intended_for", Tag.TAG_STRING),
++                    "ack tombstone");
++            if (intended.isEmpty()) throw new IllegalArgumentException("empty ack tombstone cohort");
++            return new AckTombstone(tag.getUUID("receipt_id"), tag.getLong("expires_at"), intended);
++        }
++    }
++
++    private static Set<String> readConsumerIds(ListTag values, String what) {
++        if (values.size() > MAX_CONSUMERS) throw new IllegalArgumentException(what + " capacity exceeded");
++        Set<String> result = new LinkedHashSet<>();
++        for (int i = 0; i < values.size(); i++) {
++            ResourceLocation id = ResourceLocation.tryParse(values.getString(i));
++            if (id == null || !id.toString().equals(values.getString(i))) {
++                throw new IllegalArgumentException("invalid " + what + " consumer id");
++            }
++            result.add(id.toString());
++        }
++        return result;
++    }
++
++    private static CompoundTag saveReceipt(QuestCompletionReceipt receipt) {
++        CompoundTag tag = new CompoundTag();
++        tag.putUUID("provider_epoch", receipt.providerEpoch());
++        tag.putUUID("receipt_id", receipt.receiptId());
++        tag.putUUID("player_id", receipt.playerId());
++        tag.putString("quest_id", receipt.questId().toString());
++        tag.putLong("revision", receipt.completionRevision());
++        tag.putString("outcome", receipt.outcome().name());
++        tag.putLong("completed", receipt.completedGameTime());
++        tag.putLong("accepted", receipt.acceptedGameTime());
++        tag.putUUID("giver_id", receipt.giverId());
++        tag.putString("accepted_dimension", receipt.acceptedDimension().toString());
++        receipt.acceptedVillageId().ifPresent(value -> tag.putInt("accepted_village", value));
++        receipt.kingdomBinding().ifPresent(value -> tag.put("kingdom_binding", saveKingdom(value)));
++        receipt.civicBuildingBinding().ifPresent(value -> tag.put("civic_building_binding", saveCivic(value)));
++        return tag;
++    }
++
++    private static QuestCompletionReceipt loadReceipt(CompoundTag tag) {
++        if (!tag.hasUUID("provider_epoch") || !tag.hasUUID("receipt_id") || !tag.hasUUID("player_id")
++                || !tag.hasUUID("giver_id")) throw new IllegalArgumentException("missing receipt UUID");
++        ResourceLocation quest = strictId(tag.getString("quest_id"));
++        ResourceLocation dimension = strictId(tag.getString("accepted_dimension"));
++        QuestCompletionReceipt.Outcome outcome = QuestCompletionReceipt.Outcome.valueOf(tag.getString("outcome"));
++        Optional<Integer> village = tag.contains("accepted_village", Tag.TAG_INT)
++                ? Optional.of(tag.getInt("accepted_village")) : Optional.empty();
++        Optional<QuestCompletionReceipt.KingdomBinding> kingdom = tag.contains("kingdom_binding", Tag.TAG_COMPOUND)
++                ? Optional.of(loadKingdom(tag.getCompound("kingdom_binding"))) : Optional.empty();
++        Optional<QuestCompletionReceipt.CivicBuildingBinding> civic =
++                tag.contains("civic_building_binding", Tag.TAG_COMPOUND)
++                        ? Optional.of(loadCivic(tag.getCompound("civic_building_binding"))) : Optional.empty();
++        return new QuestCompletionReceipt(tag.getUUID("provider_epoch"), tag.getUUID("receipt_id"),
++                tag.getUUID("player_id"), quest, tag.getLong("revision"), outcome,
++                tag.getLong("completed"), tag.getLong("accepted"), tag.getUUID("giver_id"), dimension,
++                village, kingdom, civic);
++    }
++
++    private static CompoundTag saveKingdom(QuestCompletionReceipt.KingdomBinding value) {
++        CompoundTag tag = new CompoundTag();
++        tag.putUUID("settlement_id", value.settlementId());
++        tag.putString("kingdom_id", value.kingdomId().toString());
++        tag.putLong("settlement_revision", value.settlementRevision());
++        tag.putString("dimension", value.dimension().toString());
++        value.localDimension().ifPresent(dimension -> tag.putString("local_dimension", dimension.toString()));
++        value.localVillageId().ifPresent(village -> tag.putInt("local_village", village));
++        return tag;
++    }
++
++    private static QuestCompletionReceipt.KingdomBinding loadKingdom(CompoundTag tag) {
++        if (!tag.hasUUID("settlement_id")) throw new IllegalArgumentException("missing settlement id");
++        Optional<ResourceLocation> localDimension = tag.contains("local_dimension", Tag.TAG_STRING)
++                ? Optional.of(strictId(tag.getString("local_dimension"))) : Optional.empty();
++        Optional<Integer> localVillage = tag.contains("local_village", Tag.TAG_INT)
++                ? Optional.of(tag.getInt("local_village")) : Optional.empty();
++        return new QuestCompletionReceipt.KingdomBinding(tag.getUUID("settlement_id"),
++                strictId(tag.getString("kingdom_id")), tag.getLong("settlement_revision"),
++                strictId(tag.getString("dimension")), localDimension, localVillage);
++    }
++
++    private static CompoundTag saveCivic(QuestCompletionReceipt.CivicBuildingBinding value) {
++        CompoundTag tag = new CompoundTag();
++        tag.putUUID("binding_id", value.bindingId());
++        tag.putUUID("settlement_id", value.settlementId());
++        tag.putString("dimension", value.dimension().toString());
++        tag.putInt("village", value.villageId());
++        tag.putInt("building", value.buildingId());
++        tag.putString("family", value.family());
++        tag.putString("type", value.typeAtBinding());
++        return tag;
++    }
++
++    private static QuestCompletionReceipt.CivicBuildingBinding loadCivic(CompoundTag tag) {
++        if (!tag.hasUUID("binding_id") || !tag.hasUUID("settlement_id")) {
++            throw new IllegalArgumentException("missing civic binding UUID");
++        }
++        return new QuestCompletionReceipt.CivicBuildingBinding(tag.getUUID("binding_id"),
++                tag.getUUID("settlement_id"), strictId(tag.getString("dimension")), tag.getInt("village"),
++                tag.getInt("building"), tag.getString("family"), tag.getString("type"));
++    }
++
++    private static ResourceLocation strictId(String value) {
++        ResourceLocation id = ResourceLocation.tryParse(value);
++        if (id == null || !id.toString().equals(value)) throw new IllegalArgumentException("invalid resource id");
++        return id;
++    }
++}
+--- a/src/main/java/dev/otectus/mcaquests/state/OfferSession.java
++++ b/src/main/java/dev/otectus/mcaquests/state/OfferSession.java
+@@ -13,6 +13,7 @@
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Optional;
++import java.util.Set;
+ import java.util.UUID;
+ 
+ /**
+@@ -61,6 +62,9 @@
+     private int packGeneration;
+     private long seed;
+     private final List<Slot> slots = new ArrayList<>();
++    /** Null for the ordinary villager repertoire; otherwise the trusted commission API's bounded scope. */
++    @Nullable
++    private Set<ResourceLocation> restrictedQuestIds;
+     /** Quest id (as a string, because that is what NBT keys are) to the game time the refusal lapses. */
+     private final Map<String, Long> declinedUntil = new HashMap<>();
+ 
+@@ -109,12 +113,31 @@
+      * time rather than about this particular menu.
+      */
+     public void redraw(List<Slot> drawn, long gameTime, int generation, long drawSeed) {
++        redraw(drawn, gameTime, generation, drawSeed, null);
++    }
++
++    /** Replaces the set and records which public menu surface drew it. */
++    public void redraw(List<Slot> drawn, long gameTime, int generation, long drawSeed,
++                       @Nullable Set<ResourceLocation> restriction) {
+         declinedUntil.values().removeIf(until -> until == UNTIL_REFRESH);
+         slots.clear();
+         slots.addAll(drawn);
+         refreshedAtGameTime = gameTime;
+         packGeneration = generation;
+         seed = drawSeed;
++        restrictedQuestIds = restriction == null ? null : Set.copyOf(restriction);
++    }
++
++    public boolean scopeMatches(@Nullable Set<ResourceLocation> restriction) {
++        return java.util.Objects.equals(restrictedQuestIds, restriction);
++    }
++
++    public boolean allowsInCurrentScope(ResourceLocation questId) {
++        return restrictedQuestIds == null || restrictedQuestIds.contains(questId);
++    }
++
++    public Optional<Set<ResourceLocation>> restrictedQuestIds() {
++        return Optional.ofNullable(restrictedQuestIds);
+     }
+ 
+     /**
+@@ -216,6 +239,12 @@
+         tag.putLong("refreshed", refreshedAtGameTime);
+         tag.putInt("generation", packGeneration);
+         tag.putLong("seed", seed);
++        if (restrictedQuestIds != null) {
++            ListTag restricted = new ListTag();
++            restrictedQuestIds.stream().map(ResourceLocation::toString).sorted()
++                    .forEach(value -> restricted.add(net.minecraft.nbt.StringTag.valueOf(value)));
++            tag.put("restricted_quests", restricted);
++        }
+         ListTag list = new ListTag();
+         for (Slot slot : slots) {
+             CompoundTag entry = new CompoundTag();
+@@ -249,6 +278,15 @@
+         session.refreshedAtGameTime = tag.getLong("refreshed");
+         session.packGeneration = tag.getInt("generation");
+         session.seed = tag.getLong("seed");
++        if (tag.contains("restricted_quests", Tag.TAG_LIST)) {
++            Set<ResourceLocation> restricted = new java.util.LinkedHashSet<>();
++            ListTag values = tag.getList("restricted_quests", Tag.TAG_STRING);
++            for (int i = 0; i < values.size() && i < 32; i++) {
++                ResourceLocation id = ResourceLocation.tryParse(values.getString(i));
++                if (id != null) restricted.add(id);
++            }
++            session.restrictedQuestIds = Set.copyOf(restricted);
++        }
+         ListTag list = tag.getList("slots", Tag.TAG_COMPOUND);
+         for (int i = 0; i < list.size(); i++) {
+             CompoundTag entry = list.getCompound(i);
+@@ -277,6 +315,7 @@
+         refreshedAtGameTime = other.refreshedAtGameTime;
+         packGeneration = other.packGeneration;
+         seed = other.seed;
++        restrictedQuestIds = other.restrictedQuestIds == null ? null : Set.copyOf(other.restrictedQuestIds);
+         slots.clear();
+         slots.addAll(other.slots);
+         declinedUntil.clear();
+--- a/src/main/java/dev/otectus/mcaquests/state/PlayerQuestData.java
++++ b/src/main/java/dev/otectus/mcaquests/state/PlayerQuestData.java
+@@ -1,5 +1,6 @@
+ package dev.otectus.mcaquests.state;
+ 
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.nbt.ListTag;
+ import net.minecraft.nbt.Tag;
+@@ -25,8 +26,65 @@
+     private final ProgressionStats stats = new ProgressionStats();
+     private final OfferSessions offers = new OfferSessions();
+     private final PendingItemRewards pendingItems = new PendingItemRewards();
++    private final CompletionReceiptOutbox completionReceipts = new CompletionReceiptOutbox();
+ 
+     public PendingItemRewards pendingItems() { return pendingItems; }
++
++    /** Internal completion pipeline hook. Add-ons read the immutable API through {@code McaQuestsApi}. */
++    public boolean canCaptureCompletionReceipt(long now) {
++        return completionReceipts.canAppend(now);
++    }
++
++    /** True only while at least one add-on is actively polling for future completion evidence. */
++    public boolean shouldCaptureCompletionReceipt(long now) {
++        return completionReceipts.shouldCapture(now);
++    }
++
++    /** Internal completion pipeline hook; the returned receipt is hidden until marked durable. */
++    public QuestCompletionReceipt captureCompletionReceipt(UUID playerId, ActiveQuest active, long now) {
++        return completionReceipts.append(playerId, active, now);
++    }
++
++    public List<QuestCompletionReceipt> readCompletionReceipts(ResourceLocation consumer, int limit, long now) {
++        return completionReceipts.read(consumer, limit, now);
++    }
++
++    public boolean acknowledgeCompletionReceipt(ResourceLocation consumer, UUID epoch, UUID receiptId) {
++        return completionReceipts.acknowledge(consumer, epoch, receiptId);
++    }
++
++    public boolean completionReceiptWasAcknowledged(ResourceLocation consumer, UUID receiptId) {
++        return completionReceipts.wasAcknowledged(consumer, receiptId);
++    }
++
++    public void rollbackCompletionReceiptAcknowledgement(ResourceLocation consumer, UUID receiptId,
++                                                          boolean previouslyAcknowledged) {
++        completionReceipts.rollbackAcknowledgement(consumer, receiptId, previouslyAcknowledged);
++    }
++
++    public boolean completionReceiptAcknowledged(ResourceLocation consumer, UUID epoch, UUID receiptId) {
++        return completionReceipts.isAcknowledged(consumer, epoch, receiptId);
++    }
++
++    public void markCompletionReceiptDurable(UUID receiptId) {
++        completionReceipts.markDurable(receiptId);
++    }
++
++    public Optional<QuestCompletionReceipt> completionReceipt(UUID receiptId) {
++        return completionReceipts.receipt(receiptId);
++    }
++
++    public boolean completionReceiptDurable(UUID receiptId) {
++        return completionReceipts.isDurable(receiptId);
++    }
++
++    public List<QuestCompletionReceipt> pendingCompletionReceiptDurability() {
++        return completionReceipts.pendingDurability();
++    }
++
++    public String completionReceiptStatus() {
++        return completionReceipts.status();
++    }
+ 
+     /** The quest the marker, the guidance line and the villager outline are all about. */
+     private TrackedQuest tracked;
+@@ -151,6 +209,7 @@
+         tag.put("stats", stats.save());
+         tag.put("offers", offers.save());
+         if (!pendingItems.isEmpty()) { tag.put("pending_items", pendingItems.save()); }
++        if (completionReceipts.shouldSave()) { tag.put("completion_receipts", completionReceipts.save()); }
+         // Written only when something is tracked, so a save that never used the feature is byte-for-byte
+         // what it was — the same discipline ActiveQuest applies to its own optional fields.
+         if (tracked != null) {
+@@ -178,6 +237,7 @@
+         stats.load(tag.getCompound("stats")); // absent on pre-1.0.0 saves -> empty
+         offers.load(tag.getCompound("offers")); // absent on pre-1.4.3 saves -> empty, so offers redraw
+         pendingItems.load(tag.getCompound("pending_items"));
++        completionReceipts.load(tag.getCompound("completion_receipts"));
+         // Absent on pre-1.5.0 saves -> nothing tracked, and the next quest accepted picks itself up.
+         tracked = TrackedQuest.load(tag.getCompound("tracked")).orElse(null);
+     }
+--- a/src/main/resources/assets/mcaquests/lang/en_us.json
++++ b/src/main/resources/assets/mcaquests/lang/en_us.json
+@@ -160,6 +160,7 @@
+   "mcaquests.message.giver_died": "A villager who gave you a quest has died.",
+   "mcaquests.message.quest_accepted": "Quest accepted: %s",
+   "mcaquests.message.quest_completed": "Quest complete: %s",
++  "mcaquests.message.completion_receipts_unavailable": "Quest completion is temporarily unavailable. Ask a server operator to check MCA: Quests receipt storage.",
+   "mcaquests.message.quest_failed": "Quest failed: %s",
+   "mcaquests.chain.part": "Part %s of %s",
+   "mcaquests.chain.part_open": "Part %s",
+--- a/src/main/resources/assets/mcaquests/lang/pt_br.json
++++ b/src/main/resources/assets/mcaquests/lang/pt_br.json
+@@ -160,6 +160,7 @@
+   "mcaquests.message.giver_died": "Um aldeão que lhe deu uma missão morreu.",
+   "mcaquests.message.quest_accepted": "Missão aceita: %s",
+   "mcaquests.message.quest_completed": "Missão concluída: %s",
++  "mcaquests.message.completion_receipts_unavailable": "A conclusão da missão está temporariamente indisponível. Peça a um operador do servidor para verificar o armazenamento de comprovantes do MCA: Quests.",
+   "mcaquests.message.quest_failed": "Missão fracassada: %s",
+   "mcaquests.chain.part": "Parte %s de %s",
+   "mcaquests.chain.part_open": "Parte %s",
+--- a/src/main/resources/mcaquests.mixins.json
++++ b/src/main/resources/mcaquests.mixins.json
+@@ -4,6 +4,9 @@
+   "package": "dev.otectus.mcaquests.mixin",
+   "compatibilityLevel": "JAVA_17",
+   "refmap": "mcaquests.refmap.json",
++  "mixins": [
++    "PlayerListAccessor"
++  ],
+   "client": [
+     "MinecraftGlowMixin",
+     "ScreenAccessor"
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaquests/state/CompletionReceiptDurabilitySourceTest.java
+@@ -0,0 +1,23 @@
++package dev.otectus.mcaquests.state;
++
++import org.junit.jupiter.api.Test;
++
++import java.nio.file.Files;
++import java.nio.file.Path;
++
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++class CompletionReceiptDurabilitySourceTest {
++    @Test
++    void durabilityFenceSavesOnlyTheReceiptOwner() throws Exception {
++        String source = Files.readString(Path.of(
++                "src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java"));
++        assertTrue(source.contains("mcaquests$savePlayer(player)"));
++        assertFalse(source.contains("saveAll()"),
++                "one receipt must not force a save of every online player's capability graph");
++
++        String mixins = Files.readString(Path.of("src/main/resources/mcaquests.mixins.json"));
++        assertTrue(mixins.contains("PlayerListAccessor"));
++    }
++}
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaquests/state/CompletionReceiptOutboxTest.java
+@@ -0,0 +1,270 @@
++package dev.otectus.mcaquests.state;
++
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
++import dev.otectus.mcaquests.support.TestBootstrap;
++import net.minecraft.nbt.CompoundTag;
++import net.minecraft.network.chat.Component;
++import net.minecraft.resources.ResourceLocation;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++import java.util.Optional;
++import java.util.OptionalInt;
++import java.util.OptionalLong;
++import java.util.UUID;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++class CompletionReceiptOutboxTest {
++    private static final ResourceLocation CONSUMER = new ResourceLocation("test", "guilds");
++    private static final ResourceLocation AUDIT = new ResourceLocation("test", "audit");
++    private static final UUID PLAYER = UUID.fromString("46b1509b-23ab-48d1-893b-e9f30fd72bc2");
++
++    @BeforeAll
++    static void bootstrap() {
++        TestBootstrap.ensureBootstrapped();
++    }
++
++    @Test
++    void receiptIsInvisibleUntilDurabilityFenceAndRoundTripsFrozenContext() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 9L);
++        ActiveQuest quest = quest(10L);
++        QuestCompletionReceipt captured = outbox.append(PLAYER, quest, 90L);
++
++        assertEquals("pending_save", outbox.status());
++        assertTrue(outbox.read(CONSUMER, 8, 90L).isEmpty(), "an in-memory completion is not delivery evidence");
++
++        // A successful disk verification is the only in-process transition that publishes the receipt.
++        outbox.markDurable(captured.receiptId());
++        QuestCompletionReceipt visible = outbox.read(CONSUMER, 8, 90L).get(0);
++        assertEquals(captured, visible);
++        assertEquals(12, visible.acceptedVillageId().orElseThrow());
++        assertEquals(new ResourceLocation("ultima_kingdoms", "madera"),
++                visible.kingdomBinding().orElseThrow().kingdomId());
++        assertEquals("guild_hall", visible.civicBuildingBinding().orElseThrow().family());
++
++        // A receipt loaded from a player file has necessarily crossed that file's fence.
++        CompletionReceiptOutbox restored = new CompletionReceiptOutbox();
++        restored.load(outbox.save());
++        assertEquals(List.of(captured), restored.read(CONSUMER, 8, 91L));
++        assertEquals("ready", restored.status());
++    }
++
++    @Test
++    void failedAcknowledgementRollsBackAndReplaysAfterRestart() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 9L);
++        QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(10L), 90L);
++        outbox.markDurable(receipt.receiptId());
++        assertFalse(outbox.wasAcknowledged(CONSUMER, receipt.receiptId()));
++        assertTrue(outbox.acknowledge(CONSUMER, receipt.providerEpoch(), receipt.receiptId()));
++
++        // Models the API's response to a failed acknowledgement save/reread.
++        outbox.rollbackAcknowledgement(CONSUMER, receipt.receiptId(), false);
++        assertEquals(List.of(receipt), outbox.read(CONSUMER, 8, 90L));
++
++        CompletionReceiptOutbox restored = new CompletionReceiptOutbox();
++        restored.load(outbox.save());
++        assertEquals(List.of(receipt), restored.read(CONSUMER, 8, 91L),
++                "a failed ack must not strand the only durable evidence");
++    }
++
++    @Test
++    void durableAcknowledgementSurvivesRestartAndOtherConsumerStillSeesReceipt() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 9L);
++        outbox.read(AUDIT, 8, 9L);
++        QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(10L), 90L);
++        outbox.markDurable(receipt.receiptId());
++        assertTrue(outbox.acknowledge(CONSUMER, receipt.providerEpoch(), receipt.receiptId()));
++
++        CompletionReceiptOutbox restored = new CompletionReceiptOutbox();
++        restored.load(outbox.save());
++        assertTrue(restored.read(CONSUMER, 8, 91L).isEmpty());
++        assertEquals(List.of(receipt), restored.read(AUDIT, 8, 91L));
++    }
++
++    @Test
++    void expiredOrUnacknowledgedConsumerNeverLosesItsFrozenEvidence() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 9L);
++        QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(10L), 90L);
++        outbox.markDurable(receipt.receiptId());
++        long longAfterRetention = 90L + CompletionReceiptOutbox.ACKNOWLEDGED_RETENTION_TICKS + 1L;
++
++        assertTrue(outbox.canAppend(longAfterRetention));
++        assertEquals(1, outbox.size(), "lease expiry cannot discard unacknowledged evidence");
++        outbox.read(CONSUMER, 8, longAfterRetention);
++        assertTrue(outbox.canAppend(longAfterRetention));
++        assertEquals(1, outbox.size(), "a registered but absent consumer still owns its unacked evidence");
++
++        assertTrue(outbox.acknowledge(CONSUMER, receipt.providerEpoch(), receipt.receiptId()));
++        assertTrue(outbox.canAppend(longAfterRetention));
++        assertEquals(0, outbox.size(), "fully acknowledged old evidence may be reclaimed");
++    }
++
++    @Test
++    void futureAndCorruptSchemasArePreservedAndFailClosed() {
++        CompoundTag future = new CompoundTag();
++        future.putInt("schema", CompletionReceiptOutbox.SCHEMA + 1);
++        future.putString("future_payload", "keep me");
++        CompletionReceiptOutbox futureOutbox = new CompletionReceiptOutbox();
++        futureOutbox.load(future);
++        assertEquals("future_schema:" + (CompletionReceiptOutbox.SCHEMA + 1), futureOutbox.status());
++        assertTrue(futureOutbox.shouldCapture(100L),
++                "unknown future state must route completion through the failing preflight");
++        assertFalse(futureOutbox.canAppend(100L));
++        assertEquals(future, futureOutbox.save());
++
++        CompoundTag corrupt = new CompoundTag();
++        corrupt.putInt("schema", CompletionReceiptOutbox.SCHEMA);
++        corrupt.putLong("revision", 1L); // revision without the required epoch
++        CompletionReceiptOutbox corruptOutbox = new CompletionReceiptOutbox();
++        corruptOutbox.load(corrupt);
++        assertEquals("corrupt", corruptOutbox.status());
++        assertFalse(corruptOutbox.shouldCapture(100L), "corrupt empty state owes no consumer evidence");
++        assertFalse(corruptOutbox.canAppend(100L));
++        assertEquals(corrupt, corruptOutbox.save());
++
++        CompoundTag corruptWithConsumer = corrupt.copy();
++        corruptWithConsumer.putString("consumers", "malformed but possibly subscribed");
++        CompletionReceiptOutbox guarded = new CompletionReceiptOutbox();
++        guarded.load(corruptWithConsumer);
++        assertTrue(guarded.shouldCapture(100L),
++                "unreadable consumer state must fail closed instead of allowing unreceipted completion");
++        assertFalse(guarded.canAppend(100L));
++    }
++
++    @Test
++    void unacknowledgedCapacityAppliesBackpressureWithoutEviction() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 99L);
++        for (int i = 0; i < CompletionReceiptOutbox.MAX_RECEIPTS; i++) {
++            outbox.read(CONSUMER, 8, i + 99L);
++            QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(i + 1L), i + 100L);
++            outbox.markDurable(receipt.receiptId());
++        }
++
++        assertEquals("full", outbox.status());
++        long afterLease = CompletionReceiptOutbox.ACKNOWLEDGED_RETENTION_TICKS * 2L;
++        assertFalse(outbox.shouldCapture(afterLease), "stopped consumer no longer opts future quests in");
++        assertFalse(outbox.canAppend(afterLease));
++        assertEquals(CompletionReceiptOutbox.MAX_RECEIPTS, outbox.size(),
++                "an active intended consumer applies backpressure instead of losing evidence");
++    }
++
++    @Test
++    void moreThanCapacityFullyAcknowledgedCompletionsKeepFlowingAndAckReplaySurvivesRestart() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        QuestCompletionReceipt first = null;
++        for (int i = 0; i < CompletionReceiptOutbox.MAX_RECEIPTS + 32; i++) {
++            long now = i + 100L;
++            outbox.read(CONSUMER, 8, now);
++            QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(i + 1L), now);
++            if (first == null) first = receipt;
++            outbox.markDurable(receipt.receiptId());
++            assertTrue(outbox.acknowledge(CONSUMER, receipt.providerEpoch(), receipt.receiptId()));
++        }
++
++        assertEquals(CompletionReceiptOutbox.MAX_RECEIPTS, outbox.size());
++        assertTrue(outbox.acknowledge(CONSUMER, first.providerEpoch(), first.receiptId()),
++                "a pressure-retired receipt keeps an idempotent ack tombstone");
++        assertFalse(outbox.acknowledge(AUDIT, first.providerEpoch(), first.receiptId()),
++                "a consumer outside the frozen cohort cannot use the tombstone");
++        assertFalse(outbox.acknowledge(CONSUMER, UUID.randomUUID(), first.receiptId()));
++
++        CompletionReceiptOutbox restored = new CompletionReceiptOutbox();
++        restored.load(outbox.save());
++        assertTrue(restored.acknowledge(CONSUMER, first.providerEpoch(), first.receiptId()),
++                "ack -> retire -> restart remains safely replayable");
++        assertFalse(restored.acknowledge(AUDIT, first.providerEpoch(), first.receiptId()));
++    }
++
++    @Test
++    void fullMixedQueueRetiresAcknowledgedEntryButNeverUnacknowledgedEvidence() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 99L);
++        QuestCompletionReceipt unacknowledged = null;
++        QuestCompletionReceipt acknowledged = null;
++        for (int i = 0; i < CompletionReceiptOutbox.MAX_RECEIPTS; i++) {
++            long now = i + 100L;
++            outbox.read(CONSUMER, 8, now);
++            QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(i + 1L), now);
++            outbox.markDurable(receipt.receiptId());
++            if (i == 0) unacknowledged = receipt;
++            else {
++                assertTrue(outbox.acknowledge(CONSUMER, receipt.providerEpoch(), receipt.receiptId()));
++                if (acknowledged == null) acknowledged = receipt;
++            }
++        }
++
++        assertTrue(outbox.canAppend(356L), "a fully acknowledged row makes pressure room");
++        assertEquals(CompletionReceiptOutbox.MAX_RECEIPTS - 1, outbox.size());
++        assertEquals(List.of(unacknowledged), outbox.read(CONSUMER, 1, 356L),
++                "the oldest unacknowledged evidence remains readable");
++        assertTrue(outbox.acknowledge(CONSUMER, acknowledged.providerEpoch(), acknowledged.receiptId()),
++                "the retired acknowledged row remains an idempotent replay");
++    }
++
++    @Test
++    void standaloneCompletionsNeverFillOutboxOrBlockNormalQuestProgress() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        for (int i = 0; i < CompletionReceiptOutbox.MAX_RECEIPTS * 2; i++) {
++            long now = i + 100L;
++            assertFalse(outbox.shouldCapture(now));
++            assertTrue(outbox.canAppend(now), "unsubscribed receipt state cannot block completion " + i);
++            // QuestManager skips append and continues its existing reward/history pipeline in this case.
++        }
++        assertEquals(0, outbox.size());
++        assertEquals("ready", outbox.status());
++    }
++
++    @Test
++    void laterConsumerCannotClaimOrBecomeRequiredForEarlierReceipt() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        outbox.read(CONSUMER, 8, 9L);
++        QuestCompletionReceipt receipt = outbox.append(PLAYER, quest(10L), 90L);
++        outbox.markDurable(receipt.receiptId());
++
++        assertTrue(outbox.read(AUDIT, 8, 91L).isEmpty(), "new add-on gets no pre-subscription credit");
++        assertFalse(outbox.acknowledge(AUDIT, receipt.providerEpoch(), receipt.receiptId()));
++        assertTrue(outbox.acknowledge(CONSUMER, receipt.providerEpoch(), receipt.receiptId()));
++        long expired = 90L + CompletionReceiptOutbox.ACKNOWLEDGED_RETENTION_TICKS + 1L;
++        assertTrue(outbox.canAppend(expired));
++        assertEquals(0, outbox.size(), "later consumers are not retroactive acknowledgement obligations");
++    }
++
++    @Test
++    void playerCapabilityRoundTripRestoresReceiptForReplay() {
++        PlayerQuestData data = new PlayerQuestData();
++        data.readCompletionReceipts(CONSUMER, 8, 9L);
++        QuestCompletionReceipt receipt = data.captureCompletionReceipt(PLAYER, quest(10L), 90L);
++        data.markCompletionReceiptDurable(receipt.receiptId());
++
++        PlayerQuestData restored = new PlayerQuestData();
++        restored.load(data.save());
++        assertEquals(List.of(receipt), restored.readCompletionReceipts(CONSUMER, 8, 91L));
++    }
++
++    private static ActiveQuest quest(long acceptedAt) {
++        ActiveQuest quest = new ActiveQuest(new ResourceLocation("mcaquests", "guild_commission"),
++                UUID.fromString("c7d1c8f0-1241-4cd8-b859-f6b6ba7862df"), Component.literal("Giver"),
++                new ResourceLocation("minecraft", "librarian"),
++                new ResourceLocation("minecraft", "overworld"), acceptedAt,
++                OptionalLong.of(acceptedAt), OptionalInt.of(12), List.of(), null, null);
++        quest.bindKingdom(new KingdomBindingSnapshot(
++                UUID.fromString("41cfe97d-baf2-452e-91fe-ad8654e512fe"),
++                new ResourceLocation("ultima_kingdoms", "madera"), 7L,
++                new ResourceLocation("minecraft", "overworld"),
++                Optional.of(new ResourceLocation("minecraft", "overworld")), OptionalInt.of(12)));
++        quest.bindCivicBuilding(new CivicBuildingBinding(
++                UUID.fromString("3d1c4a87-0d42-459d-819d-68a3c5b963db"),
++                UUID.fromString("41cfe97d-baf2-452e-91fe-ad8654e512fe"),
++                new ResourceLocation("minecraft", "overworld"), 12, 4, "guild_hall", "masonry"));
++        return quest;
++    }
++}
+--- a/src/test/java/dev/otectus/mcaquests/state/OfferSessionTest.java
++++ b/src/test/java/dev/otectus/mcaquests/state/OfferSessionTest.java
+@@ -7,6 +7,7 @@
+ import org.junit.jupiter.api.Test;
+ 
+ import java.util.List;
++import java.util.Set;
+ import java.util.UUID;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+@@ -89,6 +90,20 @@
+     }
+ 
+     @Test
++    void commissionScopeSurvivesSaveAndOrdinaryScopeDoesNotMatchIt() {
++        OfferSession session = new OfferSession(VILLAGER);
++        Set<ResourceLocation> allowed = Set.of(ONE, THREE);
++        session.redraw(List.of(slot(ONE)), 1000L, GENERATION, 42L, allowed);
++
++        OfferSession restored = OfferSession.load(session.save());
++        assertEquals(allowed, restored.restrictedQuestIds().orElseThrow());
++        assertTrue(restored.scopeMatches(allowed));
++        assertFalse(restored.scopeMatches(null));
++        assertTrue(restored.allowsInCurrentScope(ONE));
++        assertFalse(restored.allowsInCurrentScope(TWO));
++    }
++
++    @Test
+     @DisplayName("a decline cooldown longer than the pruning horizon survives pruning")
+     void timedRefusalSurvivesPruning() {
+         OfferSessions sessions = new OfferSessions();

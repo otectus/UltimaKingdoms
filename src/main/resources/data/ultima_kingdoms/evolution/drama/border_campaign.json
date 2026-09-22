@@ -1,0 +1,13 @@
+{
+  "title": "Authored Border Campaign",
+  "kind": "CAMPAIGN",
+  "outcomes": ["DECLARE", "NEGOTIATE", "EXIT", "RECOVER"],
+  "goal": "DEFEND",
+  "objective": "Defend the named settlement through the native campaign system while preserving its civic identity and assets.",
+  "durationTicks": 144000,
+  "maxParticipants": 2,
+  "operationBudget": 4,
+  "requiresOccupation": false,
+  "organizationTemplate": null,
+  "organizationName": null
+}

@@ -70,6 +70,7 @@ public final class ClientPresentationState {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        InteractionClient.tickKeys();
         Minecraft minecraft = Minecraft.getInstance();
         ResourceLocation dimension = minecraft.level == null ? null : minecraft.level.dimension().location();
         if (clientDimension == null) {

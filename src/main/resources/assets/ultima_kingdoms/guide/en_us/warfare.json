@@ -1,0 +1,225 @@
+{
+  "entries": [
+    {
+      "id": "warfare_ownership_and_setup",
+      "category": "warfare",
+      "title": "Warfare ownership and setup",
+      "summary": "Learn which systems own battles, settlements, contracts, law, and maps before beginning a campaign.",
+      "body": [
+        "Ultima Kingdoms coordinates political authority around other mods without replacing them. Recruits 1.15.2 owns factions, soldiers, equipment, claims, siege progress, and combat results. Ultima owns the mapping from those facts to civic settlements, the public campaign intent, notice periods, political mandates, sovereignty accords, and durable receipts. A native capture creates an occupation; it does not rename a town, erase residents, change culture, move buildings, or clear reputation and legal records.",
+        "Military play needs the matching Recruits provider. Civilian contracts need a compatible MCA Quests installation, and Crime jurisdiction needs the matching MCA Crime provider. Map Atlases remains the map renderer when installed. The ordinary settlement ledger, discovery records, routes, and encounter receipts still belong to Ultima and remain useful when an optional companion is absent. Version-bound operations fail closed rather than guessing provider state.",
+        "All R3 warfare feature switches default to enabled. The common configuration can separately disable military actions, civilian contracts, target protection, or world context. Default policy protects capitals, requires a defending leader online for bound siege damage, gives 1,200 ticks of campaign notice, lasts 168,000 ticks after notice, permits at most 16 temporary units per commander, and gives mobilizations 6,000 ticks. Server operators may tune these bounded values before play."
+      ],
+      "commands": []
+    },
+    {
+      "id": "claim_mapping_and_binding",
+      "category": "warfare",
+      "title": "Map claims to settlements",
+      "summary": "Operators connect real Recruits claims to civic kingdoms and settlements without assigning anyone to a faction.",
+      "body": [
+        "Initial mapping is an operator task. Stand in a participating Recruits claim, open Map the native faction here, and choose the named faction and civic kingdom. Then stand where the same loaded claim overlaps the recognized settlement and open Bind the current native claim. A claim can bind to only one settlement. These tasks record an association; they never place a player or NPC on a native team and never create a claim.",
+        "Use Inspect military control here after each step. It shows the settlement, claim, controller, mapping, campaigns, and relevant routes known at that position. Remote inspection is intentionally restricted for ordinary players: they need prior discovery and current local presence. Operators can diagnose remotely. Retire a claim binding presents the current named binding for review and refuses a changed record.",
+        "A mapping is a prerequisite, not permission to fight. A military declaration still requires the actual native faction leader and a current political PROPOSE or RATIFY mandate. Operator status alone does not supply that mandate. If the expected claim, controller, leader, or provider save cannot be verified, the command refuses and preserves existing civic and native state."
+      ],
+      "commands": [
+        "/ultima warfare here",
+        "/ultima warfare inspect \"<settlement name>\"",
+        "/ultima warfare map_here <kingdom definition id>",
+        "/ultima warfare bind_here \"<settlement name>\"",
+        "/ultima warfare retire \"<settlement name>\" <revision>"
+      ]
+    },
+    {
+      "id": "campaign_declaration",
+      "category": "warfare",
+      "title": "Declare a bounded campaign",
+      "summary": "Publish an authorized military goal with notice, a deadline, and a real native claim.",
+      "body": [
+        "Open Browse local campaigns or Read military control, then choose Declare a military campaign. Select the known settlement, an authored goal, and write a public reason other participants can understand. The review carries the current settlement version. The server checks discovery, claim binding, native faction leadership, political authority, target policy, current control sequence, and conflicting actions before saving.",
+        "A successful declaration enters notice before native activation. With defaults, notice is 1,200 game ticks and the campaign then has 168,000 ticks. The defender-online rule pauses permitted bound siege damage when the defending leader is offline. Native troop detection, native damage, and the provider's own siege rules decide the result. Ultima does not invent victory from a deadline or from a command response.",
+        "Record version checks protect multiplayer choices. If someone changes the settlement after review, reopen the task and decide from the new state. Capital protection or missing leadership is a policy refusal, not a hidden campaign. The retained record distinguishes notice, active, occupied, resolved, expired, and suspended phases so players and operators can see what happened."
+      ],
+      "commands": [
+        "/ultima warfare campaigns \"<settlement name>\"",
+        "/ultima warfare declare defend \"<settlement name>\" <revision> <public reason...>",
+        "/ultima warfare declare relief_access \"<settlement name>\" <revision> <public reason...>",
+        "/ultima warfare declare withdrawal \"<settlement name>\" <revision> <public reason...>",
+        "/ultima warfare declare autonomy \"<settlement name>\" <revision> <public reason...>",
+        "/ultima warfare declare transfer \"<settlement name>\" <revision> <public reason...>"
+      ]
+    },
+    {
+      "id": "campaign_withdrawal_and_recovery",
+      "category": "warfare",
+      "title": "Withdraw or recover a campaign",
+      "summary": "Use explicit exits and retries when a native declaration is canceled, interrupted, or awaiting acknowledgment.",
+      "body": [
+        "The declaring commander may withdraw their own campaign while the saved phase permits it. Withdrawal asks the native owner to cancel the corresponding action and records the outcome; it cannot create a hidden siege or force civilians into a special state. Inspect the settlement afterward to confirm the terminal phase and current controller rather than assuming a chat line changed native control.",
+        "If Ultima saved campaign intent but the provider did not acknowledge it, retry_campaign repeats the same bounded native declaration. It does not create a second campaign identity. Use it after restoring the exact supported Recruits provider or after an interrupted save. A provider refusal leaves the record suspended or otherwise recoverable, with the original evidence retained for inspection.",
+        "Do not delete world sidecars to clear a pending campaign. That removes the evidence needed to decide whether Recruits already changed. Back up the world, restore provider availability, inspect the saved campaign and native faction state, and then use retry or withdrawal as appropriate. If native state diverged from the frozen claim and control sequence, negotiate a fresh action instead of forcing an old one through."
+      ],
+      "commands": [
+        "/ultima warfare retry_campaign \"<campaign name>\"",
+        "/ultima warfare withdraw \"<campaign name>\"",
+        "/ultima warfare inspect \"<settlement name>\""
+      ]
+    },
+    {
+      "id": "sovereignty_accords",
+      "category": "warfare",
+      "title": "Negotiate sovereignty accords",
+      "summary": "Reach a bilateral recognized, autonomous, or independent settlement without rewriting civic identity.",
+      "body": [
+        "An accord records a negotiated relationship between two real native factions around a known settlement. Open Propose a settlement control agreement and choose recognized, autonomous, or independent status, the named counterpart faction, the recognized civic kingdom, the settlement, and clear terms. Review freezes native relations, signing governments, physical claim and controller, and the settlement evidence used for the decision.",
+        "The other authorized side opens Sign a control agreement and selects the visible proposal. Both current leaders must be online and retain RATIFY authority when it becomes operational. Apply writes through the supported native provider in both directions and verifies its saved acknowledgment. A partial result remains pending for explicit apply retry. Rejection is a durable neutral end.",
+        "Sovereignty status is separate from native control and civic identity. Independent recognition does not automatically transfer a claim, rename the settlement, move residents, or change families and buildings. Peaceful neutral visitors may receive safe conduct while a valid accord and native relations allow it. A later breach ends operational safe conduct but retains the historical ratification rather than pretending the agreement never existed."
+      ],
+      "commands": [
+        "/ultima warfare accord recognized \"<settlement name>\" <native faction id> <kingdom definition id> <revision> <terms...>",
+        "/ultima warfare accord autonomous \"<settlement name>\" <native faction id> <kingdom definition id> <revision> <terms...>",
+        "/ultima warfare accord independent \"<settlement name>\" <native faction id> <kingdom definition id> <revision> <terms...>",
+        "/ultima warfare accord sign \"<control agreement name>\" <revision>",
+        "/ultima warfare accord reject \"<control agreement name>\" <revision>",
+        "/ultima warfare accord apply \"<control agreement name>\""
+      ]
+    },
+    {
+      "id": "occupation_and_civilian_safety",
+      "category": "warfare",
+      "title": "Occupation and civilian safety",
+      "summary": "Understand what native capture changes and which civic facts remain intact.",
+      "body": [
+        "A confirmed Recruits control change can create an occupation record for the bound settlement. That record preserves the before-and-after control sequence and supports later relief, autonomy, protection, or rebellion evidence. It does not erase the settlement. Civic kingdom, culture, residences, institutions, buildings, assets, family ties, organization standing, reputation, and legal cases remain owned by their respective systems.",
+        "Ultima's target policy protects capitals by default and validates online defenders before allowing bound siege damage. Offline defenders do not become defeated by absence. Unloaded soldiers, missing NPCs, player logout, restart, and elapsed time are not victory evidence. Recruits remains responsible for troop detection and combat progress, while confirmed provider state is the only source for native control.",
+        "MCA Crime jurisdiction follows current recognized civic and occupation facts through its matching provider. An occupation does not silently pardon cases or confiscate civilian property. A later accord may recognize autonomy or independence, but that remains a political status until the native owner confirms any separate control operation. Inspect the settlement ledger and campaign history whenever the civic story and the native territorial map appear to disagree."
+      ],
+      "commands": [
+        "/ultima warfare here",
+        "/ultima warfare inspect \"<settlement name>\"",
+        "/ultima warfare campaigns \"<settlement name>\""
+      ]
+    },
+    {
+      "id": "temporary_mobilization",
+      "category": "warfare",
+      "title": "Issue temporary recruit orders",
+      "summary": "Muster self-owned loaded recruits under defense, escort, or scout doctrine for a bounded lease.",
+      "body": [
+        "Mobilization temporarily changes orders for a recruit you actually own. Open Deploy a recruit temporarily or Deploy nearby recruits temporarily and select the named loaded self-owned recruit when prompted. Choose defense, escort, or scout. With default configuration, one commander may hold at most 16 leases and each lasts 6,000 ticks. The system never force-loads a recruit or reaches into an unloaded chunk.",
+        "Before changing orders, Ultima records the recruit identity, owner, original group and orders, provider session, and expiration. It then asks Recruits to apply the temporary doctrine and verifies the result. A recruit involved in a nonterminal R4 transfer cannot be mobilized because two saved operations must not compete for the same native entity.",
+        "Use status to see current leases and their recovery state. Dismiss ends a live lease early and restores the snapshot. Natural expiry also requests restoration. If the provider was unavailable or its save was not acknowledged, recover retries the guarded restoration. Missing or changed ownership blocks unsafe repair; it does not guess what orders the recruit should have now."
+      ],
+      "commands": [
+        "/ultima-mobilization muster nearby <defense|escort|scout>",
+        "/ultima-mobilization muster \"<recruit name>\" <defense|escort|scout>",
+        "/ultima-mobilization status",
+        "/ultima-mobilization dismiss \"<deployment name>\"",
+        "/ultima-mobilization recover \"<deployment name>\""
+      ]
+    },
+    {
+      "id": "civilian_contracts",
+      "category": "warfare",
+      "title": "Take civilian contracts",
+      "summary": "Open one of six authored native service quests from a recognized nearby civilian contact.",
+      "body": [
+        "Civilian recovery offers relief, reconnaissance, mediation, autonomy, defense, and escort contracts. Stand near a loaded, living, visible recognized contact, open Choose civilian recovery work, and select that named contact and work kind. The server verifies the giver, institution, settlement, civic control, quest kind, and player before asking MCA Quests to open the native quest. An unloaded or unrelated villager cannot act as a remote quest dispenser.",
+        "MCA Quests owns acceptance, objectives, inventory consumption, rewards, and its completion receipt. Ultima binds the accepted native quest instance to its giver and political context, then consumes the durable completion proof only where an authored consequence calls for it. Replaying a receipt cannot pay twice or satisfy a different duty. Each of these unscoped R3 contracts is authored as a once-only service opportunity.",
+        "The matching MCA Quests provider range is optional for core startup but required for these commands to succeed. If it is absent or incompatible, no synthetic objective or reward is created. Restore the compatible provider and retained world state before retrying. R4 scenario and protection work uses a different scoped contract command described in the evolution chapters; do not substitute an unscoped contract for a named obligation."
+      ],
+      "commands": [
+        "/ultima-contract relief \"<contact name>\"",
+        "/ultima-contract reconnaissance \"<contact name>\"",
+        "/ultima-contract mediation \"<contact name>\"",
+        "/ultima-contract autonomy \"<contact name>\"",
+        "/ultima-contract defense \"<contact name>\"",
+        "/ultima-contract escort \"<contact name>\""
+      ]
+    },
+    {
+      "id": "discover_world_sites",
+      "category": "warfare",
+      "title": "Discover world sites",
+      "summary": "Build a private evidence-backed ledger by visiting configured structures and authored locations.",
+      "body": [
+        "World context discovers configured loaded structure starts while you travel. The installed defaults recognize vanilla villages, pillager outposts, woodland mansions, strongholds, ancient cities, desert and jungle pyramids, monuments, Nether fortresses, bastions, ruined portals, and trail ruins, assigning roles such as settlement, hostile stronghold, ruin, or archaeological site. Datapacks may replace or extend these definitions; a role is content data, not a newly generated structure.",
+        "Your sites page shows only places you have discovered, while permission-level-two operators may review all records. Discovery uses actual dimension and position evidence. An operator-authored site is initially hidden and becomes usable by a player only after that player physically comes within eight blocks of its loaded position. Authorship therefore cannot reveal a remote location to everyone.",
+        "The list is paged in groups of 16. A site may show a controller or contested marker when verified warfare facts support it. If world context is disabled, discovery and route progress stop without deleting the saved ledger. Installed datapack definitions determine which structures and encounter types participate; optional mapping companions do not create evidence for structures nobody loaded and visited."
+      ],
+      "commands": [
+        "/ultima-world sites",
+        "/ultima-world sites <page>",
+        "/ultima-world author site <role>"
+      ]
+    },
+    {
+      "id": "institution_routes",
+      "category": "warfare",
+      "title": "Travel institution routes",
+      "summary": "Follow authored checkpoint routes between known operational institutions with current safe conduct.",
+      "body": [
+        "An operator can author a route only between two different operational institutions in the same dimension. Both endpoints must have nearby sites the operator personally discovered. The saved route contains departure, midpoint, and arrival checkpoints. It does not teleport anyone, build roads, load chunks, or guarantee that terrain between the points is easy to cross.",
+        "Players see a route only after learning both institutions. Before a journey starts and before each checkpoint advances, the server checks that both institutions remain operational and that current warfare and accord state grants safe conduct at both settlements. A denied route reports why it is unavailable instead of bypassing hostile control. Reach each loaded checkpoint within eight blocks in order; progress and completion are saved.",
+        "Open Browse known routes to see named endpoints and the next checkpoint, then Begin a guided route. Starting again resets that player's journey for the route. Completed journeys remain factual ledger evidence. Route records are bounded, and progress checks use a small per-player budget, so many saved routes do not cause broad world scans."
+      ],
+      "commands": [
+        "/ultima-world routes",
+        "/ultima-world routes <page>",
+        "/ultima-world route start \"<route name>\"",
+        "/ultima-world author route \"<starting institution name>\" \"<destination institution name>\""
+      ]
+    },
+    {
+      "id": "neutral_resource_access",
+      "category": "warfare",
+      "title": "Request neutral resource access",
+      "summary": "Use an authored outside-settlement resource policy with a known independent return path.",
+      "body": [
+        "Neutral resource access is a narrow travel policy, not ownership. An operator opens Configure neutral resource access and chooses two personally discovered, named sites plus allowed and excluded commodities. The resource site must lie outside any settlement and the return site must be different. The task refuses an unknown, settled, or unavailable site.",
+        "A player requests one commodity at one site. Both the resource site and the independent return site must be known to that player. The requested resource must appear in the allowed set and not in the exclusions. Success reports neutral access with a return path; it does not grant items, mine blocks automatically, change a claim, create a trade, or suppress the native rules of another mod.",
+        "Datapacks and operators define the relevant commodities using resource identifiers from the installed pack. If content is removed later, the saved policy remains evidence but cannot conjure the missing item. Current warfare safe-conduct and route systems remain separate checks for travel through controlled settlements."
+      ],
+      "commands": [
+        "/ultima-world resource request \"<site name>\" <commodity item id>",
+        "/ultima-world author resource \"<site name>\" \"<return site name>\" <commodity item id> <excluded commodity item id>"
+      ]
+    },
+    {
+      "id": "encounter_receipts",
+      "category": "warfare",
+      "title": "Record encounter contributions",
+      "summary": "Review bounded credit for configured hostile encounters near sites you already know.",
+      "body": [
+        "Configured encounters can record contribution when a qualifying entity is defeated near a site you discovered. Installed defaults recognize elder guardians for site defense and evokers for settlement defense. The server uses actual combat contribution, entity identity, nearby site evidence, and completion time. Merely being online or near the area does not create credit.",
+        "Each credited entity is consumed once. Defaults permit three credited repeats for the same player, site, and encounter type within a seven-day game-time window, with contribution gathered during the configured 1,200-tick window. Datapacks can define other encounter types, repeat budgets, and roles. Those definitions classify real events; they do not spawn enemies or award arbitrary loot.",
+        "The encounter ledger is private to the credited player, except operators can review it for diagnosis. Each row includes the encounter type, contribution, repeat number, and stable receipt identity. Use pages of 16 to browse older entries. Optional quest or atlas companions may display related context, but Ultima's durable receipt remains the source for any later authored consequence."
+      ],
+      "commands": [
+        "/ultima-world encounters",
+        "/ultima-world encounters <page>"
+      ]
+    },
+    {
+      "id": "atlas_and_recovery",
+      "category": "warfare",
+      "title": "Atlas views and operator recovery",
+      "summary": "Understand optional map publication and recover retained warfare records without inventing provider state.",
+      "body": [
+        "Ultima publishes discovered sites and the next accessible route checkpoint to its world-context map feed. A matching external atlas can render the feed; Map Atlases remains the renderer. Recruits keeps its territorial map. Without an atlas companion, the site, route, encounter, and warfare read tasks remain authoritative. Publication never reveals undiscovered sites to an ordinary player.",
+        "Warfare, mobilization, civilian contracts, and world context keep separate saved data under the world's data directory. They preserve future or unsupported schemas read-only rather than rewriting unknown payloads. A save failure refuses the action before success is reported. Provider acknowledgments are retained so restart can distinguish a pending retry from a completed operation.",
+        "For recovery, back up the world, inspect the named operation and provider state, restore the exact compatible companion, then choose its retry, recover, apply, withdraw, or dismiss task. Commands provide the same named operations for automation. Do not delete a sidecar or edit native faction files merely to remove an error. Test provider absence on a copy and restart recovery from the untouched provider-world snapshot."
+      ],
+      "commands": [
+        "/ultima warfare here",
+        "/ultima warfare retry_campaign \"<campaign name>\"",
+        "/ultima warfare accord apply \"<control agreement name>\"",
+        "/ultima-mobilization status",
+        "/ultima-mobilization recover \"<deployment name>\"",
+        "/ultima-world sites",
+        "/ultima-world routes",
+        "/ultima-world encounters"
+      ]
+    }
+  ]
+}

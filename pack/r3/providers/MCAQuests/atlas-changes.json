@@ -1,0 +1,42 @@
+[
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/ExternalMapPoint.java",
+    "before_sha256": null,
+    "after_sha256": "040b9b890136e09f60c829f479a458679838ac6a29e0518256ce4b6ff4ced9e5"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java",
+    "before_sha256": "0e6e208db5dd747a8168ff3bcf523705dd4dfb9af541026600e74f1f94cfc943",
+    "after_sha256": "aa7a89d77ec7781f450e5d99872d3376ee638e06465ea5a83e0d3ad4c64a1a41"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/network/ExternalMapPointsS2CPacket.java",
+    "before_sha256": null,
+    "after_sha256": "f9a721c1d695a182319b4944e2fbd0377fdc18f9348fb278ecc566abf924a5ce"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/network/QuestNetwork.java",
+    "before_sha256": "10a24a8727af389b475b9d478ac553a089b81d05e85812f9aeaf919ef7e8682d",
+    "after_sha256": "ab9ef938c23cddb72119170085c5c87724c0c4f8a062701848271017a7e01e4a"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/compat/mapatlases/AtlasMarkerStore.java",
+    "before_sha256": "a0b500edc7b4f05f0fdcd7f6d0f54b60b618fb37910368f524604d79f238162d",
+    "after_sha256": "9d7f65a39bc866a5da7d892f25680cf14ec57377459980024dff96aae45c7c36"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/compat/mapatlases/client/AtlasRuntime.java",
+    "before_sha256": "e696e79c07ba2c32b8b9317ea853d09e80837aaf7a62c6d1a05f440be6a833c5",
+    "after_sha256": "2fb39e422d96790e1b842639709cd44ad712192ad773298a17ce498d65f1e84f"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/compat/mapatlases/ExternalAtlasPointsTest.java",
+    "before_sha256": null,
+    "after_sha256": "c3c10bad3247dbd64bcfd3026ce87d2dd3a3c4d3757465786eb7c2af8833188e"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/network/ExternalMapPointsPacketTest.java",
+    "before_sha256": null,
+    "after_sha256": "8ced4d4d6c724b092ad4ae9efddb3db7b40168932c39e30c969fa23318ebb113"
+  }
+]

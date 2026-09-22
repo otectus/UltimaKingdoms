@@ -1,0 +1,28 @@
+{
+  Schema: 1,
+  Revision: 1L,
+  Settlements: [{
+    Schema: 1,
+    Id: [I; 0, 0, 0, 42],
+    Dimension: "minecraft:overworld",
+    Anchor: 824633753664L,
+    Radius: 32,
+    MinX: -29, MinZ: -24, MaxX: 35, MaxZ: 40,
+    Kingdom: "ultima_kingdoms:serenum",
+    DisplayName: "Bellmeadow",
+    Slug: "ultima_kingdoms:bellmeadow",
+    Biome: "minecraft:plains",
+    AssignmentSource: "EXACT_BIOME",
+    DetectionSource: "STRUCTURE",
+    NameLocked: 1b,
+    KingdomLocked: 0b,
+    Created: 12L,
+    LastObserved: 30L,
+    ExternalRefs: {mca: "minecraft:overworld#42"},
+    Aliases: ["Old Bellmeadow"],
+    SourceId: "test:village",
+    SourceKey: "legacy-seat",
+    Revision: 1L
+  }],
+  Redirects: []
+}

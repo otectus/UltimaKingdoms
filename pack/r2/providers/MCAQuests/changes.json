@@ -1,0 +1,107 @@
+[
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java",
+    "before_sha256": "b1268e78c9e680c2219101a8ea6269e7ed71e2b5ed10746f55246fb6959c88d4",
+    "after_sha256": "0e6e208db5dd747a8168ff3bcf523705dd4dfb9af541026600e74f1f94cfc943"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/api/QuestCompletionReceipt.java",
+    "before_sha256": "8e80b59d27f038ab2430ac0aecc06008cccb19de86888b91b94791a31ea9f4ee",
+    "after_sha256": "e17e9a3cc6e378473a03d46fa1d7ea2722617d4effd56cd5aee4ee0d0d0e13d5"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/InstitutionalCommissionBridge.java",
+    "before_sha256": null,
+    "after_sha256": "50e0e719fa5b877a05d40d0791989fa6ccd84e2554cf2b65687fc28f33c88104"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/OfferSessionService.java",
+    "before_sha256": "415ba4378f5b68e9a2f84c2bf0102b355c639d73946ccb2d6b854c4c47609bb5",
+    "after_sha256": "eee1608fe6b4faf65433429984faa3b0b2ce9c00475d1425d3a6d3dcd3ed3c17"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/QuestDefinition.java",
+    "before_sha256": "95f311b7421edee39f6fcca69b7b174987892a8e90c83b2dc342301c2b773a50",
+    "after_sha256": "6ece1126da16673c2e57fca737d9c59b4a6d8b277b12abe776cb753a2f5732ad"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/QuestManager.java",
+    "before_sha256": "2ad374fc622a54cd2ca1346f1d3fe31af0173a576936377104287c04e2def536",
+    "after_sha256": "dbdb6244ba63d5174737b4309c33299f76f8616ec1e612a6380166307437fd57"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/condition/ConditionTypes.java",
+    "before_sha256": "4ed6041858fa84da006f948cc0944a24dcbf45223d15d63e10f698e2a447af90",
+    "after_sha256": "35fa1481ff2e70672141388aa23ac90081a88f17827d9be2559bf35c37e8db7a"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/condition/leaf/InstitutionalServiceAvailableCondition.java",
+    "before_sha256": null,
+    "after_sha256": "64d9d9d9198d4dcedbffa0f12ac10188f2c062da6eecda724271c90a7f256c69"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/delivery/DeliveryService.java",
+    "before_sha256": "53ba3c7c0d877cc050f158aa4df0f24b4828790428137fe1f5958fa5458510f7",
+    "after_sha256": "f3e2f90949975c7e09505428d7af029de5b65f48cf12b57bfbaf26e34f45e81d"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/quest/reward/ItemRewardDelivery.java",
+    "before_sha256": "2c06b72ba41173be8b24c506e12bfade5a481b2129b46c2f521a3874d1a9083c",
+    "after_sha256": "757d5500f2a8b9ddd36ff70f7b95552a5446c4d1fd1f3b1cc435365bc588361a"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/ActiveQuest.java",
+    "before_sha256": "4d044aaa6be5f1e21004438d0d4a27ccf770ab6fa72137b12c2564a40ec939b8",
+    "after_sha256": "7b9553470f922bb4a4eb333cdf51accb0beca43dcd70778c4efb3c2dfc313d34"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java",
+    "before_sha256": "7ccd2d68aa63044d785a7fff979a1ad5e5740653017471e3d2aa3f790fedb7fc",
+    "after_sha256": "8a4a2f10e5675c7c814585a2657d3097b770a66d32e04ca1e18e275e5f0f0ab0"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/CompletionReceiptOutbox.java",
+    "before_sha256": "e79ba3eb7b96a455eb46e13dc120cb2a0624aa31a62c38093125a9ef4bb49160",
+    "after_sha256": "9f045c0080a9a59100090ff684b37f9b7523f575c530da745097140fb7ef50e3"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/OfferSession.java",
+    "before_sha256": "6c220e412a0692f5c0dd1208ba8f6a12e63c29838044355a9f3cca9f7fd1f7c4",
+    "after_sha256": "a385a26844b4f10d6f8e6f86c8a562a1b78ccf4ef5f25200f5bcaab81cb02f50"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaquests/state/PlayerQuestData.java",
+    "before_sha256": "255872a16f5e9fca0ac5074e91778f42e8641e4c5280fbd47a812caeeeb98be3",
+    "after_sha256": "a2618f91c4269fc869f71a95e171e613e6ffcd32045684eb63ea58e47bc3bef7"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/quest/InstitutionalCommissionBridgeTest.java",
+    "before_sha256": null,
+    "after_sha256": "ebce4edc6c4bd3e4fd040638952fb427b50164404d5a31524b81eb739159c86f"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/quest/reward/ItemRewardDeliveryTest.java",
+    "before_sha256": "d76f7980279cef17b03b777b5c3d1fd8d08ef45fe2955fbdb8c4fee880b74f2d",
+    "after_sha256": "89c805f3f13584a40e8b196babe4cb89e3cb4e1ab643116033d7adce730a6275"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/CompletionReceiptDurabilitySourceTest.java",
+    "before_sha256": "e231a283a5b5cdd49b2c94ec70c46227b764563668a40ba6394fee5f594417ae",
+    "after_sha256": "d9d3ce53dca0fcd44b06ce45641ddef80458a3623ca5a93a4ee9b3f71b27b1e5"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/CompletionReceiptOutboxTest.java",
+    "before_sha256": "d4f3d910f3f523ba7b1ead345c7485bead86fdf4c956a269dfcdea7ea782c0a6",
+    "after_sha256": "693f7a1b6944bf0ad0166d5fdd0b4745580409ce4220ae3c24e7d624ae6586fc"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/InstitutionalCommissionPersistenceTest.java",
+    "before_sha256": null,
+    "after_sha256": "f89174972a7a0a435523b0300493d7d407ea72f44fb65590c10bb30a4a1e8e18"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaquests/state/OfferSessionTest.java",
+    "before_sha256": "c7143b3ad2f751d14e380bc421dc3d73962dee8f80ce0957ead64a0fd5ddc50c",
+    "after_sha256": "a79a2a0c476d13c8b3e4ad65307e166a54e50dba9c831c7a6bebfc20c036c54b"
+  }
+]

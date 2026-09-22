@@ -1,0 +1,40 @@
+{
+  "schema": "townstead:reaction/v2",
+  "display_name": "Standing Improved",
+  "tags": ["political", "faction", "standing", "positive"],
+  "cooldown": "8s",
+  "chance": 1.0,
+  "mirror_radius": 0,
+  "mirror_chance": 0.0,
+  "hearts": 0,
+  "do": {
+    "type": "pheno:and",
+    "actions": [
+      {
+        "type": "pheno:play_sound",
+        "sound": "minecraft:entity.experience_orb.pickup",
+        "category": "neutral",
+        "volume": 0.7,
+        "pitch": 1.15
+      },
+      {
+        "type": "pheno:spawn_particles",
+        "particle": "minecraft:happy_villager",
+        "count": 7,
+        "spread": 0.45,
+        "speed": 0.02
+      }
+    ]
+  },
+  "choices": [
+    {
+      "animation": {
+        "type": "emotecraft",
+        "id": "clap",
+        "allow_movement": true
+      },
+      "required_tags": ["context:faction"],
+      "weight": 1
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "id": "ultima:evolution/mediation",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Civilian Mediation",
+  "difficulty": "medium",
+  "priority": 10,
+  "repeat": {
+    "type": "cooldown",
+    "cooldown_ticks": 1200
+  },
+  "giver": {
+    "adult_only": true
+  },
+  "conditions": {
+    "type": "mcaquests:institutional_service_available"
+  },
+  "title": {
+    "text": "Regional A Local Mediator"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "Consult a cleric as a neutral local mediator, then return here. Payment: five emeralds. This commission answers one recorded regional opportunity or signed voluntary obligation."
+    },
+    "accept": {
+      "text": "This is a civilian consultation; it changes no military relation."
+    },
+    "decline": {
+      "text": "No settlement is imposed without your agreement."
+    },
+    "in_progress": {
+      "text": "Speak with a cleric and return to the original issuer."
+    },
+    "ready": {
+      "text": "The consultation can now be acknowledged."
+    },
+    "complete": {
+      "text": "Your mediation service is recorded. Five emeralds are paid."
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:talk_to_profession",
+      "profession": "minecraft:cleric",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:item",
+      "item": "minecraft:emerald",
+      "count": 5
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  }
+}

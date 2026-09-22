@@ -28,8 +28,8 @@ public class KingdomGameTests {
     private static void check(boolean ok,String message) { if(!ok)throw new net.minecraft.gametest.framework.GameTestAssertException(message); }
 
     @GameTest(template="empty")
-    public static void fiveDefaultClassifications(GameTestHelper h) {
-        String[][] cases={{"plains","serenum"},{"snowy_plains","lunari"},{"savanna","madera"},{"desert","anemosia"},{"taiga","yew"}};
+    public static void sixDefaultClassifications(GameTestHelper h) {
+        String[][] cases={{"plains","serenum"},{"snowy_plains","lunari"},{"savanna","madera"},{"desert","anemosia"},{"taiga","yew"},{"jungle","shimaguni"},{"sparse_jungle","shimaguni"},{"bamboo_jungle","shimaguni"}};
         var level=h.getLevel(); var server=level.getServer();
         for(int i=0;i<cases.length;i++) {
             var pos=h.absolutePos(new BlockPos(i*16,2,0)); level.getChunkAt(pos);
@@ -106,7 +106,7 @@ public class KingdomGameTests {
     public static void nonOperatorReadOnlyCommands(GameTestHelper h) throws Exception {
         var server=h.getLevel().getServer();var dispatcher=server.getCommands().getDispatcher();
         var source=server.createCommandSourceStack().withLevel(h.getLevel()).withPermission(0);
-        check(dispatcher.execute("ultima kingdom list",source)==5,"Nonoperator cannot read kingdom list");
+        check(dispatcher.execute("ultima kingdom list",source)==UltimaKingdoms.DEFINITIONS.snapshot().kingdoms().size(),"Nonoperator cannot read kingdom list");
         try {dispatcher.execute("ultima village create 32 Unauthorized",source);throw new net.minecraft.gametest.framework.GameTestAssertException("Nonoperator mutation accepted");}
         catch(com.mojang.brigadier.exceptions.CommandSyntaxException expected) { }
         h.succeed();

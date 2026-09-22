@@ -1,0 +1,87 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/reinforce_the_ladder",
+  "weight": 8,
+  "category": "Lamplighters",
+  "difficulty": "medium",
+  "priority": 0,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:fletcher",
+      "minecraft:shepherd"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Reinforce the Ladder"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The north ladder flexes above the cobbles. Deliver four bundles of reinforced fibers before a lamplighter learns to fly."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Bind them dry and keep them clean of lamp oil."
+    },
+    "decline": {
+      "text": "A wise refusal if heights trouble you. We will brace it from the ground."
+    },
+    "in_progress": {
+      "text": "Four bundles will brace the rungs and the crew's courage."
+    },
+    "ready": {
+      "text": "These fibers have backbone. Put them by the repair bench."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Tomorrow's climb will be uneventful. That is the finest sort of climb."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "plantfiber:reinforced_fibers",
+      "count": 4,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 30
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 3
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "type": "mcaquests:quest_completed",
+    "quest": "ultima:civic/lamplighters/twist_the_first_cord",
+    "scope": "global"
+  }
+}

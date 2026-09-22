@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 final class SettlementSavedData extends SavedData {
@@ -21,6 +22,7 @@ final class SettlementSavedData extends SavedData {
 
     private final Map<UUID, SettlementRecord> settlements = new LinkedHashMap<>();
     private final Map<UUID, UUID> redirects = new LinkedHashMap<>();
+    private final ExternalRefIndex externalRefs = new ExternalRefIndex();
     private long revision;
     private String loadError;
 
@@ -42,6 +44,10 @@ final class SettlementSavedData extends SavedData {
         return Optional.ofNullable(settlements.get(resolveId(requestedId)));
     }
 
+    Optional<SettlementRecord> getByExternalRef(String namespace, String value) {
+        return externalRefs.find(namespace, value).flatMap(this::get);
+    }
+
     UUID resolveId(UUID requestedId) {
         UUID current = requestedId;
         for (int i = 0; i < 64; i++) {
@@ -57,15 +63,26 @@ final class SettlementSavedData extends SavedData {
     }
 
     void add(SettlementRecord record) {
-        if (settlements.putIfAbsent(record.id, record) != null) {
+        if (settlements.containsKey(record.id)) {
             throw new IllegalArgumentException("Settlement already exists: " + record.id);
         }
+        externalRefs.reindex(record);
+        settlements.put(record.id, record);
         changed(record);
     }
 
     void changed(SettlementRecord record) {
+        externalRefs.reindex(record);
         record.revision = ++revision;
         setDirty();
+    }
+
+    void validateExternalRefs(UUID owner, Map<String, String> references) {
+        externalRefs.validate(owner, references, Set.of(owner));
+    }
+
+    void validateMergeExternalRefs(SettlementRecord source, SettlementRecord target) {
+        externalRefs.validateAll(target.id, source.externalRefValues, Set.of(source.id, target.id));
     }
 
     void redirect(UUID source, UUID target) {
@@ -76,6 +93,7 @@ final class SettlementSavedData extends SavedData {
         settlements.remove(source);
         redirects.put(source, resolvedTarget);
         redirects.replaceAll((ignored, value) -> value.equals(source) ? resolvedTarget : value);
+        externalRefs.redirect(source, resolvedTarget);
         revision++;
         setDirty();
     }
@@ -135,6 +153,15 @@ final class SettlementSavedData extends SavedData {
             if (redirect.hasUUID("Source") && redirect.hasUUID("Target")) {
                 data.redirects.put(redirect.getUUID("Source"), redirect.getUUID("Target"));
             }
+        }
+        try {
+            data.externalRefs.rebuild(data.settlements.values());
+        } catch (RuntimeException exception) {
+            data.loadError = "Conflicting Ultima Kingdoms settlement external references; refusing to initialize "
+                    + "so the original save cannot be overwritten: " + exception.getMessage();
+            LOGGER.error(data.loadError, exception);
+            data.settlements.clear();
+            data.redirects.clear();
         }
         return data;
     }

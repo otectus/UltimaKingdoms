@@ -1,0 +1,1487 @@
+--- a/src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java
++++ b/src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java
+@@ -31,6 +31,9 @@
+  * to the events in {@code dev.otectus.mcaquests.api.event} on the Forge event bus.
+  */
+ public final class McaQuestsApi {
++
++    private static final ResourceLocation INSTITUTIONAL_COMPLETION_CONSUMER =
++            new ResourceLocation("ultima_kingdoms", "regional_civic_network");
+ 
+     private McaQuestsApi() {
+     }
+@@ -123,6 +126,26 @@
+     }
+ 
+     /**
++     * Renews the one receipt lease required by institutional completion without invoking a player save.
++     * Ultima calls this synchronously from its validation boundary so the native completion preflight
++     * can prove the intended consumer is in the frozen receipt cohort. A pending save, full/corrupt
++     * outbox, unavailable capability, or consumer-capacity failure returns false.
++     */
++    public static boolean renewInstitutionalCompletionConsumer(ServerPlayer player) {
++        if (player == null) throw new NullPointerException("player");
++        return QuestCapabilities.get(player).map(data -> {
++            long now = player.serverLevel().getGameTime();
++            try {
++                data.readCompletionReceipts(INSTITUTIONAL_COMPLETION_CONSUMER, 8, now);
++                return "ready".equals(data.completionReceiptStatus())
++                        && data.hasActiveCompletionReceiptConsumer(INSTITUTIONAL_COMPLETION_CONSUMER, now);
++            } catch (RuntimeException failure) {
++                return false;
++            }
++        }).orElse(false);
++    }
++
++    /**
+      * Opens MCA: Quests' native offer UI for a trusted server-side commission service, drawing only from
+      * {@code allowedQuestIds}. The set may contain at most 32 existing template ids. This does not accept a
+      * quest or bypass its giver, conditions, chain, cooldown, capacity, target, or acceptance revalidation.
+@@ -139,4 +162,25 @@
+         Set<ResourceLocation> scope = Set.copyOf(allowedQuestIds);
+         return dev.otectus.mcaquests.quest.QuestManager.openCommissionMenu(player, giver, scope);
+     }
++
++    /**
++     * Opens the native UI for paid institutional work owned by one opaque Ultima contract UUID.
++     * Institutional definitions are excluded from ordinary menus and fail closed if Ultima's validation
++     * or durable acceptance callback is absent. The binding is persisted through completion receipts.
++     */
++    public static boolean openInstitutionalCommissionMenu(ServerPlayer player, Entity giver,
++                                                          Set<ResourceLocation> allowedQuestIds,
++                                                          String binding) {
++        if (player == null || giver == null || allowedQuestIds == null || binding == null) {
++            throw new NullPointerException("institutional commission menu argument");
++        }
++        if (allowedQuestIds.isEmpty() || allowedQuestIds.size() > 32) {
++            throw new IllegalArgumentException("allowedQuestIds must contain between 1 and 32 ids");
++        }
++        if (!dev.otectus.mcaquests.quest.InstitutionalCommissionBridge.validBinding(binding)) {
++            throw new IllegalArgumentException("binding must be one canonical UUID");
++        }
++        return dev.otectus.mcaquests.quest.QuestManager.openInstitutionalCommissionMenu(
++                player, giver, Set.copyOf(allowedQuestIds), binding);
++    }
+ }
+--- a/src/main/java/dev/otectus/mcaquests/api/QuestCompletionReceipt.java
++++ b/src/main/java/dev/otectus/mcaquests/api/QuestCompletionReceipt.java
+@@ -20,7 +20,21 @@
+                                      UUID giverId, ResourceLocation acceptedDimension,
+                                      Optional<Integer> acceptedVillageId,
+                                      Optional<KingdomBinding> kingdomBinding,
+-                                     Optional<CivicBuildingBinding> civicBuildingBinding) {
++                                     Optional<CivicBuildingBinding> civicBuildingBinding,
++                                     String institutionalBinding) {
++
++    /** Source-compatible constructor for receipts created before institutional ownership metadata. */
++    public QuestCompletionReceipt(UUID providerEpoch, UUID receiptId, UUID playerId,
++                                  ResourceLocation questId, long completionRevision,
++                                  Outcome outcome, long completedGameTime, long acceptedGameTime,
++                                  UUID giverId, ResourceLocation acceptedDimension,
++                                  Optional<Integer> acceptedVillageId,
++                                  Optional<KingdomBinding> kingdomBinding,
++                                  Optional<CivicBuildingBinding> civicBuildingBinding) {
++        this(providerEpoch, receiptId, playerId, questId, completionRevision, outcome, completedGameTime,
++                acceptedGameTime, giverId, acceptedDimension, acceptedVillageId, kingdomBinding,
++                civicBuildingBinding, "");
++    }
+ 
+     public QuestCompletionReceipt {
+         Objects.requireNonNull(providerEpoch, "providerEpoch");
+@@ -33,8 +47,10 @@
+         acceptedVillageId = Objects.requireNonNull(acceptedVillageId, "acceptedVillageId");
+         kingdomBinding = Objects.requireNonNull(kingdomBinding, "kingdomBinding");
+         civicBuildingBinding = Objects.requireNonNull(civicBuildingBinding, "civicBuildingBinding");
++        institutionalBinding = Objects.requireNonNull(institutionalBinding, "institutionalBinding");
+         if (completionRevision <= 0L || completedGameTime < 0L || acceptedGameTime < 0L
+-                || acceptedVillageId.filter(value -> value < 0).isPresent()) {
++                || acceptedVillageId.filter(value -> value < 0).isPresent()
++                || institutionalBinding.length() > 128) {
+             throw new IllegalArgumentException("invalid quest completion receipt number");
+         }
+     }
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/quest/InstitutionalCommissionBridge.java
+@@ -0,0 +1,197 @@
++package dev.otectus.mcaquests.quest;
++
++import com.google.gson.JsonElement;
++import com.google.gson.JsonParser;
++import com.mojang.serialization.JsonOps;
++import dev.otectus.mcaquests.McaQuests;
++import dev.otectus.mcaquests.quest.reward.ItemReward;
++import dev.otectus.mcaquests.quest.condition.QuestCondition;
++import dev.otectus.mcaquests.quest.condition.composite.AllOfCondition;
++import dev.otectus.mcaquests.quest.condition.composite.AnyOfCondition;
++import dev.otectus.mcaquests.quest.condition.leaf.InstitutionalServiceAvailableCondition;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.world.entity.Entity;
++import net.minecraft.world.item.Items;
++
++import javax.annotation.Nullable;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.lang.reflect.Modifier;
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.HexFormat;
++import java.util.Optional;
++import java.util.UUID;
++
++/** Reflection-only boundary for Ultima Kingdoms' institutional commission contract. */
++public final class InstitutionalCommissionBridge {
++
++    private static final String API_CLASS = "com.ultimakingdoms.api.civic.InstitutionalCommissionApi";
++    private static final int MAX_SNAPSHOT_CHARS = 131_072;
++
++    private InstitutionalCommissionBridge() {
++    }
++
++    /** A binding is deliberately opaque to this provider, beyond being one canonical UUID. */
++    public static boolean validBinding(String binding) {
++        if (binding == null || binding.length() != 36) return false;
++        try {
++            return UUID.fromString(binding).toString().equals(binding);
++        } catch (IllegalArgumentException ignored) {
++            return false;
++        }
++    }
++
++    /**
++     * R2 institutional commissions are deliberately narrow: a concrete quest with one or more fixed,
++     * unenchanted emerald item rewards. This keeps native MCA reward ownership and persistence intact.
++     */
++    public static boolean supportedDefinition(QuestDefinition definition) {
++        return definition != null && definition.institutionalCommission() && !definition.isTemplate()
++                && definition.conditions().map(InstitutionalCommissionBridge::hasMandatoryServiceGate)
++                        .orElse(false)
++                && definition.rewards().size() == 1
++                && definition.rewards().stream().allMatch(reward -> reward instanceof ItemReward item
++                        && item.item() == Items.EMERALD && item.count() > 0 && item.enchantments().isEmpty());
++    }
++
++    /** True only when Ultima exposes the complete, exact ABI used by offer and acceptance commits. */
++    public static boolean serviceAvailable() {
++        try {
++            apiMethod("validate", ServerPlayer.class, Entity.class,
++                    ResourceLocation.class, String.class, boolean.class);
++            apiMethod("accepted", ServerPlayer.class, Entity.class,
++                    ResourceLocation.class, String.class, UUID.class);
++            apiMethod("cancelled", ServerPlayer.class, ResourceLocation.class, String.class, UUID.class);
++            return true;
++        } catch (ReflectiveOperationException | LinkageError failure) {
++            return false;
++        }
++    }
++
++    /**
++     * Requires the service gate on every path that can satisfy an authored condition. A direct gate
++     * or one member of {@code all_of} is mandatory; every branch of {@code any_of} must contain it.
++     * Negation never counts as the positive availability tripwire.
++     */
++    static boolean hasMandatoryServiceGate(QuestCondition condition) {
++        if (condition instanceof InstitutionalServiceAvailableCondition) return true;
++        if (condition instanceof AllOfCondition all) {
++            return all.conditions().stream().anyMatch(InstitutionalCommissionBridge::hasMandatoryServiceGate);
++        }
++        if (condition instanceof AnyOfCondition any) {
++            return !any.conditions().isEmpty()
++                    && any.conditions().stream().allMatch(InstitutionalCommissionBridge::hasMandatoryServiceGate);
++        }
++        return false;
++    }
++
++    /** Empty means permit; every missing, malformed, throwing, or non-empty result denies. */
++    public static String validate(ServerPlayer player, Entity giver, ResourceLocation questId,
++                                  String binding, boolean completion) {
++        if (player == null || giver == null || questId == null || !validBinding(binding)) {
++            return "This commission is not currently authorized.";
++        }
++        try {
++            Method method = apiMethod("validate", ServerPlayer.class, Entity.class,
++                    ResourceLocation.class, String.class, boolean.class);
++            Object result = method.invoke(null, player, giver, questId, binding, completion);
++            return validationResult(result);
++        } catch (ReflectiveOperationException | LinkageError failure) {
++            logBridgeFailure("validate", failure);
++            return "This commission service is currently unavailable.";
++        }
++    }
++
++    static String validationResult(@Nullable Object result) {
++        if (!(result instanceof String reason)) return "This commission is not currently authorized.";
++        if (reason.isEmpty()) return "";
++        return reason.length() <= 512 ? reason : "This commission is not currently authorized.";
++    }
++
++    /** Durably binds the opaque owner token to exactly this accepted native quest copy. */
++    public static boolean accepted(ServerPlayer player, Entity giver, ResourceLocation questId,
++                                   String binding, UUID instance) {
++        if (player == null || giver == null || questId == null || instance == null || !validBinding(binding)) {
++            return false;
++        }
++        try {
++            Method method = apiMethod("accepted", ServerPlayer.class, Entity.class,
++                    ResourceLocation.class, String.class, UUID.class);
++            return Boolean.TRUE.equals(method.invoke(null, player, giver, questId, binding, instance));
++        } catch (ReflectiveOperationException | LinkageError failure) {
++            logBridgeFailure("accepted", failure);
++            return false;
++        }
++    }
++
++    /** Durably releases an accepted owner contract before native abandonment removes its quest copy. */
++    public static boolean cancelled(ServerPlayer player, ResourceLocation questId,
++                                    String binding, UUID instance) {
++        if (player == null || questId == null || instance == null || !validBinding(binding)) {
++            return false;
++        }
++        try {
++            Method method = apiMethod("cancelled", ServerPlayer.class, ResourceLocation.class,
++                    String.class, UUID.class);
++            return Boolean.TRUE.equals(method.invoke(null, player, questId, binding, instance));
++        } catch (ReflectiveOperationException | LinkageError failure) {
++            logBridgeFailure("cancelled", failure);
++            return false;
++        }
++    }
++
++    private static Method apiMethod(String name, Class<?>... parameters) throws ReflectiveOperationException {
++        Method method = Class.forName(API_CLASS, false,
++                InstitutionalCommissionBridge.class.getClassLoader()).getMethod(name, parameters);
++        if (!Modifier.isStatic(method.getModifiers()) || !Modifier.isPublic(method.getModifiers())) {
++            throw new NoSuchMethodException(API_CLASS + "#" + name + " is not public static");
++        }
++        return method;
++    }
++
++    private static void logBridgeFailure(String operation, Throwable failure) {
++        Throwable cause = failure instanceof InvocationTargetException invocation && invocation.getCause() != null
++                ? invocation.getCause() : failure;
++        McaQuests.LOGGER.warn("[MCA: Quests] Institutional commission {} failed closed ({})",
++                operation, cause.getClass().getSimpleName());
++    }
++
++    /** Stable persisted JSON used both to keep accepted terms and to detect a changed datapack definition. */
++    public static Optional<Snapshot> snapshot(QuestDefinition definition) {
++        Optional<JsonElement> encoded = QuestDefinition.CODEC.encodeStart(JsonOps.INSTANCE, definition).result();
++        if (encoded.isEmpty()) return Optional.empty();
++        String json = encoded.get().toString();
++        if (json.length() > MAX_SNAPSHOT_CHARS) return Optional.empty();
++        return Optional.of(new Snapshot(json, sha256(json)));
++    }
++
++    public static Optional<QuestDefinition> decodeSnapshot(String json, String fingerprint) {
++        if (json == null || fingerprint == null || json.length() > MAX_SNAPSHOT_CHARS
++                || !sha256(json).equals(fingerprint)) return Optional.empty();
++        try {
++            return QuestDefinition.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)).result();
++        } catch (RuntimeException malformed) {
++            return Optional.empty();
++        }
++    }
++
++    public static boolean matches(QuestDefinition current, String fingerprint) {
++        return current != null && fingerprint != null
++                && snapshot(current).map(Snapshot::fingerprint).filter(fingerprint::equals).isPresent();
++    }
++
++    private static String sha256(String value) {
++        try {
++            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
++                    .digest(value.getBytes(StandardCharsets.UTF_8)));
++        } catch (NoSuchAlgorithmException impossible) {
++            throw new IllegalStateException("SHA-256 unavailable", impossible);
++        }
++    }
++
++    public record Snapshot(String json, String fingerprint) {
++    }
++}
+--- a/src/main/java/dev/otectus/mcaquests/quest/OfferSessionService.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/OfferSessionService.java
+@@ -92,6 +92,12 @@
+     /** Same native offer session, restricted to an authorized caller's bounded commission catalogue. */
+     public static List<Offer> currentOffers(ServerPlayer player, Entity villager, PlayerQuestData data,
+                                             @javax.annotation.Nullable Set<ResourceLocation> allowedQuestIds) {
++        return currentOffers(player, villager, data, allowedQuestIds, null);
++    }
++
++    /** Institutional menu session carrying the opaque owner binding through the eventual accept click. */
++    public static List<Offer> currentOffers(ServerPlayer player, Entity villager, PlayerQuestData data,
++                                            Set<ResourceLocation> allowedQuestIds, String binding) {
+         ServerLevel level = (ServerLevel) player.level();
+         long now = level.getGameTime();
+         int refreshTicks = McaQuestsConfig.COMMON.offerRefreshTicks.get();
+@@ -102,9 +108,9 @@
+         session.pruneDeclines(now);
+ 
+         OfferFilters.Pass pass = OfferFilters.Pass.of(player, villager, data);
+-        if (!session.scopeMatches(allowedQuestIds)
++        if (!session.scopeMatches(allowedQuestIds, binding)
+                 || session.isStale(now, refreshTicks, QuestRegistry.generation())) {
+-            redraw(pass, session, now, refreshTicks, allowedQuestIds);
++            redraw(pass, session, now, refreshTicks, allowedQuestIds, binding);
+         } else {
+             revalidate(pass, session, now);
+         }
+@@ -156,19 +162,25 @@
+ 
+     private static void redraw(OfferFilters.Pass pass, OfferSession session, long now, int refreshTicks,
+                                @javax.annotation.Nullable Set<ResourceLocation> allowedQuestIds) {
++        redraw(pass, session, now, refreshTicks, allowedQuestIds, null);
++    }
++
++    private static void redraw(OfferFilters.Pass pass, OfferSession session, long now, int refreshTicks,
++                               @javax.annotation.Nullable Set<ResourceLocation> allowedQuestIds,
++                               @javax.annotation.Nullable String binding) {
+         // OfferSession#redraw drops the refusals that were only meant to last as long as the old set --
+         // turning something down is meant to last until the villager has something new to say, not to ban
+         // it. A refusal given an explicit declineCooldownTicks is about the clock rather than about this
+         // menu, so it survives.
+         long epoch = refreshTicks <= 0 ? 0L : now / refreshTicks;
+         long seed = offerSeed(pass.player(), session.villagerUuid(), epoch);
+-        List<QuestDefinition> pool = offerablePool(pass, session, now, allowedQuestIds);
++        List<QuestDefinition> pool = offerablePool(pass, session, now, allowedQuestIds, binding);
+         List<QuestDefinition> chosen = QuestManager.selectOffers(pass, pool, seed);
+         List<OfferSession.Slot> slots = new ArrayList<>();
+         for (QuestDefinition def : chosen) {
+             freeze(pass, def).ifPresent(slots::add);
+         }
+-        session.redraw(slots, now, QuestRegistry.generation(), seed, allowedQuestIds);
++        session.redraw(slots, now, QuestRegistry.generation(), seed, allowedQuestIds, binding);
+     }
+ 
+     /**
+@@ -248,6 +260,7 @@
+ 
+     private static List<QuestDefinition> offerablePool(OfferFilters.Pass pass, OfferSession session, long now) {
+         return QuestManager.eligibleOffers(pass).stream()
++                .filter(def -> def.institutionalCommission() == session.institutionalBinding().isPresent())
+                 .filter(def -> !session.isDeclined(def.id(), now))
+                 .filter(def -> session.allowsInCurrentScope(def.id()))
+                 .toList();
+@@ -255,7 +268,14 @@
+ 
+     private static List<QuestDefinition> offerablePool(OfferFilters.Pass pass, OfferSession session, long now,
+                                                        @javax.annotation.Nullable Set<ResourceLocation> allowed) {
++        return offerablePool(pass, session, now, allowed, null);
++    }
++
++    private static List<QuestDefinition> offerablePool(OfferFilters.Pass pass, OfferSession session, long now,
++                                                       @javax.annotation.Nullable Set<ResourceLocation> allowed,
++                                                       @javax.annotation.Nullable String binding) {
+         return QuestManager.eligibleOffers(pass).stream()
++                .filter(def -> def.institutionalCommission() == (binding != null))
+                 .filter(def -> !session.isDeclined(def.id(), now))
+                 .filter(def -> allowed == null || allowed.contains(def.id()))
+                 .toList();
+--- a/src/main/java/dev/otectus/mcaquests/quest/QuestDefinition.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/QuestDefinition.java
+@@ -50,7 +50,21 @@
+         Optional<TemplateSpec> template,
+         OfferShaping offerShaping,
+         dev.otectus.mcaquests.quest.reputation.QuestReputationBlock reputation,
+-        Optional<dev.otectus.mcaquests.quest.kingdom.KingdomLifecycleSpec> kingdomLifecycle) {
++        Optional<dev.otectus.mcaquests.quest.kingdom.KingdomLifecycleSpec> kingdomLifecycle,
++        boolean institutionalCommission) {
++
++    /** Source-compatible shape from before institutional commissions were introduced. */
++    public QuestDefinition(ResourceLocation id, boolean enabled, int weight, Optional<String> category,
++                           Optional<QuestText> titleOverride, RepeatRule repeat, GiverSpec giver,
++                           Map<String, QuestText> dialogue, List<QuestObjective> objectives,
++                           List<QuestReward> rewards, TurnInSpec turnIn, Optional<QuestCondition> conditions,
++                           Optional<ChainSpec> chain, Optional<FailureSpec> failure,
++                           Optional<TemplateSpec> template, OfferShaping offerShaping,
++                           dev.otectus.mcaquests.quest.reputation.QuestReputationBlock reputation,
++                           Optional<dev.otectus.mcaquests.quest.kingdom.KingdomLifecycleSpec> kingdomLifecycle) {
++        this(id, enabled, weight, category, titleOverride, repeat, giver, dialogue, objectives, rewards,
++                turnIn, conditions, chain, failure, template, offerShaping, reputation, kingdomLifecycle, false);
++    }
+ 
+     /** Source-compatible shape for add-ons and tests written before kingdom lifecycle metadata. */
+     public QuestDefinition(ResourceLocation id, boolean enabled, int weight, Optional<String> category,
+@@ -61,7 +75,7 @@
+                            Optional<TemplateSpec> template, OfferShaping offerShaping,
+                            dev.otectus.mcaquests.quest.reputation.QuestReputationBlock reputation) {
+         this(id, enabled, weight, category, titleOverride, repeat, giver, dialogue, objectives, rewards,
+-                turnIn, conditions, chain, failure, template, offerShaping, reputation, Optional.empty());
++                turnIn, conditions, chain, failure, template, offerShaping, reputation, Optional.empty(), false);
+     }
+ 
+     /** Dialogue states (spec section 9). */
+@@ -102,15 +116,20 @@
+                             Codec.mapPair(
+                                     StrictCodecs.strictOptional(dev.otectus.mcaquests.quest.reputation.QuestReputationBlock.CODEC, "reputation",
+                                                     dev.otectus.mcaquests.quest.reputation.QuestReputationBlock.NONE),
+-                                    StrictCodecs.strictOptional(dev.otectus.mcaquests.quest.kingdom.KingdomLifecycleSpec.CODEC,
+-                                            "kingdom_lifecycle")))
++                                    Codec.mapPair(
++                                            StrictCodecs.strictOptional(dev.otectus.mcaquests.quest.kingdom.KingdomLifecycleSpec.CODEC,
++                                                    "kingdom_lifecycle"),
++                                            StrictCodecs.strictOptional(Codec.BOOL, "institutional_commission", false))))
+                     .forGetter(def -> com.mojang.datafixers.util.Pair.of(def.offerShaping(),
+-                            com.mojang.datafixers.util.Pair.of(def.reputation(), def.kingdomLifecycle())))
++                            com.mojang.datafixers.util.Pair.of(def.reputation(),
++                                    com.mojang.datafixers.util.Pair.of(def.kingdomLifecycle(),
++                                            def.institutionalCommission()))))
+     ).apply(instance, (id, enabled, weight, category, title, repeat, giver, dialogue, objectives, rewards,
+                        turnIn, conditions, chain, failure, template, tail) ->
+             new QuestDefinition(id, enabled, weight, category, title, repeat, giver, dialogue, objectives,
+                     rewards, turnIn, conditions, chain, failure, template, tail.getFirst(),
+-                    tail.getSecond().getFirst(), tail.getSecond().getSecond())));
++                    tail.getSecond().getFirst(), tail.getSecond().getSecond().getFirst(),
++                    tail.getSecond().getSecond().getSecond())));
+ 
+     /** Translation key for this quest's display title (spec section 32), e.g. {@code mcaquests.quest.<path>.title}. */
+     public String titleKey() {
+@@ -149,7 +168,7 @@
+     public QuestDefinition withConcrete(TemplateSpec.Concrete concrete) {
+         return new QuestDefinition(id, enabled, weight, category, titleOverride, repeat, giver, dialogue,
+                 concrete.objectives(), concrete.rewards(), turnIn, conditions, chain, failure, template,
+-                offerShaping, reputation, kingdomLifecycle);
++                offerShaping, reputation, kingdomLifecycle, institutionalCommission);
+     }
+ 
+     /** Datapack offer priority tier, if set (see {@link OfferShaping}). */
+--- a/src/main/java/dev/otectus/mcaquests/quest/QuestManager.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/QuestManager.java
+@@ -58,6 +58,8 @@
+ import dev.otectus.mcaquests.quest.situation.state.SituationSavedData;
+ import dev.otectus.mcaquests.quest.reward.CurrencyReward;
+ import dev.otectus.mcaquests.quest.reward.ItemPoolReward;
++import dev.otectus.mcaquests.quest.reward.ItemReward;
++import dev.otectus.mcaquests.quest.reward.ItemRewardDelivery;
+ import dev.otectus.mcaquests.quest.reward.HeartsReward;
+ import dev.otectus.mcaquests.quest.reward.FactionStandingReward;
+ import dev.otectus.mcaquests.quest.reward.QuestReward;
+@@ -112,6 +114,9 @@
+  */
+ public final class QuestManager {
+ 
++    private static final ResourceLocation INSTITUTIONAL_RECEIPT_CONSUMER =
++            new ResourceLocation("ultima_kingdoms", "regional_civic_network");
++
+     private QuestManager() {
+     }
+ 
+@@ -225,7 +230,28 @@
+                 || player.level() != villager.level() || !McaCompat.canPlayerInteract(player, villager)) {
+             return false;
+         }
+-        sendMenu(player, villager, Component.empty(), Set.copyOf(allowedQuestIds));
++        sendMenu(player, villager, Component.empty(), Set.copyOf(allowedQuestIds), null);
++        return true;
++    }
++
++    /** Institutional counterpart with a persisted, privately validated Ultima owner binding. */
++    public static boolean openInstitutionalCommissionMenu(ServerPlayer player, Entity villager,
++                                                          Set<ResourceLocation> allowedQuestIds,
++                                                          String binding) {
++        if (player.getServer() == null || !player.getServer().isSameThread()
++                || player.level() != villager.level() || !McaCompat.canPlayerInteract(player, villager)) {
++            return false;
++        }
++        for (ResourceLocation questId : allowedQuestIds) {
++            QuestDefinition definition = QuestDefinitions.resolve(questId).orElse(null);
++            if (!InstitutionalCommissionBridge.supportedDefinition(definition)) return false;
++            String refusal = InstitutionalCommissionBridge.validate(player, villager, questId, binding, false);
++            if (!refusal.isEmpty()) {
++                player.sendSystemMessage(Component.literal(refusal));
++                return false;
++            }
++        }
++        sendMenu(player, villager, Component.empty(), Set.copyOf(allowedQuestIds), binding);
+         return true;
+     }
+ 
+@@ -234,7 +260,10 @@
+         Optional<Set<ResourceLocation>> restriction = QuestCapabilities.get(player)
+                 .flatMap(data -> data.offers().find(villager.getUUID()))
+                 .flatMap(OfferSession::restrictedQuestIds);
+-        sendMenu(player, villager, Component.empty(), restriction.orElse(null));
++        String binding = QuestCapabilities.get(player)
++                .flatMap(data -> data.offers().find(villager.getUUID()))
++                .flatMap(OfferSession::institutionalBinding).orElse(null);
++        sendMenu(player, villager, Component.empty(), restriction.orElse(null), binding);
+     }
+ 
+     /**
+@@ -245,11 +274,12 @@
+      * message the player cannot see is barely better than none.
+      */
+     public static void sendMenu(ServerPlayer player, Entity villager, Component notice) {
+-        sendMenu(player, villager, notice, null);
++        sendMenu(player, villager, notice, null, null);
+     }
+ 
+     private static void sendMenu(ServerPlayer player, Entity villager, Component notice,
+-                                 @Nullable Set<ResourceLocation> allowedQuestIds) {
++                                 @Nullable Set<ResourceLocation> allowedQuestIds,
++                                 @Nullable String institutionalBinding) {
+         // Co-send community-project cards first so the client cache is populated before the quest menu
+         // opens (drives the "View Project" button). Individual quests stay visually unchanged.
+         ProjectManager.sendProjectMenu(player, villager);
+@@ -323,7 +353,10 @@
+         // declining an offer brought the very same three straight back).
+         List<OfferSessionService.Offer> offers = allowedQuestIds == null
+                 ? OfferSessionService.currentOffers(player, villager, data)
+-                : OfferSessionService.currentOffers(player, villager, data, allowedQuestIds);
++                : institutionalBinding == null
++                ? OfferSessionService.currentOffers(player, villager, data, allowedQuestIds)
++                : OfferSessionService.currentOffers(player, villager, data, allowedQuestIds,
++                        institutionalBinding);
+         if (offers.isEmpty()) {
+             // "I do not need anything right now" is true but unhelpful when the reason is "you did that
+             // yesterday" or "not until you have done something else first". Every quest already authors a
+@@ -605,11 +638,23 @@
+         QuestDefinition def = defOpt.get();
+         PlayerQuestData data = dataOpt.get();
+         UUID villagerUuid = villager.getUUID();
++        OfferSession offerSession = data.offers().find(villagerUuid).orElse(null);
+ 
+         // Re-validate server-side; never trust the client's offered id. Against this villager's actual
+         // offer set, not the eligible pool: a crafted packet could otherwise accept a quest that was
+         // declined, or that this villager never drew, simply because it would have been offerable.
+-        if (OfferSessionService.slotFor(data, villagerUuid, questId).isEmpty()) {
++        if (offerSession == null || offerSession.slots().stream()
++                .noneMatch(slot -> slot.questId().equals(questId))) {
++            return false;
++        }
++        String institutionalBinding = offerSession.institutionalBinding().orElse(null);
++        if (def.institutionalCommission()) {
++            if (institutionalBinding == null || !InstitutionalCommissionBridge.supportedDefinition(def)
++                    || offerSession.packGeneration() != QuestRegistry.generation()
++                    || offerSession.restrictedQuestIds().filter(ids -> ids.contains(questId)).isEmpty()) {
++                return false;
++            }
++        } else if (institutionalBinding != null) {
+             return false;
+         }
+         // ...and re-run the offer gate at this exact moment. A session remembers its cards for up to
+@@ -703,12 +748,31 @@
+                 .map(community -> OptionalInt.of(community.villageId()))
+                 .orElseGet(OptionalInt::empty);
+ 
++        // This is the last authorization read before acceptance. The offer may have been open while a
++        // service suspension, restitution requirement, or contract cancellation changed in Ultima.
++        if (institutionalBinding != null) {
++            String refusal = InstitutionalCommissionBridge.validate(
++                    player, villager, questId, institutionalBinding, false);
++            if (!refusal.isEmpty()) {
++                player.sendSystemMessage(Component.literal(refusal));
++                return false;
++            }
++        }
++
+         ActiveQuest active = ActiveQuest.create(questId, villagerUuid,
+                 McaCompat.getVillagerDisplayName(villager),
+                 McaCompat.getProfessionId(villager).orElse(null),
+                 player.level().dimension().location(),
+                 startTime, OptionalLong.of(startDayTime), villageId,
+                 accepted.objectives().size(), frozen, situationLink);
++        if (institutionalBinding != null) {
++            Optional<UUID> instance = active.bindInstitutional(institutionalBinding, accepted);
++            if (instance.isEmpty() || !InstitutionalCommissionBridge.accepted(
++                    player, villager, questId, institutionalBinding, instance.get())) {
++                player.sendSystemMessage(Component.literal("This commission could not be accepted."));
++                return false;
++            }
++        }
+         if (!KingdomQuestLifecycle.bindAtAccept(accepted, active, player, villager)) {
+             if (McaQuestsConfig.COMMON.questChatMessages.get()) {
+                 player.sendSystemMessage(Component.translatable("mcaquests.message.offer_gone",
+@@ -725,6 +789,13 @@
+         // hand before it ever appears is a feature most players would never find.
+         if (McaQuestsConfig.COMMON.autoTrackNewQuests.get()) {
+             data.trackIfNothingTracked(active);
++        }
++        if (active.isInstitutional()
++                && !CompletionReceiptDurability.flushInstitutionalAcceptance(player, active)) {
++            player.sendSystemMessage(Component.literal(
++                    "The commission was bound, but its quest save could not be verified. It remains active; "
++                            + "reopen this menu after storage recovers."));
++            return false;
+         }
+         if (situationLink != null && player.getServer() != null) {
+             SituationSavedData.get(player.getServer()).recordParticipant(situationLink, player.getUUID());
+@@ -1027,6 +1098,35 @@
+         if (active.rewardClaimed() || !data.active().contains(active)) {
+             return false;
+         }
++        QuestDefinition current = QuestDefinitions.resolve(active.questId()).orElse(null);
++        if (!active.institutionalShapeMatches(current)) {
++            if (active.isInstitutional() || (current != null && current.institutionalCommission())) {
++                player.sendSystemMessage(Component.literal(
++                        "This commission is suspended because its accepted terms are unavailable."));
++            }
++            return false;
++        }
++        boolean institutional = active.isInstitutional();
++        if (institutional) {
++            Entity issuer = resolveGiver(player, active);
++            if (issuer == null) {
++                player.sendSystemMessage(Component.literal(
++                        "This commission is suspended because its issuer or accepted terms are unavailable."));
++                return false;
++            }
++            String refusal = InstitutionalCommissionBridge.validate(player, issuer, active.questId(),
++                    active.institutionalBinding(), true);
++            if (!refusal.isEmpty()) {
++                player.sendSystemMessage(Component.literal(refusal));
++                return false;
++            }
++            ItemReward payment = (ItemReward) def.rewards().get(0);
++            if (!ItemRewardDelivery.canFitExactly(player, payment.item(), payment.count())) {
++                player.sendSystemMessage(Component.literal(
++                        "Make room for the full commission payment before turning in the delivery."));
++                return false;
++            }
++        }
+         if (KingdomQuestLifecycle.activeStatus(def, active, player, resolveGiver(player, active))
+                 != KingdomQuestLifecycle.ActiveStatus.ALLOW) {
+             return false;
+@@ -1039,10 +1139,16 @@
+             return false;
+         }
+         long now = ((ServerLevel) player.level()).getGameTime();
++        if (institutional && (!data.hasActiveCompletionReceiptConsumer(INSTITUTIONAL_RECEIPT_CONSUMER, now)
++                || !data.canCaptureCompletionReceipt(now))) {
++            player.sendSystemMessage(Component.literal(
++                    "The civic receipt service is unavailable; no goods or payment were moved."));
++            return false;
++        }
+         // A polling add-on opts this player into receipts. Standalone MCA: Quests never accumulates an
+         // outbox merely because a possible future consumer could be installed. Once subscribed, refuse
+         // before delivery or rewards rather than evict evidence its frozen consumer cohort has not acked.
+-        boolean captureCompletionReceipt = data.shouldCaptureCompletionReceipt(now);
++        boolean captureCompletionReceipt = institutional || data.shouldCaptureCompletionReceipt(now);
+         if (captureCompletionReceipt && !data.canCaptureCompletionReceipt(now)) {
+             McaQuests.LOGGER.error("[MCA: Quests] Refusing completion of '{}' for {}: completion receipt "
+                     + "outbox status is {}", def.id(), player.getUUID(), data.completionReceiptStatus());
+@@ -1100,6 +1206,15 @@
+                 int choice = pool.clamp(frozenChoice.isPresent() ? frozenChoice.getAsInt()
+                         : pool.pick(player.getRandom()));
+                 grantSafely(player, reward, def, () -> pool.grantChoice(player, choice));
++                continue;
++            }
++            if (active.isInstitutional() && reward instanceof ItemReward item) {
++                if (!ItemRewardDelivery.grantExactly(player, item.item(), item.count())) {
++                    active.setRewardClaimed(false);
++                    player.sendSystemMessage(Component.literal(
++                            "The commission payment could not be stored; completion was not recorded."));
++                    return false;
++                }
+                 continue;
+             }
+             if (reward instanceof FactionStandingReward faction) {
+@@ -1351,6 +1466,15 @@
+         if (!data.active().contains(active)) {
+             return false; // already reached a terminal state this tick — never abandon twice
+         }
++        // The owner contract reserves civic capacity and an honor slot. Release it durably before
++        // removing the native quest; a crash after that callback can only resurrect an unpayable quest,
++        // and the callback is idempotent when the player retries abandonment after restart.
++        if (active.isInstitutional() && !InstitutionalCommissionBridge.cancelled(player, active.questId(),
++                active.institutionalBinding(), active.instance())) {
++            player.sendSystemMessage(Component.literal(
++                    "This commission could not be cancelled; it remains active until storage recovers."));
++            return false;
++        }
+         // Said before the quest disappears, because afterwards there is nothing left to explain it with.
+         // Committed goods are already in somebody else's hands or already consumed, so abandoning does
+         // not give them back; a player who is not told that reads the loss as a bug.
+@@ -1550,6 +1674,13 @@
+     // ---------------------------------------------------------------- helpers
+ 
+     public static boolean isComplete(ServerPlayer player, QuestDefinition def, ActiveQuest active) {
++        if (active != null && active.isInstitutional()) {
++            QuestDefinition current = QuestDefinitions.resolve(active.questId()).orElse(null);
++            if (!active.institutionalShapeMatches(current)
++                    || resolveGiver(player, active) == null) return false;
++        } else if (def.institutionalCommission()) {
++            return false;
++        }
+         if (CapitalsQuestRequirements.unavailableReason(def).isPresent()) {
+             return false;
+         }
+@@ -1596,6 +1727,17 @@
+      */
+     public static Optional<Component> suspensionReason(ServerPlayer player, QuestDefinition def,
+                                                        ActiveQuest active) {
++        if (active != null && active.isInstitutional()) {
++            QuestDefinition current = QuestDefinitions.resolve(active.questId()).orElse(null);
++            if (!active.institutionalShapeMatches(current)) {
++                return Optional.of(Component.literal("Commission terms changed; cancel it or contact the issuer."));
++            }
++            if (resolveGiver(player, active) == null) {
++                return Optional.of(Component.literal("Commission issuer unavailable"));
++            }
++        } else if (def.institutionalCommission()) {
++            return Optional.of(Component.literal("Commission ownership is missing; cancel this quest."));
++        }
+         Optional<Component> capitals = CapitalsQuestRequirements.unavailableReason(def);
+         if (capitals.isPresent()) {
+             return capitals;
+--- a/src/main/java/dev/otectus/mcaquests/quest/condition/ConditionTypes.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/condition/ConditionTypes.java
+@@ -33,6 +33,7 @@
+ import dev.otectus.mcaquests.quest.condition.leaf.TownsteadSpiritCondition;
+ import dev.otectus.mcaquests.quest.condition.leaf.TownsteadValueCondition;
+ import dev.otectus.mcaquests.quest.condition.leaf.InfectedCondition;
++import dev.otectus.mcaquests.quest.condition.leaf.InstitutionalServiceAvailableCondition;
+ import dev.otectus.mcaquests.quest.condition.leaf.IsFamilyMemberCondition;
+ import dev.otectus.mcaquests.quest.condition.leaf.IsPlayerSpouseCondition;
+ import dev.otectus.mcaquests.quest.condition.leaf.ItemHeldCondition;
+@@ -189,6 +190,14 @@
+     public static final QuestConditionType<CompatCapabilityCondition> COMPAT_CAPABILITY =
+             register("compat_capability", CompatCapabilityCondition.CODEC);
+ 
++    /**
++     * Required tripwire for institutional definitions. Its unknown type makes pre-protocol providers
++     * quarantine the whole quest instead of treating its paid content as an ordinary native quest.
++     */
++    public static final QuestConditionType<InstitutionalServiceAvailableCondition>
++            INSTITUTIONAL_SERVICE_AVAILABLE = register("institutional_service_available",
++            InstitutionalServiceAvailableCondition.CODEC);
++
+     public static final QuestConditionType<KingdomStandingCondition> KINGDOM_STANDING =
+             register(new ResourceLocation("ultima_kingdoms", "standing"), KingdomStandingCondition.CODEC);
+ 
+--- /dev/null
++++ b/src/main/java/dev/otectus/mcaquests/quest/condition/leaf/InstitutionalServiceAvailableCondition.java
+@@ -0,0 +1,38 @@
++package dev.otectus.mcaquests.quest.condition.leaf;
++
++import com.mojang.serialization.Codec;
++import dev.otectus.mcaquests.quest.InstitutionalCommissionBridge;
++import dev.otectus.mcaquests.quest.condition.ConditionTypes;
++import dev.otectus.mcaquests.quest.condition.QuestCondition;
++import dev.otectus.mcaquests.quest.condition.QuestConditionType;
++import dev.otectus.mcaquests.quest.condition.QuestContext;
++import net.minecraft.network.chat.Component;
++
++/**
++ * Datapack tripwire and offer gate for Ultima-owned institutional commissions.
++ *
++ * <p>The condition type did not exist before the bounded institutional protocol. Older MCA: Quests
++ * builds therefore reject a definition that names it instead of ignoring the newer
++ * {@code institutional_commission} metadata and exposing paid work as an ordinary quest. On this
++ * provider it is true only when all methods in Ultima's exact reflection-only ABI are present.
++ */
++public final class InstitutionalServiceAvailableCondition implements QuestCondition {
++
++    public static final Codec<InstitutionalServiceAvailableCondition> CODEC =
++            Codec.unit(InstitutionalServiceAvailableCondition::new);
++
++    @Override
++    public QuestConditionType<?> type() {
++        return ConditionTypes.INSTITUTIONAL_SERVICE_AVAILABLE;
++    }
++
++    @Override
++    public boolean test(QuestContext context) {
++        return InstitutionalCommissionBridge.serviceAvailable();
++    }
++
++    @Override
++    public Component describe() {
++        return Component.literal("Institutional commission service available");
++    }
++}
+--- a/src/main/java/dev/otectus/mcaquests/quest/delivery/DeliveryService.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/delivery/DeliveryService.java
+@@ -7,6 +7,7 @@
+ import dev.otectus.mcaquests.quest.CapitalsQuestRequirements;
+ import dev.otectus.mcaquests.quest.situation.QuestDefinitions;
+ import dev.otectus.mcaquests.quest.QuestDefinition;
++import dev.otectus.mcaquests.quest.InstitutionalCommissionBridge;
+ import dev.otectus.mcaquests.quest.QuestManager;
+ import dev.otectus.mcaquests.quest.objective.DeliverToVillagerObjective;
+ import dev.otectus.mcaquests.quest.objective.DeliveryDestination;
+@@ -476,6 +477,22 @@
+     private static Outcome commitTo(ServerPlayer player, ServerLevel level, ActiveQuest active,
+                                     QuestDefinition def, Obligation obligation, LivingEntity recipient,
+                                     DeliveryRequest request) {
++        QuestDefinition current = QuestDefinitions.resolve(active.questId()).orElse(null);
++        if (current == null || !active.institutionalShapeMatches(current)) {
++            return Outcome.of(DeliveryResult.OBJECTIVE_PAUSED);
++        }
++        if (active.isInstitutional()) {
++            Entity issuer = level.getEntity(active.villagerUuid());
++            if (issuer == null) {
++                return Outcome.of(DeliveryResult.OBJECTIVE_PAUSED);
++            }
++            String refusal = InstitutionalCommissionBridge.validate(player, issuer, active.questId(),
++                    active.institutionalBinding(), true);
++            if (!refusal.isEmpty()) {
++                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(refusal));
++                return Outcome.of(DeliveryResult.OBJECTIVE_PAUSED);
++            }
++        }
+         ObjectiveProgress progress = active.progress(obligation.index());
+         if (paused(player, level, active, def, obligation, progress)) {
+             return Outcome.of(DeliveryResult.OBJECTIVE_PAUSED);
+--- a/src/main/java/dev/otectus/mcaquests/quest/reward/ItemRewardDelivery.java
++++ b/src/main/java/dev/otectus/mcaquests/quest/reward/ItemRewardDelivery.java
+@@ -62,13 +62,46 @@
+         }
+     }
+ 
++    /** True only when the whole fixed reward fits in the player-file-backed main inventory. */
++    public static boolean canFitExactly(ServerPlayer player, Item item, int count) {
++        if (count <= 0 || !player.isAlive() || player.isRemoved()) return false;
++        return canFitExactly(mainInventory(player), item, count);
++    }
++
++    /**
++     * Inserts the whole fixed reward without ever dropping an entity or using the deferred ledger.
++     * Institutional completion preflights this before consuming delivery goods and checks it again here.
++     */
++    public static boolean grantExactly(ServerPlayer player, Item item, int count) {
++        if (!canFitExactly(player, item, count)) return false;
++        try {
++            ItemStack remainder = ItemHandlerHelper.insertItemStacked(
++                    mainInventory(player), new ItemStack(item, count), false);
++            if (!remainder.isEmpty()) return false;
++            player.getInventory().setChanged();
++            player.inventoryMenu.broadcastChanges();
++            return true;
++        } catch (RuntimeException | LinkageError failure) {
++            return false;
++        }
++    }
++
++    static boolean canFitExactly(IItemHandler inventory, Item item, int count) {
++        return count > 0 && ItemHandlerHelper.insertItemStacked(
++                inventory, new ItemStack(item, count), true).isEmpty();
++    }
++
++    private static IItemHandler mainInventory(ServerPlayer player) {
++        return new RangedWrapper(new InvWrapper(player.getInventory()),
++                0, player.getInventory().items.size());
++    }
++
+     /** Pays only into available inventory slots; a full inventory cannot create a stream of entities. */
+     public static void flush(ServerPlayer player) {
+         if (!player.isAlive() || player.isRemoved()) { return; }
+         var data = QuestCapabilities.get(player).orElse(null);
+         if (data == null || data.pendingItems().isEmpty()) { return; }
+-        IItemHandler inventory = new RangedWrapper(new InvWrapper(player.getInventory()),
+-                0, player.getInventory().items.size());
++        IItemHandler inventory = mainInventory(player);
+         if (flush(data.pendingItems(), inventory, id -> BuiltInRegistries.ITEM.containsKey(id)
+                 ? BuiltInRegistries.ITEM.get(id) : null, player.serverLevel().getGameTime())) {
+             player.getInventory().setChanged();
+--- a/src/main/java/dev/otectus/mcaquests/state/ActiveQuest.java
++++ b/src/main/java/dev/otectus/mcaquests/state/ActiveQuest.java
+@@ -4,6 +4,7 @@
+ import dev.otectus.mcaquests.compat.McaCompat;
+ import dev.otectus.mcaquests.data.QuestRegistry;
+ import dev.otectus.mcaquests.quest.QuestDefinition;
++import dev.otectus.mcaquests.quest.InstitutionalCommissionBridge;
+ import dev.otectus.mcaquests.quest.objective.ObjectiveProgress;
+ import dev.otectus.mcaquests.quest.reputation.QuestReputation;
+ import dev.otectus.mcaquests.quest.template.PlaceholderResolver;
+@@ -103,6 +104,12 @@
+      */
+     @Nullable
+     private UUID instance;
++    /** Opaque Ultima contract UUID; empty on every ordinary and legacy quest. */
++    private boolean institutionalMarker;
++    private String institutionalBinding = "";
++    /** Canonical accepted definition, persisted so reloads cannot reinterpret institutional terms. */
++    private String institutionalDefinitionJson = "";
++    private String institutionalDefinitionFingerprint = "";
+     private boolean rewardClaimed;
+     private boolean readyNotified;
+     /**
+@@ -221,6 +228,13 @@
+      * objectives -- see {@link #reconcile(QuestDefinition)}.
+      */
+     public QuestDefinition resolve(QuestDefinition base) {
++        if (!institutionalBinding.isEmpty()) {
++            if (resolvedCache == null) {
++                resolvedCache = InstitutionalCommissionBridge.decodeSnapshot(
++                        institutionalDefinitionJson, institutionalDefinitionFingerprint).orElse(base);
++            }
++            return resolvedCache;
++        }
+         reconcile(base);
+         if (template == null || base.template().isEmpty()) {
+             return base;
+@@ -347,6 +361,45 @@
+         return candidate != null && candidate.equals(instance);
+     }
+ 
++    /**
++     * Freezes owner and terms before Ultima's accepted callback. The returned instance is already the
++     * identity the callback must durably bind, although this quest has not yet entered player state.
++     */
++    public Optional<UUID> bindInstitutional(String binding, QuestDefinition acceptedDefinition) {
++        if (!institutionalBinding.isEmpty() || !InstitutionalCommissionBridge.validBinding(binding)) {
++            return Optional.empty();
++        }
++        Optional<InstitutionalCommissionBridge.Snapshot> snapshot =
++                InstitutionalCommissionBridge.snapshot(acceptedDefinition);
++        if (snapshot.isEmpty()) return Optional.empty();
++        institutionalBinding = binding;
++        institutionalMarker = true;
++        institutionalDefinitionJson = snapshot.get().json();
++        institutionalDefinitionFingerprint = snapshot.get().fingerprint();
++        resolvedCache = acceptedDefinition;
++        return Optional.of(instance());
++    }
++
++    public String institutionalBinding() {
++        return institutionalBinding;
++    }
++
++    public boolean isInstitutional() {
++        return institutionalMarker;
++    }
++
++    /** True only while the currently loaded datapack definition is byte-for-byte equivalent in codec form. */
++    public boolean institutionalDefinitionMatches(QuestDefinition current) {
++        return !isInstitutional()
++                || InstitutionalCommissionBridge.matches(current, institutionalDefinitionFingerprint);
++    }
++
++    /** Prevents either persisted kind of quest from being reinterpreted as the other after a reload. */
++    public boolean institutionalShapeMatches(QuestDefinition current) {
++        return current != null && current.institutionalCommission() == isInstitutional()
++                && institutionalDefinitionMatches(current);
++    }
++
+     public ObjectiveProgress progress(int index) {
+         while (progress.size() <= index) {
+             progress.add(new ObjectiveProgress());
+@@ -521,6 +574,11 @@
+         if (instance != null) {
+             // Absent on every quest that never needed an identity, so an untouched save stays untouched.
+             tag.putUUID("instance", instance);
++        }
++        if (institutionalMarker) {
++            tag.putString("institutional_binding", institutionalBinding);
++            tag.putString("institutional_definition", institutionalDefinitionJson);
++            tag.putString("institutional_definition_fingerprint", institutionalDefinitionFingerprint);
+         }
+         if (!frozenRewards.isEmpty()) {
+             CompoundTag frozen = new CompoundTag();
+@@ -567,6 +625,24 @@
+         if (tag.hasUUID("instance")) {
+             quest.instance = tag.getUUID("instance");
+         }
++        // Raw key presence is the trust boundary. A corrupt wrong-type value must stay institutional
++        // and fail its bounded typed reads below, never silently downgrade into an ordinary quest.
++        boolean institutionalMarker = tag.contains("institutional_binding")
++                || tag.contains("institutional_definition")
++                || tag.contains("institutional_definition_fingerprint");
++        if (institutionalMarker) {
++            quest.institutionalMarker = true;
++            String institutionalBinding = tag.getString("institutional_binding");
++            String institutionalDefinition = tag.getString("institutional_definition");
++            String institutionalFingerprint = tag.getString("institutional_definition_fingerprint");
++            // Presence is the security boundary. Bound malformed content before retaining it so corrupted
++            // data fails closed without carrying an unbounded string through every later save.
++            quest.institutionalBinding = institutionalBinding.length() <= 128 ? institutionalBinding : "";
++            quest.institutionalDefinitionJson = institutionalDefinition.length() <= 131_072
++                    ? institutionalDefinition : "";
++            quest.institutionalDefinitionFingerprint = institutionalFingerprint.length() <= 128
++                    ? institutionalFingerprint : "";
++        }
+         if (tag.contains("kingdom_binding", Tag.TAG_COMPOUND)) {
+             KingdomBindingSnapshot.load(tag.getCompound("kingdom_binding")).ifPresent(quest::bindKingdom);
+         }
+--- a/src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java
++++ b/src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java
+@@ -47,6 +47,26 @@
+         return all;
+     }
+ 
++    /**
++     * Forces and verifies the institutional acceptance snapshot before the native accept action reports
++     * success. Ultima has already bound the instance by this point; on a failed fence the active quest is
++     * deliberately retained in memory and success is withheld so a later vanilla save can recover it.
++     */
++    public static boolean flushInstitutionalAcceptance(ServerPlayer player, ActiveQuest expected) {
++        if (expected == null || !expected.isInstitutional() || expected.instanceIfPresent().isEmpty()) return false;
++        MinecraftServer server = player.getServer();
++        if (server == null || !server.isSameThread()) return false;
++        savePlayer(server, player);
++        PlayerQuestData disk = readPlayerQuestData(server, player);
++        boolean durable = disk != null && containsActiveSnapshot(disk, expected);
++        if (!durable) {
++            McaQuests.LOGGER.error("[MCA: Quests] Player save did not contain institutional acceptance "
++                    + "{} instance {}; acceptance success remains fenced", expected.questId(),
++                    expected.instanceIfPresent().orElse(null));
++        }
++        return durable;
++    }
++
+     /** Forces and verifies an acknowledgement. The caller rolls its in-memory mutation back on false. */
+     public static boolean flushAcknowledgement(ServerPlayer player, ResourceLocationAck acknowledgement) {
+         MinecraftServer server = player.getServer();
+@@ -64,6 +84,12 @@
+             return false;
+         }
+         return disk.active().stream().noneMatch(active -> active.isInstance(expected.receiptId()));
++    }
++
++    static boolean containsActiveSnapshot(PlayerQuestData disk, ActiveQuest expected) {
++        return expected.instanceIfPresent().map(instance -> disk.active().stream()
++                .filter(active -> active.isInstance(instance))
++                .anyMatch(active -> active.save().equals(expected.save()))).orElse(false);
+     }
+ 
+     private static void savePlayer(MinecraftServer server, ServerPlayer player) {
+--- a/src/main/java/dev/otectus/mcaquests/state/CompletionReceiptOutbox.java
++++ b/src/main/java/dev/otectus/mcaquests/state/CompletionReceiptOutbox.java
+@@ -54,6 +54,11 @@
+         return health == Health.READY ? !activeConsumers(now).isEmpty() : unreadableRequiresFence;
+     }
+ 
++    boolean hasActiveConsumer(ResourceLocation consumer, long now) {
++        return health == Health.READY && consumer != null
++                && activeConsumers(now).contains(consumer.toString());
++    }
++
+     QuestCompletionReceipt append(UUID playerId, ActiveQuest active, long completedGameTime) {
+         if (!canAppend(completedGameTime)) {
+             throw new IllegalStateException("completion receipt outbox is not writable: " + status());
+@@ -81,7 +86,8 @@
+                                 ? Optional.of(binding.localVillageId().getAsInt()) : Optional.empty())),
+                 active.civicBuildingBinding().map(binding -> new QuestCompletionReceipt.CivicBuildingBinding(
+                         binding.bindingId(), binding.settlementId(), binding.dimension(), binding.villageId(),
+-                        binding.buildingId(), binding.family(), binding.typeAtBinding())));
++                        binding.buildingId(), binding.family(), binding.typeAtBinding())),
++                active.institutionalBinding());
+         if (entries.putIfAbsent(receipt.receiptId(), new Entry(receipt, intendedConsumers)) != null) {
+             throw new IllegalStateException("duplicate completion receipt id " + receipt.receiptId());
+         }
+@@ -493,6 +499,9 @@
+         receipt.acceptedVillageId().ifPresent(value -> tag.putInt("accepted_village", value));
+         receipt.kingdomBinding().ifPresent(value -> tag.put("kingdom_binding", saveKingdom(value)));
+         receipt.civicBuildingBinding().ifPresent(value -> tag.put("civic_building_binding", saveCivic(value)));
++        if (!receipt.institutionalBinding().isEmpty()) {
++            tag.putString("institutional_binding", receipt.institutionalBinding());
++        }
+         return tag;
+     }
+ 
+@@ -512,7 +521,7 @@
+         return new QuestCompletionReceipt(tag.getUUID("provider_epoch"), tag.getUUID("receipt_id"),
+                 tag.getUUID("player_id"), quest, tag.getLong("revision"), outcome,
+                 tag.getLong("completed"), tag.getLong("accepted"), tag.getUUID("giver_id"), dimension,
+-                village, kingdom, civic);
++                village, kingdom, civic, tag.getString("institutional_binding"));
+     }
+ 
+     private static CompoundTag saveKingdom(QuestCompletionReceipt.KingdomBinding value) {
+--- a/src/main/java/dev/otectus/mcaquests/state/OfferSession.java
++++ b/src/main/java/dev/otectus/mcaquests/state/OfferSession.java
+@@ -65,6 +65,9 @@
+     /** Null for the ordinary villager repertoire; otherwise the trusted commission API's bounded scope. */
+     @Nullable
+     private Set<ResourceLocation> restrictedQuestIds;
++    /** Opaque contract UUID for the institutional menu surface; null for every native/R1 menu. */
++    @Nullable
++    private String institutionalBinding;
+     /** Quest id (as a string, because that is what NBT keys are) to the game time the refusal lapses. */
+     private final Map<String, Long> declinedUntil = new HashMap<>();
+ 
+@@ -119,6 +122,11 @@
+     /** Replaces the set and records which public menu surface drew it. */
+     public void redraw(List<Slot> drawn, long gameTime, int generation, long drawSeed,
+                        @Nullable Set<ResourceLocation> restriction) {
++        redraw(drawn, gameTime, generation, drawSeed, restriction, null);
++    }
++
++    public void redraw(List<Slot> drawn, long gameTime, int generation, long drawSeed,
++                       @Nullable Set<ResourceLocation> restriction, @Nullable String binding) {
+         declinedUntil.values().removeIf(until -> until == UNTIL_REFRESH);
+         slots.clear();
+         slots.addAll(drawn);
+@@ -126,10 +134,16 @@
+         packGeneration = generation;
+         seed = drawSeed;
+         restrictedQuestIds = restriction == null ? null : Set.copyOf(restriction);
++        institutionalBinding = binding;
+     }
+ 
+     public boolean scopeMatches(@Nullable Set<ResourceLocation> restriction) {
+-        return java.util.Objects.equals(restrictedQuestIds, restriction);
++        return scopeMatches(restriction, null);
++    }
++
++    public boolean scopeMatches(@Nullable Set<ResourceLocation> restriction, @Nullable String binding) {
++        return java.util.Objects.equals(restrictedQuestIds, restriction)
++                && java.util.Objects.equals(institutionalBinding, binding);
+     }
+ 
+     public boolean allowsInCurrentScope(ResourceLocation questId) {
+@@ -138,6 +152,10 @@
+ 
+     public Optional<Set<ResourceLocation>> restrictedQuestIds() {
+         return Optional.ofNullable(restrictedQuestIds);
++    }
++
++    public Optional<String> institutionalBinding() {
++        return Optional.ofNullable(institutionalBinding);
+     }
+ 
+     /**
+@@ -245,6 +263,7 @@
+                     .forEach(value -> restricted.add(net.minecraft.nbt.StringTag.valueOf(value)));
+             tag.put("restricted_quests", restricted);
+         }
++        if (institutionalBinding != null) tag.putString("institutional_binding", institutionalBinding);
+         ListTag list = new ListTag();
+         for (Slot slot : slots) {
+             CompoundTag entry = new CompoundTag();
+@@ -287,6 +306,10 @@
+             }
+             session.restrictedQuestIds = Set.copyOf(restricted);
+         }
++        if (tag.contains("institutional_binding", Tag.TAG_STRING)) {
++            String binding = tag.getString("institutional_binding");
++            if (binding.length() <= 128) session.institutionalBinding = binding;
++        }
+         ListTag list = tag.getList("slots", Tag.TAG_COMPOUND);
+         for (int i = 0; i < list.size(); i++) {
+             CompoundTag entry = list.getCompound(i);
+@@ -316,6 +339,7 @@
+         packGeneration = other.packGeneration;
+         seed = other.seed;
+         restrictedQuestIds = other.restrictedQuestIds == null ? null : Set.copyOf(other.restrictedQuestIds);
++        institutionalBinding = other.institutionalBinding;
+         slots.clear();
+         slots.addAll(other.slots);
+         declinedUntil.clear();
+--- a/src/main/java/dev/otectus/mcaquests/state/PlayerQuestData.java
++++ b/src/main/java/dev/otectus/mcaquests/state/PlayerQuestData.java
+@@ -38,6 +38,11 @@
+     /** True only while at least one add-on is actively polling for future completion evidence. */
+     public boolean shouldCaptureCompletionReceipt(long now) {
+         return completionReceipts.shouldCapture(now);
++    }
++
++    /** True only while this exact consumer will be frozen into a newly appended receipt's cohort. */
++    public boolean hasActiveCompletionReceiptConsumer(ResourceLocation consumer, long now) {
++        return completionReceipts.hasActiveConsumer(consumer, now);
+     }
+ 
+     /** Internal completion pipeline hook; the returned receipt is hidden until marked durable. */
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaquests/quest/InstitutionalCommissionBridgeTest.java
+@@ -0,0 +1,99 @@
++package dev.otectus.mcaquests.quest;
++
++import com.google.gson.JsonParser;
++import com.mojang.serialization.JsonOps;
++import dev.otectus.mcaquests.quest.condition.ConditionTypes;
++import dev.otectus.mcaquests.quest.condition.composite.AllOfCondition;
++import dev.otectus.mcaquests.quest.condition.composite.AnyOfCondition;
++import dev.otectus.mcaquests.quest.condition.leaf.InstitutionalServiceAvailableCondition;
++import dev.otectus.mcaquests.quest.condition.leaf.IsPlayerSpouseCondition;
++import dev.otectus.mcaquests.support.TestBootstrap;
++import org.junit.jupiter.api.Test;
++
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++class InstitutionalCommissionBridgeTest {
++    static { TestBootstrap.ensureBootstrapped(); }
++
++    @Test
++    void onlyCanonicalUuidBindingsAreAccepted() {
++        assertTrue(InstitutionalCommissionBridge.validBinding(
++                "11111111-2222-3333-4444-555555555555"));
++        assertFalse(InstitutionalCommissionBridge.validBinding("11111111222233334444555555555555"));
++        assertFalse(InstitutionalCommissionBridge.validBinding(
++                "11111111-2222-3333-4444-555555555555-extra"));
++    }
++
++    @Test
++    void validationFailsClosedForMissingOrMalformedApiResults() {
++        assertTrue(InstitutionalCommissionBridge.validationResult("").isEmpty());
++        assertFalse(InstitutionalCommissionBridge.validationResult("service suspended").isEmpty());
++        assertFalse(InstitutionalCommissionBridge.validationResult(null).isEmpty());
++        assertFalse(InstitutionalCommissionBridge.validationResult(Boolean.TRUE).isEmpty());
++        assertFalse(InstitutionalCommissionBridge.validationResult("x".repeat(513)).isEmpty());
++    }
++
++    @Test
++    void institutionalSurfaceAcceptsOnlyConcreteFixedEmeraldRewards() {
++        assertTrue(InstitutionalCommissionBridge.supportedDefinition(parse(
++                gate() + ",\"institutional_commission\":true,\"rewards\":[{\"type\":\"mcaquests:item\","
++                        + "\"item\":\"minecraft:emerald\",\"count\":6}]")));
++        assertFalse(InstitutionalCommissionBridge.supportedDefinition(parse(
++                gate() + ",\"rewards\":[{\"type\":\"mcaquests:item\",\"item\":\"minecraft:emerald\","
++                        + "\"count\":6}]")), "ordinary definitions stay on the ordinary surface");
++        assertFalse(InstitutionalCommissionBridge.supportedDefinition(parse(
++                gate() + ",\"institutional_commission\":true,\"rewards\":[{\"type\":\"mcaquests:item\","
++                        + "\"item\":\"minecraft:diamond\",\"count\":1}]")));
++        assertFalse(InstitutionalCommissionBridge.supportedDefinition(parse(
++                "\"institutional_commission\":true,\"rewards\":[{\"type\":\"mcaquests:item\","
++                        + "\"item\":\"minecraft:emerald\",\"count\":6}]")),
++                "institutional authoring must include the legacy-provider tripwire");
++    }
++
++    @Test
++    void serviceGateMustBePositiveAndMandatory() {
++        var service = new InstitutionalServiceAvailableCondition();
++        var other = new IsPlayerSpouseCondition();
++        assertTrue(InstitutionalCommissionBridge.hasMandatoryServiceGate(service));
++        assertTrue(InstitutionalCommissionBridge.hasMandatoryServiceGate(
++                new AllOfCondition(List.of(other, service))));
++        assertFalse(InstitutionalCommissionBridge.hasMandatoryServiceGate(
++                new AnyOfCondition(List.of(other, service))));
++    }
++
++    @Test
++    void unknownConditionTypeIsAHardCodecFailure() {
++        assertTrue(ConditionTypes.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
++                "{\"type\":\"mcaquests:provider_too_old_tripwire\"}")).error().isPresent());
++        assertTrue(QuestDefinition.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
++                "{\"id\":\"ultima:test\",\"giver\":{},\"dialogue\":{},"
++                        + "\"conditions\":{\"type\":\"mcaquests:provider_too_old_tripwire\"}}"))
++                .error().isPresent(), "the owning definition must preserve the strict condition error");
++    }
++
++    @Test
++    void institutionalAbandonCallsDurableOwnerCancellationBeforeRemoval() throws Exception {
++        String source = Files.readString(Path.of(
++                "src/main/java/dev/otectus/mcaquests/quest/QuestManager.java"));
++        int abandon = source.indexOf("public static boolean abandon(ServerPlayer player, ActiveQuest active");
++        int cancelled = source.indexOf("InstitutionalCommissionBridge.cancelled", abandon);
++        int removal = source.indexOf("data.remove(active)", abandon);
++        assertTrue(abandon >= 0 && cancelled > abandon && removal > cancelled,
++                "owner cancellation must commit before the native quest is removed");
++    }
++
++    private static String gate() {
++        return "\"conditions\":{\"type\":\"mcaquests:institutional_service_available\"}";
++    }
++
++    private static QuestDefinition parse(String tail) {
++        return QuestDefinition.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
++                "{\"id\":\"ultima:test\",\"giver\":{},\"dialogue\":{}," + tail + "}"))
++                .result().orElseThrow();
++    }
++}
+--- a/src/test/java/dev/otectus/mcaquests/quest/reward/ItemRewardDeliveryTest.java
++++ b/src/test/java/dev/otectus/mcaquests/quest/reward/ItemRewardDeliveryTest.java
+@@ -26,6 +26,18 @@
+         assertEquals(4998L, pending.snapshot().get(ITEM));
+     }
+ 
++    @Test void exactInstitutionalPaymentRequiresPlayerFileBackedCapacity() {
++        SimpleContainer full = new SimpleContainer(new ItemStack(Items.DIAMOND, 64));
++        assertFalse(ItemRewardDelivery.canFitExactly(new InvWrapper(full), Items.EMERALD, 6));
++
++        SimpleContainer partial = new SimpleContainer(new ItemStack(Items.EMERALD, 58));
++        assertTrue(ItemRewardDelivery.canFitExactly(new InvWrapper(partial), Items.EMERALD, 6));
++        assertEquals(58, partial.getItem(0).getCount(), "capacity simulation must not mutate inventory");
++
++        SimpleContainer empty = new SimpleContainer(1);
++        assertTrue(ItemRewardDelivery.canFitExactly(new InvWrapper(empty), Items.EMERALD, 6));
++    }
++
+     @Test void eachTickCanInsertAtMostSixteenStacksAcrossCalls() {
+         PendingItemRewards pending = new PendingItemRewards();
+         pending.add(ITEM, 5000);
+--- a/src/test/java/dev/otectus/mcaquests/state/CompletionReceiptDurabilitySourceTest.java
++++ b/src/test/java/dev/otectus/mcaquests/state/CompletionReceiptDurabilitySourceTest.java
+@@ -14,10 +14,25 @@
+         String source = Files.readString(Path.of(
+                 "src/main/java/dev/otectus/mcaquests/state/CompletionReceiptDurability.java"));
+         assertTrue(source.contains("mcaquests$savePlayer(player)"));
++        assertTrue(source.contains("containsActiveSnapshot(disk, expected)"));
+         assertFalse(source.contains("saveAll()"),
+                 "one receipt must not force a save of every online player's capability graph");
+ 
+         String mixins = Files.readString(Path.of("src/main/resources/mcaquests.mixins.json"));
+         assertTrue(mixins.contains("PlayerListAccessor"));
+     }
++
++    @Test
++    void institutionalLeaseRenewalCannotTriggerAPlayerSave() throws Exception {
++        String source = Files.readString(Path.of(
++                "src/main/java/dev/otectus/mcaquests/api/McaQuestsApi.java"));
++        int start = source.indexOf("public static boolean renewInstitutionalCompletionConsumer");
++        int end = source.indexOf("public static boolean openCommissionMenu", start);
++        assertTrue(start >= 0 && end > start);
++        String method = source.substring(start, end);
++        assertTrue(method.contains("data.readCompletionReceipts"));
++        assertTrue(method.contains("\"ready\".equals(data.completionReceiptStatus())"));
++        assertFalse(method.contains("flushPending"),
++                "commit-time policy validation must not save half-finished native completion state");
++    }
+ }
+--- a/src/test/java/dev/otectus/mcaquests/state/CompletionReceiptOutboxTest.java
++++ b/src/test/java/dev/otectus/mcaquests/state/CompletionReceiptOutboxTest.java
+@@ -26,6 +26,19 @@
+     @BeforeAll
+     static void bootstrap() {
+         TestBootstrap.ensureBootstrapped();
++    }
++
++    @Test
++    void institutionalCompletionRequiresItsExactActiveConsumerLease() {
++        CompletionReceiptOutbox outbox = new CompletionReceiptOutbox();
++        ResourceLocation civic = new ResourceLocation("ultima_kingdoms", "regional_civic_network");
++        assertFalse(outbox.hasActiveConsumer(civic, 10L));
++        outbox.read(AUDIT, 8, 10L);
++        assertFalse(outbox.hasActiveConsumer(civic, 10L), "an unrelated subscriber is insufficient");
++        outbox.read(civic, 8, 10L);
++        assertTrue(outbox.hasActiveConsumer(civic, 10L));
++        assertFalse(outbox.hasActiveConsumer(civic,
++                10L + CompletionReceiptOutbox.SUBSCRIPTION_LEASE_TICKS + 1L));
+     }
+ 
+     @Test
+--- /dev/null
++++ b/src/test/java/dev/otectus/mcaquests/state/InstitutionalCommissionPersistenceTest.java
+@@ -0,0 +1,110 @@
++package dev.otectus.mcaquests.state;
++
++import com.google.gson.JsonParser;
++import com.mojang.serialization.JsonOps;
++import dev.otectus.mcaquests.api.QuestCompletionReceipt;
++import dev.otectus.mcaquests.quest.QuestDefinition;
++import dev.otectus.mcaquests.quest.reward.ItemReward;
++import dev.otectus.mcaquests.support.TestBootstrap;
++import net.minecraft.network.chat.Component;
++import net.minecraft.resources.ResourceLocation;
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++import java.util.OptionalInt;
++import java.util.OptionalLong;
++import java.util.UUID;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++class InstitutionalCommissionPersistenceTest {
++    private static final String BINDING = "11111111-2222-3333-4444-555555555555";
++    private static final UUID PLAYER = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
++    private static final ResourceLocation CONSUMER = new ResourceLocation("ultima_kingdoms", "civic");
++
++    static { TestBootstrap.ensureBootstrapped(); }
++
++    @Test
++    void bindingAcceptedTermsAndReceiptSurvivePlayerDataRoundTrip() {
++        QuestDefinition accepted = definition(6, true);
++        ActiveQuest active = active(accepted);
++        assertTrue(active.bindInstitutional(BINDING, accepted).isPresent());
++
++        ActiveQuest restoredActive = ActiveQuest.load(active.save());
++        assertEquals(BINDING, restoredActive.institutionalBinding());
++        assertEquals(6, ((ItemReward) restoredActive.resolve(definition(9, true)).rewards().get(0)).count(),
++                "the accepted snapshot, rather than the changed live payout, must resolve");
++        assertFalse(restoredActive.institutionalDefinitionMatches(definition(9, true)));
++        assertTrue(restoredActive.institutionalDefinitionMatches(accepted));
++
++        PlayerQuestData acceptedData = new PlayerQuestData();
++        acceptedData.add(restoredActive);
++        PlayerQuestData acceptedDisk = new PlayerQuestData();
++        acceptedDisk.load(acceptedData.save());
++        assertTrue(CompletionReceiptDurability.containsActiveSnapshot(acceptedDisk, restoredActive),
++                "acceptance verification must find the exact instance, binding, and frozen terms");
++        acceptedDisk.remove(acceptedDisk.active().get(0));
++        assertFalse(CompletionReceiptDurability.containsActiveSnapshot(acceptedDisk, restoredActive));
++
++        PlayerQuestData data = new PlayerQuestData();
++        data.readCompletionReceipts(CONSUMER, 8, 1L);
++        QuestCompletionReceipt receipt = data.captureCompletionReceipt(PLAYER, restoredActive, 20L);
++        data.markCompletionReceiptDurable(receipt.receiptId());
++        PlayerQuestData reloaded = new PlayerQuestData();
++        reloaded.load(data.save());
++        assertEquals(BINDING, reloaded.readCompletionReceipts(CONSUMER, 8, 21L)
++                .get(0).institutionalBinding());
++    }
++
++    @Test
++    void legacyQuestAndLegacyDefinitionRemainOrdinary() {
++        ActiveQuest legacy = active(definition(6, false));
++        assertFalse(ActiveQuest.load(legacy.save()).isInstitutional());
++        assertFalse(definition(6, false).institutionalCommission());
++        assertFalse(legacy.institutionalShapeMatches(definition(6, true)),
++                "an old ordinary active quest cannot acquire institutional terms after reload");
++    }
++
++    @Test
++    void malformedInstitutionalMarkersRemainInstitutionalAndFailClosed() {
++        ActiveQuest ordinary = active(definition(6, false));
++        net.minecraft.nbt.CompoundTag emptyBinding = ordinary.save();
++        emptyBinding.putString("institutional_binding", "");
++        ActiveQuest emptyLoaded = ActiveQuest.load(emptyBinding);
++        assertTrue(emptyLoaded.isInstitutional());
++        assertFalse(emptyLoaded.institutionalShapeMatches(definition(6, true)));
++
++        net.minecraft.nbt.CompoundTag oversized = ordinary.save();
++        oversized.putString("institutional_binding", "x".repeat(129));
++        ActiveQuest oversizedLoaded = ActiveQuest.load(oversized);
++        assertTrue(oversizedLoaded.isInstitutional());
++        assertTrue(oversizedLoaded.institutionalBinding().isEmpty());
++        assertFalse(oversizedLoaded.institutionalShapeMatches(definition(6, true)));
++
++        net.minecraft.nbt.CompoundTag wrongType = ordinary.save();
++        wrongType.putInt("institutional_binding", 7);
++        ActiveQuest wrongTypeLoaded = ActiveQuest.load(wrongType);
++        assertTrue(wrongTypeLoaded.isInstitutional(),
++                "a corrupt marker type cannot downgrade the persisted quest to ordinary");
++        assertTrue(wrongTypeLoaded.institutionalBinding().isEmpty());
++        assertFalse(wrongTypeLoaded.institutionalShapeMatches(definition(6, false)));
++    }
++
++    private static ActiveQuest active(QuestDefinition definition) {
++        return ActiveQuest.create(definition.id(), UUID.randomUUID(), Component.literal("Issuer"), null,
++                new ResourceLocation("minecraft", "overworld"), 10L, OptionalLong.of(10L),
++                OptionalInt.empty(), definition.objectives().size(), null, null);
++    }
++
++    private static QuestDefinition definition(int emeralds, boolean institutional) {
++        String json = "{\"id\":\"ultima:civic/lamplighters/workshop_lanterns\","
++                + "\"giver\":{},\"dialogue\":{},\"institutional_commission\":" + institutional + ","
++                + (institutional ? "\"conditions\":{\"type\":\"mcaquests:institutional_service_available\"}," : "")
++                + "\"rewards\":[{\"type\":\"mcaquests:item\",\"item\":\"minecraft:emerald\","
++                + "\"count\":" + emeralds + "}]}";
++        return QuestDefinition.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
++                .result().orElseThrow();
++    }
++}
+--- a/src/test/java/dev/otectus/mcaquests/state/OfferSessionTest.java
++++ b/src/test/java/dev/otectus/mcaquests/state/OfferSessionTest.java
+@@ -104,6 +104,22 @@
+     }
+ 
+     @Test
++    void institutionalBindingSurvivesAndAStaleOwnerCannotReuseTheOffer() {
++        String binding = "11111111-2222-3333-4444-555555555555";
++        Set<ResourceLocation> allowed = Set.of(ONE);
++        OfferSession session = new OfferSession(VILLAGER);
++        session.redraw(List.of(slot(ONE)), 1000L, GENERATION, 42L, allowed, binding);
++
++        OfferSession restored = OfferSession.load(session.save());
++        assertEquals(binding, restored.institutionalBinding().orElseThrow());
++        assertEquals(GENERATION, restored.packGeneration(),
++                "acceptance can compare the displayed catalogue generation after restart");
++        assertTrue(restored.scopeMatches(allowed, binding));
++        assertFalse(restored.scopeMatches(allowed, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
++        assertFalse(restored.scopeMatches(allowed), "ordinary R1 callers cannot inherit the owner token");
++    }
++
++    @Test
+     @DisplayName("a decline cooldown longer than the pruning horizon survives pruning")
+     void timedRefusalSurvivesPruning() {
+         OfferSessions sessions = new OfferSessions();

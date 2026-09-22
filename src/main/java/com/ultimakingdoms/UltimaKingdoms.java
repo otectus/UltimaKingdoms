@@ -7,6 +7,8 @@ import com.ultimakingdoms.compat.mca.McaCompat;
 import com.ultimakingdoms.config.UltimaKingdomsConfig;
 import com.ultimakingdoms.core.KingdomsServiceImpl;
 import com.ultimakingdoms.data.DefinitionRegistry;
+import com.ultimakingdoms.integration.IntegrationBootstrap;
+import com.ultimakingdoms.integration.IntegrationConfig;
 import com.ultimakingdoms.presentation.Presentation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -38,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Mod(UltimaKingdomsApi.MOD_ID)
 public final class UltimaKingdoms {
+    public static final com.ultimakingdoms.politics.PoliticalDefinitions POLITICS = new com.ultimakingdoms.politics.PoliticalDefinitions();
     public static final DefinitionRegistry DEFINITIONS = new DefinitionRegistry();
     private static final int MAX_PENDING_CHUNKS = 4_096;
     private static final Map<MinecraftServer, RuntimeState> RUNTIMES = new ConcurrentHashMap<>();
@@ -45,18 +48,42 @@ public final class UltimaKingdoms {
 
     public UltimaKingdoms() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, UltimaKingdomsConfig.SPEC);
-        Presentation.init(FMLJavaModLoadingContext.get().getModEventBus());
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, IntegrationConfig.SPEC, IntegrationConfig.FILE_NAME);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, com.ultimakingdoms.warfare.WarfareConfig.SPEC, "ultima-kingdoms-warfare-common.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, com.ultimakingdoms.evolution.EvolutionConfig.SPEC, "ultima-kingdoms-evolution-common.toml");
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.evolution.EvolutionRuntime.class);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.evolution.EvolutionCommands.class);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.evolution.ProtectionCommands.class);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.evolution.RecruitTransferCommands.class);
+        var modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        Presentation.init(modBus);
+        IntegrationBootstrap.init(modBus);
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.politics.PoliticalCommands.class);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.warfare.WarfareCommands.class);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.warfare.WarfareRuntime.class);
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.warfare.MilitaryTargetPolicy.class);
     }
 
     @SubscribeEvent
     public void addReloadListeners(AddReloadListenerEvent event) {
         event.addListener(DEFINITIONS.reloadListener());
+        event.addListener(POLITICS);
+        event.addListener(com.ultimakingdoms.evolution.EvolutionDefinitions.INSTANCE);
+        event.addListener(com.ultimakingdoms.evolution.drama.DramaRuntime.reloadListener());
+        event.addListener(com.ultimakingdoms.civic.CivicDefinitions.INSTANCE);
+        event.addListener(com.ultimakingdoms.factions.organization.OrganizationRuntime.reloadListener());
+        event.addListener(IntegrationBootstrap.gateReloadListener());
     }
 
     @SubscribeEvent
     public void serverAboutToStart(ServerAboutToStartEvent event) {
+        com.ultimakingdoms.evolution.drama.DramaRuntime.commitPending();
+        com.ultimakingdoms.evolution.EvolutionDefinitions.INSTANCE.commitPending();
         DEFINITIONS.commitPending();
+        POLITICS.commitPending();
+        com.ultimakingdoms.civic.CivicDefinitions.INSTANCE.commitPending();
+        com.ultimakingdoms.factions.organization.OrganizationRuntime.commitPending();
         PENDING_CHUNKS.computeIfAbsent(event.getServer(), ignored -> ConcurrentHashMap.newKeySet());
     }
 
@@ -66,9 +93,18 @@ public final class UltimaKingdoms {
         KingdomsServiceImpl service = new KingdomsServiceImpl(server, DEFINITIONS);
         ApiBootstrap.attach(server, service);
         Registration mca = () -> { };
+        Registration integrations = () -> { };
         try {
+            IntegrationBootstrap.commitPending(service);
+            com.ultimakingdoms.knowledge.SettlementKnowledge.get(server).adopt(server, service);
+            integrations = IntegrationBootstrap.attach(server, service);
             mca = McaCompat.attach(server, service);
-            RUNTIMES.put(server, new RuntimeState(service, mca));
+            var politics = new com.ultimakingdoms.politics.GovernmentService(server, service, POLITICS);
+            com.ultimakingdoms.api.politics.UltimaPoliticsApi.attach(server, politics);
+            com.ultimakingdoms.warfare.CampaignService.attach(server);
+            com.ultimakingdoms.compat.crime.JurisdictionPolicyBridge.attach(server);
+            MinecraftForge.EVENT_BUS.register(politics);
+            RUNTIMES.put(server, new RuntimeState(service, mca, integrations, politics));
             Set<PendingChunk> pending = PENDING_CHUNKS.remove(server);
             if (pending != null) {
                 pending.forEach(chunk -> {
@@ -79,11 +115,19 @@ public final class UltimaKingdoms {
             enqueueLoadedSpawnChunks(server, service);
         } catch (RuntimeException exception) {
             PENDING_CHUNKS.remove(server);
-            RUNTIMES.remove(server);
+            RuntimeState failedRuntime = RUNTIMES.remove(server);
+            if (failedRuntime != null) MinecraftForge.EVENT_BUS.unregister(failedRuntime.politics());
+            com.ultimakingdoms.api.politics.UltimaPoliticsApi.detach(server);
+            com.ultimakingdoms.compat.crime.JurisdictionPolicyBridge.detach(server);
+            com.ultimakingdoms.warfare.CampaignService.clear(server);
             try {
                 mca.close();
             } finally {
-                ApiBootstrap.detach(server, service);
+                try {
+                    integrations.close();
+                } finally {
+                    ApiBootstrap.detach(server, service);
+                }
             }
             throw exception;
         }
@@ -92,10 +136,18 @@ public final class UltimaKingdoms {
     @SubscribeEvent
     public void datapackSync(OnDatapackSyncEvent event) {
         if (event.getPlayer() != null) return;
+        com.ultimakingdoms.evolution.drama.DramaRuntime.commitPending();
+        com.ultimakingdoms.evolution.EvolutionDefinitions.INSTANCE.commitPending();
         MinecraftServer server = event.getPlayerList().getServer();
         DEFINITIONS.commitPending();
+        POLITICS.commitPending();
+        com.ultimakingdoms.civic.CivicDefinitions.INSTANCE.commitPending();
+        com.ultimakingdoms.factions.organization.OrganizationRuntime.commitPending();
         RuntimeState runtime = RUNTIMES.get(server);
-        if (runtime != null) runtime.service().definitionsReloaded();
+        if (runtime != null) {
+            IntegrationBootstrap.commitPending(runtime.service());
+            runtime.service().definitionsReloaded();
+        }
     }
 
     @SubscribeEvent
@@ -116,8 +168,15 @@ public final class UltimaKingdoms {
     @SubscribeEvent
     public void serverTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        com.ultimakingdoms.evolution.drama.DramaRuntime.tick(event.getServer());
         RuntimeState runtime = RUNTIMES.get(event.getServer());
         if (runtime != null) runtime.service().tickDiscovery();
+    }
+
+    @SubscribeEvent
+    public void settlementMerged(com.ultimakingdoms.api.event.SettlementMergedEvent event) {
+        com.ultimakingdoms.knowledge.SettlementKnowledge.get(event.server())
+                .merge(event.source().id(), event.target().id());
     }
 
     @SubscribeEvent
@@ -150,19 +209,34 @@ public final class UltimaKingdoms {
 
     @SubscribeEvent
     public void serverStopped(ServerStoppedEvent event) {
+        com.ultimakingdoms.evolution.drama.DramaRuntime.clear(event.getServer());
+        com.ultimakingdoms.compat.crime.JurisdictionPolicyBridge.detach(event.getServer());
+        com.ultimakingdoms.warfare.CampaignService.clear(event.getServer());
+        com.ultimakingdoms.warfare.WarfareRuntime.clear(event.getServer());
         PENDING_CHUNKS.remove(event.getServer());
         RuntimeState runtime = RUNTIMES.remove(event.getServer());
         if (runtime != null) {
+            MinecraftForge.EVENT_BUS.unregister(runtime.politics());
+            com.ultimakingdoms.api.politics.UltimaPoliticsApi.detach(event.getServer());
             try {
                 runtime.mca().close();
             } finally {
-                ApiBootstrap.detach(event.getServer(), runtime.service());
+                try {
+                    runtime.integrations().close();
+                } finally {
+                    ApiBootstrap.detach(event.getServer(), runtime.service());
+                }
             }
         }
+        IntegrationBootstrap.clear();
         DEFINITIONS.clear();
+        POLITICS.clear();
+        com.ultimakingdoms.evolution.EvolutionDefinitions.INSTANCE.clear();
+        com.ultimakingdoms.civic.CivicDefinitions.INSTANCE.clear();
+        com.ultimakingdoms.factions.organization.OrganizationRuntime.clear();
     }
 
-    private record RuntimeState(KingdomsServiceImpl service, Registration mca) {
+    private record RuntimeState(KingdomsServiceImpl service, Registration mca, Registration integrations, com.ultimakingdoms.politics.GovernmentService politics) {
     }
 
     private static void enqueueLoadedSpawnChunks(MinecraftServer server, KingdomsServiceImpl service) {

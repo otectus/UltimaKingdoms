@@ -17,9 +17,13 @@ public final class Presentation {
     }
 
     public static void init(IEventBus modBus) {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, com.ultimakingdoms.civic.CivicConfig.SPEC,
+                "ultima-kingdoms-civic-common.toml");
         CommandArguments.register(modBus);
         ModItems.register(modBus);
         NetworkHandler.init();
+        com.ultimakingdoms.civic.CivicNetwork.init();
+        MinecraftForge.EVENT_BUS.register(com.ultimakingdoms.civic.CivicCommands.class);
         MinecraftForge.EVENT_BUS.register(UltimaCommands.class);
         MinecraftForge.EVENT_BUS.register(ServerPresentationEvents.class);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, PresentationConfig.SPEC,

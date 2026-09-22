@@ -1,0 +1,17 @@
+[
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/api/InstitutionalServiceApi.java",
+    "before_sha256": null,
+    "after_sha256": "12650cccd0b9a862a6912a0bf6dd1e7261a195fbca629c5054fd9740a482b159"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcacrime/civic/InstitutionalWorkshopPolicy.java",
+    "before_sha256": null,
+    "after_sha256": "be67720d2776b60304eefd48b2e5d0f9ee29a811d94220859bb1ac9085fc4963"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcacrime/civic/InstitutionalWorkshopPolicyTest.java",
+    "before_sha256": null,
+    "after_sha256": "5c52b1d59c03ef8201a95ff0cc0de7dd27b7fba86ba90e3fca585835f97f7cc3"
+  }
+]

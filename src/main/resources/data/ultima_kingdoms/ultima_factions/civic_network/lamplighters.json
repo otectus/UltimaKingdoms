@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "organization": "ultima_kingdoms:lamplighters",
+  "sponsor_quests": [
+    "ultima:civic/lamplighters/charters_night",
+    "ultima:civic/lamplighters/fire_in_poor_hands",
+    "ultima:civic/lamplighters/mesh_for_the_glass",
+    "ultima:civic/lamplighters/reinforce_the_ladder",
+    "ultima:civic/lamplighters/sootward_plaster",
+    "ultima:civic/lamplighters/twist_the_first_cord",
+    "ultima:civic/lamplighters/warmth_at_the_gate",
+    "ultima:civic/lamplighters/weather_eye"
+  ],
+  "building_families": [
+    "workshop"
+  ],
+  "commissions": [
+    "ultima:civic/lamplighters/charters_night",
+    "ultima:civic/lamplighters/fire_in_poor_hands",
+    "ultima:civic/lamplighters/mesh_for_the_glass",
+    "ultima:civic/lamplighters/reinforce_the_ladder",
+    "ultima:civic/lamplighters/sootward_plaster",
+    "ultima:civic/lamplighters/twist_the_first_cord",
+    "ultima:civic/lamplighters/warmth_at_the_gate",
+    "ultima:civic/lamplighters/weather_eye",
+    "ultima:arcana/green_compact/wood_and_stone_that_live",
+    "ultima:arcana/green_compact/source_for_the_seed_vault",
+    "ultima:expeditions/border_watch/rations_for_the_upper_stair",
+    "ultima:expeditions/fieldbook/teeth_in_the_lamplight"
+  ]
+}

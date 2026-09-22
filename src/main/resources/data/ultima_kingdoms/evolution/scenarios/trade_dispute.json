@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "title": "A disputed voluntary contribution",
+  "trigger": "GRIEVANCE",
+  "outcomes": ["AID", "MEDIATE", "INTRODUCE", "DECLINE"],
+  "duration": 72000,
+  "cooldown": 168000,
+  "contributions": 1,
+  "dramatic": false
+}

@@ -1,0 +1,93 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/mesh_for_the_glass",
+  "weight": 3,
+  "category": "Lamplighters",
+  "difficulty": "easy",
+  "priority": 0,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "cooldown",
+    "cooldown_ticks": 48000
+  },
+  "giver": {
+    "professions": [
+      "minecraft:fletcher",
+      "minecraft:shepherd"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Cages Before Flame"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Wind cannot steal a lantern's flame, but every lantern begins unlit. Craft two unlit lanterns for the lane crew."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Fit the cages cleanly. Oil and flame come only after the vessel is sound."
+    },
+    "decline": {
+      "text": "Then leave the glass to steadier hands today. Go safely."
+    },
+    "in_progress": {
+      "text": "Two unlit lanterns, newly crafted, will equip the east and west turns."
+    },
+    "ready": {
+      "text": "Sound cages and closed panes. They are ready for oil."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "The crew can fill and light these when dusk calls. Good work begins before the spark."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:craft_item",
+      "item": "hardcore_torches:unlit_lantern",
+      "count": 2
+    },
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "hardcore_torches:unlit_lantern",
+      "count": 2,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 16
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 2
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  },
+  "conditions": {
+    "type": "mcaquests:quest_completed",
+    "quest": "ultima:civic/lamplighters/twist_the_first_cord",
+    "scope": "global"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "entries": [
+    {
+      "id": "ledger_and_discovery",
+      "category": "settlements",
+      "title": "Find and use settlements",
+      "summary": "The Village Ledger is your starting point for places, guilds, and government.",
+      "body": [
+        "The mod examines loaded chunks for village structures and clusters of village points of interest, such as homes and job sites. Supported MCA village records can also supply settlement evidence. An operator can register a place manually. Discovering a place does not generate a town or paste buildings into the world.",
+        "Use the Village Ledger to browse known settlements. Filter by kingdom and move through result pages. Select a settlement to inspect its name, kingdom, dimension, location, and related details. Kingdom opens that settlement's political pages; Guilds opens your own civic membership and service view. Military and world-context views require their relevant context and integrations.",
+        "Discovery is personal. An ordinary player does not receive all remote coordinates merely because the server knows them. Visiting and supported introductions can expand what you know. A private introduction is not a global map reveal, and external map mods still own their own explored terrain.",
+        "If the ledger is empty, visit a recognized settlement and refresh. If the entry overlay appeared but a page seems stale, refresh before trying an administrative repair. If village here reports no recognized settlement, you may be outside its saved bounds or the settlement may not yet be recognized. An operator can investigate; creating a second identity blindly can make duplicates."
+      ],
+      "commands": [
+        "/ultima village here",
+        "/ultima village info [village]",
+        "/ultima kingdom info ultima_kingdoms:serenum"
+      ]
+    },
+    {
+      "id": "kingdoms",
+      "category": "settlements",
+      "title": "The six starting kingdoms",
+      "summary": "Kingdom identity is persistent and can be extended by a datapack.",
+      "body": [
+        "The bundled kingdoms are Serenum, Lunari, Madera, Anemosia, Yew, and Shimaguni. Their command IDs use ultima_kingdoms: followed by the lowercase name. Names, heraldry, biome preferences, structure associations, and naming pools come from definitions.",
+        "Biome and structure evidence help choose an initial kingdom for a newly recognized settlement. Existing settlements keep their saved assignments when definitions or nearby terrain change. A jungle biome is not a live military border, and recoloring a banner does not transfer sovereignty.",
+        "Shimaguni draws on the pack's island-empire history, Island Covenant, and Tide Archive. New jungle, sparse-jungle, and bamboo-jungle settlements use its supplied biome preference. Akatsura is reserved from random naming so a deliberate capital can use it; the mod does not automatically create that city, capital, or historical alliance.",
+        "A kingdom's cultural name is not a constituted government. A government is founded separately with a capital, charter, and leader. Likewise, military control is recorded from its owning provider, not inferred from a cultural settlement name.",
+        "Use kingdom list to see the server's definitions, including any additions. Server datapacks may extend or replace the shipped defaults; the current ledger is the authoritative description of a saved settlement."
+      ],
+      "commands": [
+        "/ultima kingdom list",
+        "/ultima kingdom info ultima_kingdoms:serenum"
+      ]
+    },
+    {
+      "id": "npc_identity",
+      "category": "settlements",
+      "title": "Residents, origins, and visitors",
+      "summary": "Civic identity records a home without taking over a person’s life.",
+      "body": [
+        "Ultima adds separate origin and residence records to eligible entities. Positive evidence of a current home can update civic residence. A first known home can establish origin; newborns in a recognized settlement can also receive that settlement as an initial origin.",
+        "An origin remains historical when a resident moves. A current residence must be supported; seeing an NPC walk through a market is not enough to declare that they moved there. Unknown home evidence is different from homelessness, death, or hostile allegiance.",
+        "With MCA installed, personal names, genetics, hearts, family, personality, and the MCA home remain MCA's data. Renaming an Ultima settlement changes the civic label without renaming residents or rewriting family history. An office appointment does not replace a profession or start a new AI schedule.",
+        "Some roles require a living, loaded adult with a confirmed residence. An unknown life stage or an unloaded NPC can block an appointment without implying that the NPC is dead. Operators can inspect identity and make deliberate origin/residence corrections, but those commands are not ordinary player relocation tools."
+      ],
+      "commands": [
+        "/ultima citizen info <entity selector>",
+        "/ultima citizen setorigin <entity selector> \"<settlement name>\"",
+        "/ultima citizen setresidence <entity selector> \"<settlement name>\""
+      ]
+    },
+    {
+      "id": "settlement_changes",
+      "category": "settlements",
+      "title": "Rename, reassign, or merge places",
+      "summary": "Operator tools change saved identity; they do not rebuild the settlement.",
+      "body": [
+        "These commands require operator permission level 2. Start by inspecting the existing record and backing up the world before a consequential merge or reassignment. Use the actual settlement selector; the new name may contain spaces without quotes.",
+        "Create registers an identity at your current location, with a radius from 16 to 512 blocks (default 64). Rename changes its civic display name. Setkingdom explicitly assigns a kingdom. Reclassify asks current classification rules to reconsider an eligible record. Lock and unlock control the settlement's automatic identity locks; inspect debug output before relying on a reclassification.",
+        "Discover scans a bounded nearby chunk area, with radius 1–32 chunks (default 8). It is a recognition tool, not a command to build towns. Use ordinary travel and discovery for everyday play.",
+        "Merge directs the source identity into the target and keeps canonical references rather than treating a renamed place as new. This is different from merging guilds or annexing a military claim. Capital and institution references are checked: move a seat before reassignment, resolve conflicting local office holders, and explicitly suspend conflicting institution charters before retrying a blocked merge.",
+        "Changing an assignment does not transfer all historical standing or deeds into the new kingdom. Historical evidence keeps its original context. Do not use repeated reassignment as a reward-reset mechanism.",
+        "To name a newly created settlement in the command, supply its radius first, then its name."
+      ],
+      "commands": [
+        "/ultima village create [radius [name...]]",
+        "/ultima village rename \"<settlement name>\" <new name...>",
+        "/ultima village setkingdom \"<settlement name>\" <kingdom definition id>",
+        "/ultima village reclassify \"<settlement name>\"",
+        "/ultima village lock \"<settlement name>\"",
+        "/ultima village unlock \"<settlement name>\"",
+        "/ultima village discover [radiusChunks]",
+        "/ultima village merge \"<source settlement name>\" \"<target settlement name>\"",
+        "/ultima village debug [village]"
+      ]
+    }
+  ]
+}

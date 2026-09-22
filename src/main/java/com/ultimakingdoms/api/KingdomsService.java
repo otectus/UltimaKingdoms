@@ -18,6 +18,17 @@ public interface KingdomsService {
 
     Optional<SettlementView> getSettlement(UUID id);
 
+    Optional<SettlementView> getSettlementByExternalRef(String namespace, String value);
+
+    default Optional<SettlementView> getSettlementForMcaVillage(ResourceLocation dimension, int villageId) {
+        McaCommunityRef reference = new McaCommunityRef(dimension, villageId);
+        return getSettlementByExternalRef(McaCommunityRef.EXTERNAL_REF_NAMESPACE, reference.format());
+    }
+
+    default Optional<SettlementView> getSettlementByMcaVillage(ResourceLocation dimension, int villageId) {
+        return getSettlementForMcaVillage(dimension, villageId);
+    }
+
     Optional<SettlementView> getSettlementAt(ServerLevel level, BlockPos pos);
 
     Collection<SettlementView> getSettlements(ResourceLocation kingdomId);
@@ -27,6 +38,13 @@ public interface KingdomsService {
     Optional<SettlementView> findSettlement(String query);
 
     Optional<SettlementView> getResidence(Entity entity);
+
+    /** All provider aliases, including references retained through merges. */
+    default java.util.Map<String, java.util.Set<String>> getSettlementExternalRefs(UUID settlementId) {
+        java.util.Map<String, java.util.Set<String>> refs = new java.util.LinkedHashMap<>();
+        getSettlement(settlementId).ifPresent(v -> v.externalRefs().forEach((key, value) -> refs.put(key, java.util.Set.of(value))));
+        return java.util.Map.copyOf(refs);
+    }
 
     Optional<CivicIdentityView> getCivicIdentity(Entity entity);
 

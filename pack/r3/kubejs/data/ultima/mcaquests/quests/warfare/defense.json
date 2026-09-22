@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "id": "ultima:warfare/defense",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Civilian Defense",
+  "difficulty": "hard",
+  "priority": 10,
+  "repeat": { "type": "once" },
+  "giver": { "adult_only": true },
+  "conditions": { "type": "mcaquests:institutional_service_available" },
+  "title": { "text": "Defend the Civilian Contact" },
+  "dialogue": {
+    "offer": { "text": "Protect this contact from five zombies. This is civilian defense, not authority to harm residents. Payment: eight emeralds." },
+    "accept": { "text": "Protect the issuer while preserving civilian law." },
+    "decline": { "text": "No militia duty is imposed." },
+    "in_progress": { "text": "Defeat five zombies threatening this issuer." },
+    "ready": { "text": "The defense is complete; report to the original issuer." },
+    "complete": { "text": "Civilian defense is acknowledged. Eight emeralds are paid." }
+  },
+  "objectives": [ {
+    "type": "mcaquests:defend_villager",
+    "villager": { "mode": "self" },
+    "threat": { "entity": "minecraft:zombie" },
+    "radius": 16,
+    "count": 5
+  } ],
+  "rewards": [ { "type": "mcaquests:item", "item": "minecraft:emerald", "count": 8 } ],
+  "turn_in": { "mode": "original_giver" }
+}

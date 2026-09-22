@@ -1,0 +1,87 @@
+{
+  "format_version": 1,
+  "id": "ultima:civic/lamplighters/twist_the_first_cord",
+  "weight": 8,
+  "category": "Lamplighters",
+  "difficulty": "easy",
+  "priority": 0,
+  "offer_group": "ultima_civic_lamplighters",
+  "repeat": {
+    "type": "once"
+  },
+  "giver": {
+    "professions": [
+      "minecraft:fletcher",
+      "minecraft:shepherd"
+    ],
+    "adult_only": true
+  },
+  "title": {
+    "text": "Twist the First Cord"
+  },
+  "dialogue": {
+    "offer": {
+      "text": "",
+      "extra": [
+        {
+          "text": "Before lamps, before oil, before brave speeches: cord. Craft four lengths of plant-fiber rope for the crews."
+        },
+        {
+          "text": " Your first verified completion counts as Lamplighters civic service. Joining the guild is optional."
+        }
+      ]
+    },
+    "accept": {
+      "text": "Twist it tight. A lantern dropped is a darkness doubled."
+    },
+    "decline": {
+      "text": "No blame. Night work must be taken willingly or not at all."
+    },
+    "in_progress": {
+      "text": "Four lengths will rig the first stretch of lane."
+    },
+    "ready": {
+      "text": "Good cordage. Pull hard; I want no polite knots."
+    },
+    "complete": {
+      "text": "",
+      "extra": [
+        {
+          "text": "It holds. The first lamps may leave the shed tonight."
+        },
+        {
+          "text": " The Lamplighters will remember your service. Ask a guild contact about introductions and workshop commissions."
+        }
+      ]
+    }
+  },
+  "objectives": [
+    {
+      "type": "mcaquests:craft_item",
+      "item": "plantfiber:rope",
+      "count": 4
+    },
+    {
+      "type": "mcaquests:item_delivery",
+      "item": "plantfiber:rope",
+      "count": 4,
+      "consume": true
+    }
+  ],
+  "rewards": [
+    {
+      "type": "mcaquests:currency"
+    },
+    {
+      "type": "mcaquests:xp",
+      "amount": 16
+    },
+    {
+      "type": "mcaquests:hearts",
+      "amount": 2
+    }
+  ],
+  "turn_in": {
+    "mode": "original_giver"
+  }
+}

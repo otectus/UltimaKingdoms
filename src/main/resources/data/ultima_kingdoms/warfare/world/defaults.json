@@ -1,0 +1,24 @@
+{
+  "structures": [
+    { "id": "minecraft:village_plains", "role": "settlement" },
+    { "id": "minecraft:village_desert", "role": "settlement" },
+    { "id": "minecraft:village_savanna", "role": "settlement" },
+    { "id": "minecraft:village_snowy", "role": "settlement" },
+    { "id": "minecraft:village_taiga", "role": "settlement" },
+    { "id": "minecraft:pillager_outpost", "role": "hostile_outpost" },
+    { "id": "minecraft:mansion", "role": "hostile_stronghold" },
+    { "id": "minecraft:stronghold", "role": "archaeological_site" },
+    { "id": "minecraft:ancient_city", "role": "abandoned_institution" },
+    { "id": "minecraft:desert_pyramid", "role": "archaeological_site" },
+    { "id": "minecraft:jungle_pyramid", "role": "archaeological_site" },
+    { "id": "minecraft:monument", "role": "hostile_stronghold" },
+    { "id": "minecraft:fortress", "role": "hostile_stronghold" },
+    { "id": "minecraft:bastion_remnant", "role": "hostile_stronghold" },
+    { "id": "minecraft:ruined_portal", "role": "ruin" },
+    { "id": "minecraft:trail_ruins", "role": "archaeological_site" }
+  ],
+  "encounters": [
+    { "id": "minecraft:elder_guardian", "role": "site_defense", "repeat_budget": 3, "contribution_window": 1200 },
+    { "id": "minecraft:evoker", "role": "settlement_defense", "repeat_budget": 3, "contribution_window": 1200 }
+  ]
+}

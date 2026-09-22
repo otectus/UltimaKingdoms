@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exercise packaged Forge server restart and datapack reload without touching pack instances."""
-import argparse, gzip, io, json, pathlib, shutil, struct, subprocess, time
+import argparse, gzip, io, json, pathlib, re, shutil, struct, subprocess, time
 
 def read_nbt(path):
     f=io.BytesIO(gzip.open(path,'rb').read())
@@ -22,13 +22,14 @@ def read_nbt(path):
     typ=num('B');string();return payload(typ)
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--mca',action='store_true');p.add_argument('--lifecycle-only',action='store_true');p.add_argument('--live-reload-only',action='store_true');p.add_argument('--commands-only',action='store_true');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--mca',action='store_true');p.add_argument('--lifecycle-only',action='store_true');p.add_argument('--live-reload-only',action='store_true');p.add_argument('--commands-only',action='store_true');p.add_argument('--work-dir',type=pathlib.Path);p.add_argument('--extra-mod',type=pathlib.Path,action='append',default=[]);args=p.parse_args()
     root=pathlib.Path(__file__).resolve().parents[2];work=root/'build'/('production-mca' if args.mca else 'production-standalone')
     if args.live_reload_only:
         from live_reload import run
         run(root,args.mca);return
     if args.lifecycle_only:work=work.with_name(work.name+'-lifecycle')
     if args.commands_only:work=work.with_name(work.name+'-commands')
+    if args.work_dir:work=args.work_dir.resolve()
     if work.exists():raise SystemExit(f'Refusing to reuse runtime directory {work}')
     work.mkdir(parents=True);(work/'libraries').symlink_to(root/'build/forge-server/libraries',target_is_directory=True)
     properties=dict(line.strip().split('=',1) for line in (root/'gradle.properties').read_text().splitlines() if '=' in line and not line.startswith('#'))
@@ -36,8 +37,9 @@ def main():
     if args.mca:
         source=pathlib.Path('/home/otectus/Documents/curseforge/minecraft/Instances/Ultima/mods')
         for name in ('minecraft-comes-alive-7.6.26+1.20.1-universal.jar','architectury-9.2.14-forge.jar'):shutil.copy2(source/name,work/'mods'/name)
+    for extra in args.extra_mod:shutil.copy2(extra,work/'mods'/extra.name)
     if args.lifecycle_only or args.commands_only:
-        harness=next((root/'build/test-artifacts').glob('*-acceptance.jar'));shutil.copy2(harness,work/'mods'/harness.name)
+        harness=root/'build/test-artifacts'/f"{properties['mod_id']}-{properties['mod_version']}-acceptance.jar";shutil.copy2(harness,work/'mods'/harness.name)
     shutil.copy2('/home/otectus/Projects/MCACrime/run/eula.txt',work/'eula.txt')
     (work/'server.properties').write_text('online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-type=minecraft:flat\ngenerate-structures=false\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n')
     launcher='@libraries/net/minecraftforge/forge/1.20.1-47.4.23/unix_args.txt'
@@ -87,7 +89,7 @@ def main():
     rule.write_text('{ broken json');send(proc,'reload');wait(proc,log,'Failed to execute reload',90)
     send(proc,'execute positioned 2000 64 2000 run ultima village create 32 AfterInvalidReload');send(proc,'save-all flush');time.sleep(2);stop(proc,out)
     final=next(r for r in records() if r['DisplayName']=='AfterInvalidReload');assert final['Kingdom']=='ultima_kingdoms:lunari';print('PASS invalid reload retained last committed definitions',flush=True)
-    if args.mca:assert 'Attached MCA 7.6.26+1.20.1 civic integration' in log.read_text();print('PASS production exact MCA adapter startup',flush=True)
+    if args.mca:assert re.search(r'Attached MCA 7\.6\.26\+1\.20\.1 integration through package root forge\.net\.(?:conczin\.)?mca ',log.read_text());print('PASS production exact MCA adapter startup',flush=True)
     # Verify the real SavedData storage path refuses future schemas without overwriting bytes.
     import hashlib
     save=work/'world/data/ultima_kingdoms_settlements.dat';original=save.read_bytes()

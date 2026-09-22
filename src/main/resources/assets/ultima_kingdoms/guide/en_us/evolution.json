@@ -1,0 +1,304 @@
+{
+  "entries": [
+    {
+      "id": "evolution_world_opt_in",
+      "category": "evolution",
+      "title": "Enable an evolving world",
+      "summary": "Operators opt in the world and individual settlements before authored opportunities can appear.",
+      "body": [
+        "Evolution starts paused in every world. An operator opens Configure world evolution to enable ordinary scenarios and separately choose authored drama and negotiated recruit transfers. They then use Configure evolution region and select each named settlement. Disabling the world clears the current sampling set but keeps saved scenarios. Disabling a region removes it from eligibility and pauses active sampling rather than deleting history.",
+        "Only an online visitor standing in an enabled settlement makes that region active. Evaluation never loads chunks. Defaults evaluate every 1,200 ticks, inspect at most four online players or regions per pass, and permit eight concurrent ordinary scenarios and dramas across the world. Server configuration can change these values within bounded ranges. Deadlines pause outside the active sample, so an offline town receives no simulated catch-up.",
+        "The drama flag is an additional consent gate. Ordinary evolution may be enabled while dramatic templates and Recruits transfers remain unavailable. Installed datapacks supply the scenario and drama templates; enabling evolution does not promise that every template's real evidence exists. Missing political, family, occupation, institution, or provider facts simply prevent that opportunity from being created."
+      ],
+      "commands": [
+        "/ultima-evolution configure <enabled:true|false> <drama:true|false>",
+        "/ultima-evolution region \"<settlement name>\" <enabled:true|false>"
+      ]
+    },
+    {
+      "id": "scenario_browser_and_digest",
+      "category": "evolution",
+      "title": "Browse scenarios and digests",
+      "summary": "View only opportunities supported by your settlement knowledge and manage periodic notices.",
+      "body": [
+        "Open World evolution status to see scenarios visible through your settlement knowledge, or Inspect opportunity for a named record. Inspection shows the frozen title, cause evidence, allowed outcomes, deadline, contributions, selected intent, current phase, and next actor. A scenario for someone else's unknown settlement is not disclosed.",
+        "Digest subscription is a personal setting. When enabled, the server periodically reports visible changes using the configured digest interval, which defaults to 24,000 ticks. It saves the digest cursor before sending the notice so a restart does not intentionally replay the same interval. Turning the digest off does not withdraw contributions or close scenarios.",
+        "Installed default scenario templates include diplomatic and family introductions, named succession, occupation relief, trade dispute, and voluntary aid. Datapacks can provide bounded templates with their own outcomes, durations, cooldowns, and evidence triggers. The record freezes the selected template terms when created; a later datapack reload does not silently rewrite an existing choice."
+      ],
+      "commands": [
+        "/ultima-evolution digest <enabled:true|false>",
+        "/ultima-evolution list",
+        "/ultima-evolution list <offset multiple of 10>",
+        "/ultima-evolution inspect \"<opportunity name>\""
+      ]
+    },
+    {
+      "id": "scenario_contributions_and_service",
+      "category": "evolution",
+      "title": "Contributions and scoped service",
+      "summary": "Support an authored choice with the exact evidence or scoped MCA Quests service it requires.",
+      "body": [
+        "Open Inspect opportunity first, then Contribute to opportunity. The task offers only outcomes frozen into its template: aid, mediate, introduce, negotiate, or succeed as applicable. Contributions belong to the connected player and are bounded by the required count. Changed, expired, invisible, or unavailable choices are refused at review or apply.",
+        "Aid, mediation, and autonomy negotiation normally require a completed scoped MCA Quests contract. Family introductions and succession revalidate their native or political evidence at contribution time. The command does not award a reward, appoint a successor, or change government by itself; it records a supported choice for later resolution.",
+        "A contributor may withdraw while the scenario remains editable. Withdrawal removes that active choice but leaves any completed service receipt consumed, preventing one quest completion from backing a different future choice. A changed scenario must be inspected again before another mutation. This revision rule also resolves multiplayer races deterministically: only the operation against the current saved revision can win.",
+        "An open scenario or obligation may authorize exactly one scoped service kind: aid, mediation, autonomy, or defense. Open Open opportunity service and choose the visible opportunity or duty, a nearby named giver, and its allowed kind. The giver must be loaded, living, visible, and recognized at the correct institution. Scope, settlement, outcome or duty, deadline, player, and provider binding must agree.",
+        "MCA Quests owns acceptance, objectives, item consumption, and payment. Ultima records which native quest instance belongs to the scope and later consumes its durable provider epoch and receipt once. An unrelated record, a completed or closed scope, the wrong service kind, or a receipt from another person cannot satisfy the requirement. Repeating completion cannot issue another reward.",
+        "The compatible MCA Quests companion is optional for core startup and required for this workflow. If it is missing, the command refuses without inventing completion. Restore the supported provider and retained world before continuing. Accepted scoped contracts also block organization merge or dissolution until they finish, are explicitly canceled by their owner, or are confirmed through supported novation."
+      ],
+      "commands": [
+        "/ultima-evolution contribute aid \"<opportunity name>\" <revision>",
+        "/ultima-evolution contribute mediate \"<opportunity name>\" <revision>",
+        "/ultima-evolution contribute introduce \"<opportunity name>\" <revision>",
+        "/ultima-evolution contribute negotiate \"<opportunity name>\" <revision>",
+        "/ultima-evolution contribute succeed \"<opportunity name>\" <revision>",
+        "/ultima-evolution withdraw \"<opportunity name>\" <revision>",
+        "/ultima-evolution contract \"<opportunity or obligation name>\" \"<contact name>\" aid",
+        "/ultima-evolution contract \"<opportunity or obligation name>\" \"<contact name>\" mediation",
+        "/ultima-evolution contract \"<opportunity or obligation name>\" \"<contact name>\" autonomy",
+        "/ultima-evolution contract \"<opportunity or obligation name>\" \"<contact name>\" defense"
+      ]
+    },
+    {
+      "id": "scenario_resolution_and_recovery",
+      "category": "evolution",
+      "title": "Resolve, decline, or recover",
+      "summary": "Commit one supported outcome through the political owner, or leave the opportunity peacefully.",
+      "body": [
+        "After required contributions exist, an authorized player opens Resolve opportunity and selects one offered outcome. Introductions may also require the exact named counterpart shown by the evidence. Decline is a terminal peaceful choice when offered and does not consume invented service or impose a political penalty.",
+        "Resolution saves a durable intent before asking the political owner to act. Success records the owner's receipt and closes the scenario. If the owner changed after preview, rejects authority, or cannot acknowledge, the record remains explicit rather than pretending success. Retry reuses the frozen actor, stable request key, political revision, and selected terms after an interrupted acknowledgment.",
+        "Use release_rejected only when the political owner confirmed that the saved request was never committed. It reopens that rejected intent; it does not reverse a completed government change. Scenario deadlines advance only while the region participates in the bounded active sample. There is no offline catch-up, forced chunk load, assumed death, or automatic choice at timeout."
+      ],
+      "commands": [
+        "/ultima-evolution resolve aid \"<opportunity name>\" <revision>",
+        "/ultima-evolution resolve mediate \"<opportunity name>\" <revision>",
+        "/ultima-evolution resolve introduce \"<opportunity name>\" <revision> <counterpart kingdom id>",
+        "/ultima-evolution resolve negotiate \"<opportunity name>\" <revision> <counterpart kingdom id>",
+        "/ultima-evolution resolve succeed \"<opportunity name>\" <revision>",
+        "/ultima-evolution resolve decline \"<opportunity name>\" <revision>",
+        "/ultima-evolution retry \"<opportunity name>\"",
+        "/ultima-evolution release_rejected \"<opportunity name>\""
+      ]
+    },
+    {
+      "id": "political_history",
+      "category": "evolution",
+      "title": "Read political history",
+      "summary": "Consult a bounded attributed ledger whose private facts remain limited to authorized viewers.",
+      "body": [
+        "The kingdom screen History tab and its command equivalent show the first viewer-filtered page, up to 20 rows. Every fact has a stable source receipt, actor attribution, affected kingdoms and players, game-tick and revision order, visibility, and correction state. Superseded agreement or petition lifecycle facts are marked SUPERSEDED, while elapsed facts are marked EXPIRED rather than silently removed.",
+        "Public facts are visible to everyone. Party facts require an affected player or current PROPOSE or RATIFY authority in an affected kingdom. Private petitions require an affected player or current REVIEW authority in their kingdom. A ballot is visible only to its voter. Foreign viewers do not receive redacted placeholders that reveal a private record exists.",
+        "Political state is committed durably before its notice is published. Confirmed NPC death, abdication, succession, deadlines, elections, and regency can therefore leave stable facts. NPC unload, absence, player respawn, and restart never count as death. Townstead 0.7.6 exposes no supported Chronicles archive receipt, so this ledger does not fabricate a Townstead archive entry or deep link."
+      ],
+      "commands": [
+        "/ultima politics inspect \"<kingdom name>\" history"
+      ]
+    },
+    {
+      "id": "protection_pacts_and_duties",
+      "category": "evolution",
+      "title": "Protection pacts and duties",
+      "summary": "Create a pact between two kingdoms, handle its agreed duties, and leave after giving notice.",
+      "body": [
+        "A protection proposal names different protector and subordinate kingdoms, one beneficiary settlement, one or more duties, a duration, exit notice, and written terms. Open Propose protection and choose the named records. Valid duties are civic aid, defense assistance, and mediation. Duration and notice remain bounded, and the proposer needs current PROPOSE authority for the protector.",
+        "Both governments sign the frozen terms with current RATIFY authority. The signatures must come from different authorized players. When the second signature activates the pact, both authorities must be online and still valid. Protection hierarchy is checked and limited to depth four, preventing loops and unbounded chains.",
+        "Open Read protection to review signatures, deadline, duties, and open obligations by name. A pact grants only its written duty surface. It does not transfer offices, troops, buildings, property, standing, or native claim control. If authority or pact state changes during review, reopen the task.",
+        "A player with REVIEW authority for the protector requests only a duty enumerated in the active pact. The request creates a bounded obligation with its own saved identity and revision. Any eligible volunteer who knows the beneficiary may complete the matching scoped native contract, then fulfill the obligation; the service consumes that player's exact durable completion receipt once. A wrong quest kind, scope, settlement, provider epoch, or already-used receipt is refused.",
+        "A player with REVIEW authority for the subordinate may refuse with a recorded reason. Refusal is a factual grievance that can support later authored negotiation or rebellion evidence, but it does not declare war, transfer property, change native relations, or satisfy the duty. Inspect the pact after any request because its revision changes.",
+        "Either signatory may announce exit after current RATIFY authority is checked. The pact enters exit notice and duties end after its configured notice period. Existing records remain for attribution. Exit does not confiscate troops, offices, assets, buildings, memberships, or standing. If nobody is online, time-dependent maintenance does not invent a fulfillment or refusal."
+      ],
+      "commands": [
+        "/ultima-protection propose <protector kingdom id> <subordinate kingdom id> \"<beneficiary settlement name>\" <comma-separated duties> <duration ticks> <notice ticks> <terms...>",
+        "/ultima-protection sign \"<pact name>\" <kingdom id> <revision>",
+        "/ultima-protection list",
+        "/ultima-protection inspect \"<pact name>\"",
+        "/ultima-protection request \"<pact name>\" <civic_aid|defense_assistance|mediation> <revision>",
+        "/ultima-protection fulfill \"<obligation name>\" <revision>",
+        "/ultima-protection refuse \"<obligation name>\" <revision> <reason...>",
+        "/ultima-protection exit \"<pact name>\" <kingdom id> <revision>"
+      ]
+    },
+    {
+      "id": "family_introductions",
+      "category": "evolution",
+      "title": "Make a family introduction",
+      "summary": "Use a verified reciprocal MCA marriage for a private diplomatic introduction across kingdoms.",
+      "body": [
+        "The explicit entry point checks a reciprocal, non-deceased MCA marriage record. Your spouse must be loaded, both residences must be verified in different kingdoms, the counterpart government must be known, and your current settlement region must be enabled. The check never force-loads a spouse or chunk. Marriage supplies evidence for an introduction; it grants no office, ownership, mandate, or claim.",
+        "Success creates a private family scenario visible to the requesting player. Inspect it, contribute introduce with the current revision, then resolve introduce using the exact counterpart kingdom frozen by the verified residence context. The political owner receives a normal introduction petition, subject to its ordinary authority and privacy rules.",
+        "The marriage is revalidated at scenario creation, contribution, resolution, and recovery. Divorce, death, a nonreciprocal native link, an unloaded spouse, missing residence, or unavailable MCA evidence pauses or refuses the operation. It never converts absence into death or assumes the former relationship still exists. A compatible Minecraft Comes Alive installation provides these native facts; Ultima only reads them."
+      ],
+      "commands": [
+        "/ultima-evolution family_introduction",
+        "/ultima-evolution inspect \"<opportunity name>\"",
+        "/ultima-evolution contribute introduce \"<opportunity name>\" <revision>",
+        "/ultima-evolution resolve introduce \"<opportunity name>\" <revision> <counterpart kingdom id>"
+      ]
+    },
+    {
+      "id": "recruit_transfer_workflow",
+      "category": "evolution",
+      "title": "Bilateral recruit transfers",
+      "summary": "Freeze one recruit, obtain informed consent, apply through Recruits, and recover interrupted acknowledgment.",
+      "body": [
+        "Negotiated transfer requires world drama enabled and the exact audited Recruits provider ready. It is private to the source owner, recipient, and authorized recovery staff. The task menu never lists another player's unshared native groups or troop counts.",
+        "The recipient begins with Share a recruit transfer destination. They choose one of their own named native groups and a named online sender. Only that sender can then select the shared group while proposing a transfer to that recipient. The share lasts for the current server connection, may be revoked by the recipient, and is cleared when either participant logs out or the server stops.",
+        "The source owner opens Propose a recruit transfer, chooses a loaded self-owned recruit, the recipient, the recipient's shared destination group, and whether family evidence is required. The review names the recruit, source owner, recipient, destination group, notice, deadline, equipment evidence, and family terms. No technical identity or fingerprint is entered.",
+        "The recipient opens Inspect recruit transfer and then Consent to a recruit transfer. Consent is required even though the destination group was shared. Revoking a group share prevents new proposals but does not silently cancel a durable proposal already reviewed; use the proposal's neutral cancellation path while its phase permits it.",
+        "If family is required, the two players need a reciprocal MCA marriage every time the agreement is used. Consent changes no native owner. It begins a 1,200-tick notice, and the whole proposal expires at 72,000 ticks.",
+        "Inspect shows the phase, notice, deadline, family requirement, named participants and group, retained equipment evidence, and recovery detail only to participants or authorized operators. The same recruit cannot be mobilized while its transfer is nonterminal. Missing entities, offline participants, changed equipment, lost ownership, stale review, or expired consent blocks progress without moving the recruit.",
+        "After notice, the source owner may apply before the deadline while the recipient and recruit are loaded. Ultima first saves the source group, remaining wage timer, original orders, equipment, owner counts, and scoreboard state. It then requests release and hire through Recruits and verifies the entity, groups, counts, provider disk state, and acknowledgment. Civic residence and political identity are untouched.",
+        "If native mutation happened but final acknowledgment was interrupted, Confirm native transfer retries disk verification without repeating ownership changes. Restore original ownership is a guarded recovery request using the retained original snapshot and requires both original parties online. It is available only in appropriate nonterminal failure phases and refuses when current native state no longer matches the safe recovery conditions.",
+        "Do not retry application blindly or delete the transfer record. The saved intent prevents duplicate release, hire, wage reset, or count change after restart. A terminal completion keeps its receipt. A restored or canceled operation also remains historical rather than pretending no proposal occurred."
+      ],
+      "commands": []
+    },
+    {
+      "id": "transfer_reconciliation",
+      "category": "evolution",
+      "title": "Reconcile divergent recruit accounting",
+      "summary": "Acknowledge an operator-reviewed native state when unrelated recruit changes make automatic repair unsafe.",
+      "body": [
+        "A pending transfer becomes accountingDiverged when unrelated recruitment, death, or native recount changes owner totals around its saved snapshot. Even if totals later happen to match, automatic confirm and restore remain blocked. The transfer retains intent, before-and-after evidence, and provider receipt so an operator can distinguish a real handoff from a coincidental count.",
+        "A permission-level-two operator opens Review native reconciliation. It reports current owner, group, equipment evidence, and both native counts. After independently checking the Recruits save, the operator opens Acknowledge native reconciliation, selects the reviewed transfer by name, and writes a reason. The server carries the exact reviewed fingerprint and revision as hidden choice metadata and verifies native disk state again.",
+        "Reconciliation performs no ownership, group, equipment, or count writes. It closes the record with a distinct RECONCILED receipt and preserves the divergence evidence. RECONCILED does not claim that the proposed transfer completed. If native state changes after preview, the reviewed choice is refused; open a fresh review instead of forcing stale evidence."
+      ],
+      "commands": [
+        "/ultima-transfer reconciliation_preview \"<transfer name>\"",
+        "/ultima-transfer reconcile \"<transfer name>\" <revision> <fingerprint> <reason...>"
+      ]
+    },
+    {
+      "id": "organization_founding",
+      "category": "evolution",
+      "title": "Found a dynamic organization",
+      "summary": "Create a durable charter from an installed bounded template under current recognition authority.",
+      "body": [
+        "Open Found chartered organization. Choose an installed charter template, a named sponsoring kingdom, and a readable organization name. The server creates the stable organization ID from that name. The founder must hold current RECOGNIZE authority for the sponsor and be compatible with the template membership policy. Founding enrolls only the founder; it does not recruit residents automatically.",
+        "The new definition is copied into durable world state. Later datapack reloads, template edits, or removal do not mutate the frozen charter. Installed datapack templates determine available ranks, quests, incompatibilities, and benefits. The default content includes the Lamplighters, but a server pack may install other valid templates.",
+        "Use Browse organization lifecycles and Inspect organization lifecycle to resolve aliases and see ACTIVE, MERGED, or DISSOLVED state. Founding does not rewrite faith, deity, residence, kingdom, standing in another organization, or completed quest receipts. Conflicting memberships and a changed review fail before the definition is saved."
+      ],
+      "commands": []
+    },
+    {
+      "id": "organization_merge_and_dissolution",
+      "category": "evolution",
+      "title": "Merge or dissolve organizations",
+      "summary": "Require bilateral authority, honor member opt-outs, and settle accepted obligations before closure.",
+      "body": [
+        "Open Propose organization merge and choose the named source and target. The merge remains pending until an independently authorized target representative uses Consent to organization merge. Active source members may choose Opt out of organization merge before finalization. No participant enters a merge ID or revision.",
+        "Before finalization, accepted civic commissions and scoped civilian contracts appear as named blockers only to people with the actual novation authority and required consents. Complete or explicitly cancel them, or use Novate merge obligation where that accepted job supports confirmed transfer to the target. Ordinary source members cannot browse another player’s private commission owner or quest.",
+        "Finalize organization merge closes source memberships and enrolls only compatible members who did not opt out. It never copies source standing blindly into the target. The source becomes a MERGED tombstone with a stable alias for current lookup, while frozen historical quest IDs, receipts, deeds, and prior standing continue to name the original organization.",
+        "Dissolve organization likewise refuses while unsettled obligations remain. Success closes memberships and freezes a DISSOLVED tombstone so benefits stop. It does not erase deeds, completed quests, or historical standing. Reopen the lifecycle after consent, opt-out, novation, or blocker changes; stale finalization is refused and competing attempts cannot both apply."
+      ],
+      "commands": []
+    },
+    {
+      "id": "constitutional_elections",
+      "category": "evolution",
+      "title": "Adopt rules and hold an election",
+      "summary": "Let a legitimate government explicitly opt into a private, deterministic succession ballot.",
+      "body": [
+        "Existing succession remains unchanged until the current leader adopts a transition rule. The rule separately enables elections and regency, sets election, grace, and regency durations, and lists regent permissions. Election and regency durations must be 1,200 to 2,419,200 ticks; grace must be 200 to 172,800 ticks.",
+        "Open the dedicated K tasks: Set election and regency rules, Open a leadership election, Vote in an election, Close and count an election, and Read an election. Named candidates and eligible elections are server choices; players never enter an technical election identity or another player's ballot. The review page freezes the relevant government version before apply.",
+        "Opening freezes candidates and the eligible electorate from current player officeholders and mandates, plus an active unexpired regent. Inspect shows public election state without exposing how other people voted. Each eligible voter casts one authenticated private ballot for a frozen candidate.",
+        "An authorized close succeeds after every eligible ballot arrives or the election deadline passes. A unique winner becomes named successor while government remains active, or legitimate leader during interregnum. A tie enters grace. After grace expires the election expires without installing anyone, even if its last stored tally appears unique. Stale reviews and duplicate apply requests cannot install two outcomes."
+      ],
+      "commands": []
+    },
+    {
+      "id": "constitutional_regency",
+      "category": "evolution",
+      "title": "Appoint a bounded regent",
+      "summary": "Grant temporary enumerated authority while preserving the government's named successor.",
+      "body": [
+        "Regency must be enabled by the current constitutional rule. An authorized appointment names an online player and freezes the government's existing named successor. The regent receives only the responsibilities enumerated in that rule and only until its recorded deadline. Empty permissions do not become broad authority.",
+        "Use the dedicated K tasks Appoint a temporary regent and End a regency. The server supplies the named kingdom and player choices and shows the configured responsibility set and expiry on review. Regency is not submitted through a generic political form.",
+        "A regent cannot replace the preserved successor merely by acting as regent. Ending regency removes the interim grant early; automatic expiry removes it at the deadline. Both paths retain the named successor and leave a durable political fact. An election may include an active, unexpired regent in the frozen electorate, but an expired regency contributes no authority.",
+        "NPC absence, chunk unload, server restart, and player logout are never reasons to appoint a regent or open an election. Use confirmed government state and the explicit rule. If the government profile is dormant or unavailable, transition actions refuse rather than reviving it through a side path."
+      ],
+      "commands": []
+    },
+    {
+      "id": "authored_drama_workflow",
+      "category": "evolution",
+      "title": "Propose an authored drama",
+      "summary": "Start a bounded opt-in operation from installed evidence, then require independent participant consent.",
+      "body": [
+        "Drama requires the world's drama flag. Open Propose authored drama, choose an installed template, a known settlement, and any eligible named subject. Installed templates cover border campaign, occupied rebellion, frontier invasion, and concord schism. Datapacks own this bounded authored content; an unknown or unavailable template is refused.",
+        "Proposal review freezes template terms, prerequisite evidence, participants, duration, objective, and operation budget. Military drama requires a provider-saved claim binding, a mapped faction commanded by the proposer, and an independently commanded opponent. The other participant uses Consent to authored drama. Remaining time advances only while all recorded participants are online and deducts at most 1,200 ticks per evaluation.",
+        "Inspect after every step. Execute calls an existing authority-checked organization, campaign, accord, or withdrawal owner; it does not implement a second hidden system. Negotiate offers a nonviolent provider path, exit closes without changing control or civic assets, and recover retries only the saved bounded operation after missing provider acknowledgment."
+      ],
+      "commands": [
+        "/ultima-drama list",
+        "/ultima-drama list <offset>",
+        "/ultima-drama inspect \"<drama name>\"",
+        "/ultima-drama propose \"<request key>\" <global drama revision> <template definition id> \"<settlement name>\" [<organization definition id>]",
+        "/ultima-drama consent \"<drama name>\" <record revision>",
+        "/ultima-drama execute \"<drama name>\" <record revision>",
+        "/ultima-drama negotiate \"<drama name>\" <record revision>",
+        "/ultima-drama exit \"<drama name>\" <record revision>",
+        "/ultima-drama recover \"<drama name>\" <record revision>"
+      ]
+    },
+    {
+      "id": "campaign_rebellion_and_invasion",
+      "category": "evolution",
+      "title": "Campaign, rebellion, and invasion drama",
+      "summary": "Use real native leadership, occupation grievance, and bilateral consent for military stories.",
+      "body": [
+        "Border campaign uses the DEFEND campaign goal and a 144,000-tick drama duration. Occupied rebellion uses AUTONOMY for 216,000 ticks and additionally requires a current saved occupation grievance, such as a refused authored obligation supported by the protection and control records. Frontier invasion uses TRANSFER for 144,000 ticks and requires explicit opt-in from both involved native leaders around its authored target.",
+        "Execution delegates to the existing warfare campaign declaration and inherits its current mandate, mapping, notice, claim, leader, capital, defender, and provider checks. Drama consent alone cannot bypass political authority. Native Recruits combat remains the only source of siege progress, victory, and control. No template erases the town, moves civilians, destroys buildings, rewrites culture, or transfers civic property.",
+        "Negotiation calls the existing accord path where the saved operation allows it. Exit is always nonviolent and preserves native control, civic identity, residents, institutions, assets, and standing. A provider refusal or absent acknowledgment leaves a suspended recoverable record. Restore provider availability and recover the same request; do not propose repeated stable request keys to obtain duplicate campaigns."
+      ],
+      "commands": [
+        "/ultima-drama propose \"<request key>\" <global drama revision> ultima_kingdoms:border_campaign \"<settlement name>\"",
+        "/ultima-drama propose \"<request key>\" <global drama revision> ultima_kingdoms:occupied_rebellion \"<settlement name>\"",
+        "/ultima-drama propose \"<request key>\" <global drama revision> ultima_kingdoms:frontier_invasion \"<settlement name>\"",
+        "/ultima-drama consent \"<drama name>\" <record revision>",
+        "/ultima-drama execute \"<drama name>\" <record revision>",
+        "/ultima-drama negotiate \"<drama name>\" <record revision>",
+        "/ultima-drama exit \"<drama name>\" <record revision>"
+      ]
+    },
+    {
+      "id": "peaceful_organization_schism",
+      "category": "evolution",
+      "title": "Resolve a peaceful charter schism",
+      "summary": "Found a separate organization through member consent without military or religious rewriting.",
+      "body": [
+        "For concord_schism, the proposal subject is the source organization resource ID. The proposer must be an active member, stand within a known civic settlement, and hold current charter RECOGNIZE authority. Another active source member provides independent consent. No native military claim, faction command, or siege evidence is required for this peaceful organizational workflow.",
+        "Execution uses the organization lifecycle owner to found the installed Lamplighters-based Concord Fellowship charter under a new stable ID. It obeys template availability, sponsor authority, membership compatibility, revision, and durable-save checks. If the configured template is absent from installed datapack content, the schism cannot invent a replacement definition.",
+        "Nobody is moved automatically. Source membership and standing remain, and every participant chooses any new membership through normal organization rules. The operation does not rewrite deity, faith, marriage, residence, kingdom, property, quests, or civic identity. Exit leaves the source organization untouched, while a saved provider or owner failure remains available only through its bounded recovery path."
+      ],
+      "commands": [
+        "/ultima-drama propose \"<request key>\" <global drama revision> ultima_kingdoms:concord_schism \"<settlement name>\" <organization definition id>",
+        "/ultima-drama consent \"<drama name>\" <record revision>",
+        "/ultima-drama execute \"<drama name>\" <record revision>",
+        "/ultima-drama exit \"<drama name>\" <record revision>",
+        "/ultima-drama recover \"<drama name>\" <record revision>"
+      ]
+    },
+    {
+      "id": "evolution_saved_data_recovery",
+      "category": "evolution",
+      "title": "Recover evolving-world records",
+      "summary": "Preserve sidecars and restore compatible providers before using explicit recovery commands.",
+      "body": [
+        "Evolution, protection, transfers, drama, organizations, politics, and civilian contracts each keep bounded saved data under the world's data directory. Future, unsupported, or partial schemas are preserved read-only. State that precedes an external call is durably saved first, so a crash can leave a truthful pending operation for retry rather than an untracked duplicate.",
+        "Do not delete a sidecar to clear a blocked record. Back up the world, inspect the named record and current provider state, restore the matching provider version, then choose the applicable retry, confirm, restore, release, exit, recover, reconciliation, or novation task. A failed save refuses the action. Recovery never broadens authority or changes frozen participants.",
+        "Current native contracts are MCA 7.6.26 for reciprocal family and residence facts, MCA Quests 1.6.5 through before 1.7 for objectives and receipts, Townstead 0.7.6 for political life-stage and building evidence, and Recruits 1.15.2 for warfare and transfer operations. There is no Townstead Chronicles archive adapter. Test provider absence only on an isolated copy; vanilla can remove unknown mod entities, so reinstall recovery must start from the untouched provider-world snapshot."
+      ],
+      "commands": [
+        "/ultima-evolution inspect \"<opportunity name>\"",
+        "/ultima-evolution retry \"<opportunity name>\"",
+        "/ultima-evolution release_rejected \"<opportunity name>\"",
+        "/ultima-transfer inspect \"<transfer name>\"",
+        "/ultima-transfer confirm \"<transfer name>\"",
+        "/ultima-transfer restore \"<transfer name>\"",
+        "/ultima-drama inspect \"<drama name>\"",
+        "/ultima-drama recover \"<drama name>\" <record revision>",
+        "/ultima guild lifecycle status <organization definition id>"
+      ]
+    }
+  ]
+}

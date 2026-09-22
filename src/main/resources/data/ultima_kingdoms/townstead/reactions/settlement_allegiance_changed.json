@@ -1,0 +1,40 @@
+{
+  "schema": "townstead:reaction/v2",
+  "display_name": "Settlement Allegiance Changed",
+  "tags": ["political", "settlement", "allegiance"],
+  "cooldown": "20s",
+  "chance": 1.0,
+  "mirror_radius": 0,
+  "mirror_chance": 0.0,
+  "hearts": 0,
+  "do": {
+    "type": "pheno:and",
+    "actions": [
+      {
+        "type": "pheno:play_sound",
+        "sound": "minecraft:block.bell.use",
+        "category": "neutral",
+        "volume": 0.65,
+        "pitch": 1.0
+      },
+      {
+        "type": "pheno:spawn_particles",
+        "particle": "minecraft:firework",
+        "count": 6,
+        "spread": 0.4,
+        "speed": 0.02
+      }
+    ]
+  },
+  "choices": [
+    {
+      "animation": {
+        "type": "emotecraft",
+        "id": "waving",
+        "allow_movement": true
+      },
+      "required_tags": ["context:settlement"],
+      "weight": 1
+    }
+  ]
+}

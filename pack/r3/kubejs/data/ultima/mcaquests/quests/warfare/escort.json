@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "id": "ultima:warfare/escort",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Civilian Escort",
+  "difficulty": "medium",
+  "priority": 10,
+  "repeat": { "type": "once" },
+  "giver": { "adult_only": true },
+  "conditions": { "type": "mcaquests:institutional_service_available" },
+  "title": { "text": "Escort Between Settlements" },
+  "dialogue": {
+    "offer": { "text": "Escort this contact to the nearest other village under the current safe-conduct terms. Payment: seven emeralds." },
+    "accept": { "text": "The issuer and safe-conduct context are now fixed. Provider absence pauses the escort." },
+    "decline": { "text": "The route remains optional." },
+    "in_progress": { "text": "Lead the issuer safely to the nearest other village." },
+    "ready": { "text": "The escorted contact has reached the destination." },
+    "complete": { "text": "The civilian escort is acknowledged. Seven emeralds are paid." }
+  },
+  "objectives": [ {
+    "type": "mcaquests:escort_entity",
+    "villager": { "mode": "self" },
+    "destination": { "anchor": "nearest_other_village", "radius": 2048 },
+    "radius": 8,
+    "lead": true
+  } ],
+  "rewards": [ { "type": "mcaquests:item", "item": "minecraft:emerald", "count": 7 } ],
+  "turn_in": { "mode": "original_giver" }
+}

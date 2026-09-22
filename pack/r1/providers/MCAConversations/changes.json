@@ -1,0 +1,212 @@
+[
+  {
+    "path": "src/content/topics/guild_contact.json",
+    "before_sha256": null,
+    "after_sha256": "9be983f00a4d8962b43a57855240ba608be3d08236043f0930a6421cac7e818f"
+  },
+  {
+    "path": "src/content/voices/specials/friendly.json",
+    "before_sha256": "084eff9a43b029ca1c7a9ac6093ee44ead3219434e8d230e67dde65347b8d590",
+    "after_sha256": "448751106fea72023a6e436a2d2b049b7c75caca13419d2c5e0aa514e8f22d32"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/compat/CivicBridge.java",
+    "before_sha256": null,
+    "after_sha256": "c74c67f23a84258f1295c75e5f5dc44f653b0e430863ebbd94581d3ea7bedbff"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/compat/mca/ConversationsMcaRegistrar.java",
+    "before_sha256": "733655fbc9fb059d1b01066f3ee0453707172a3eb5ccb545e11b731b759b5dff",
+    "after_sha256": "1acc718051f21891f19b4fe0482ada347aa882f10dec03680ac71084d7965501"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/context/CivicContextSource.java",
+    "before_sha256": null,
+    "after_sha256": "0c56b173484e5ad907fdc5388a2258e8961b7015cd935aa19cbb4c95aa3f4732"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/context/ContextKeys.java",
+    "before_sha256": "b9a2cd33a4078e33384745034bd5ce407f014b185adf5171ddae354e0e7dc57e",
+    "after_sha256": "596ea2f0e329ec1230e5236228331d8e42e1f83592a02226f44ae5cdd86af789"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/context/ContextSources.java",
+    "before_sha256": "406f4a1138523abbef0dabf5ab4d85411f87de484f7af5f09fd1a509c208cf9c",
+    "after_sha256": "6af4e19852db553ca5e57c4f10f3fb0ceb6580e93c2a59d0de3a5ac782b99cf7"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/conversation/TopicEntry.java",
+    "before_sha256": "3cd2095935ed32346864051e989e133fa4849f6b0da7f18652179c84124ed743",
+    "after_sha256": "5f990ebb293f9f36a6da8f1527e169a33c1e1cfb7782b424714525b3ce0ec569"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/conversation/TopicGate.java",
+    "before_sha256": "ca2de5aa4003c3bf3dd987e61e84ff2a6e02a158c519c15f97b667a2e81feba5",
+    "after_sha256": "a27f4f9ccd70955979df9a660d378bd7489785059bd9c51c8b130744d1743714"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/hub/HubDomain.java",
+    "before_sha256": "2b7f9980e3dcd5d8caed1973f66f88d8f5e640119e3e64ed6ecc4f7ae2ac50df",
+    "after_sha256": "9e9f4986107b5c9cdc2799a4a7578ef6a9072da4a24ac7b9c1f85f6900c98570"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/mixin/QuestionMixin.java",
+    "before_sha256": "bb7ab9b5d3a70dc0766e956f664d25677e8bab31bb29165f83df396a8af75978",
+    "after_sha256": "fc988e53e328bf105fc2bf5fdba0c88e0f809ba5c8de189d29e962363b3b5bf4"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/template/TemplateContextFactory.java",
+    "before_sha256": "826edff23dcc24cd54c14a9081ccfbd1ee8b4710b7d3931d3c3b8fafc277eb4f",
+    "after_sha256": "3b98835127827b572abdee05f63717a25a090e62a5da1d70e6271ea1dc2fbd11"
+  },
+  {
+    "path": "src/main/java/dev/otectus/mcaconversations/template/TemplateVariable.java",
+    "before_sha256": "364ab80407543ba52948b82dc50ffc02b04b876c4e8fdab53d880d730c89fe1d",
+    "after_sha256": "433f37b346f570ec0348f87a8da69e575113e5c726e3063939790d2e58873dbf"
+  },
+  {
+    "path": "src/main/resources/assets/mca_dialogue/lang/en_us.json",
+    "before_sha256": "de90371fdb00aa0258f1fb38b57870bb528b16271c7a89685e741e116d84c4e2",
+    "after_sha256": "9a21ab122dcbe86290a0eed31ebc71d79c1ab5ed1b2b879ffd52f85f16b4827c"
+  },
+  {
+    "path": "src/main/resources/assets/mca_dialogue/lang/pt_br.json",
+    "before_sha256": "15e016187a4b19d01ae916cb7d26933c739c730774800b03a89656a303817d61",
+    "after_sha256": "418ca09cd8cb9200f33c2fad9df88e3ab98c409518947b0dff0788c320bf9904"
+  },
+  {
+    "path": "src/main/resources/assets/mca_dialogue_friendly/lang/en_us.json",
+    "before_sha256": "d288665fb7cd14707da158807e3874c440656a6b57edf68bdb7e7366663e75fa",
+    "after_sha256": "12401590c637b0e2130a7cb3b2f1a4355909bb8839649fa5adc548c9152fd5c0"
+  },
+  {
+    "path": "src/main/resources/assets/mca_dialogue_friendly/lang/pt_br.json",
+    "before_sha256": "ab8a7f7ba2c1c1e0931d02cd4efeceac6ba9fdc154f9238f2df7fa7c47d034c5",
+    "after_sha256": "db2ff89e33a4e97b3e7aeb665bf06d14810e477da71603b873ac2531b8c898a7"
+  },
+  {
+    "path": "src/main/resources/assets/mcaconversations/lang/en_us.json",
+    "before_sha256": "b3ae6314ec2d16bb4b58153a0d7e5dca6c15c29bf9323e0fdbdd1135e645b162",
+    "after_sha256": "eb798bd3914a5d0481beaa8bbaab94fbc5a73b74648a1c40667100171063450a"
+  },
+  {
+    "path": "src/main/resources/assets/mcaconversations/lang/pt_br.json",
+    "before_sha256": "666888f6bb9283755840e6bd13b0424ff8c059c3051de6e2669735bd33a1e13f",
+    "after_sha256": "17d70c1cf69e9444d349a2d35daf7f850bbc0080fa06effa0950819096f0ecb9"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/chat_intents/scene_generated_ultima_kingdoms.json",
+    "before_sha256": null,
+    "after_sha256": "439f14d2a6556e966a7b6d849069c75c9d0489b3f5edb0b929b49c04e6d02737"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/conversation_beats/scene_generated_ultima_kingdoms.json",
+    "before_sha256": null,
+    "after_sha256": "098a242322a03da78902c4ff1121eb26ce0ac35f06581205f6cad903fb534f08"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/conversation_catalog/topics.json",
+    "before_sha256": "c1727cb602757ce6d3a02e475bdafe3c5258d843a7ababd9005b565edb7a133e",
+    "after_sha256": "21e6098097ac216b406b8684ecc62e364fff86f2a08b3eb9be52e93d2227392a"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/conversation_scenes/generated.json",
+    "before_sha256": "ba23896e5a9e367c3772a7a4dd040842f6d6193e9594a2d221110176d1023008",
+    "after_sha256": "d1e0e954cd8e3b2f5d0a60247edd5d4a53b55b43ec0b5f678a2e9d480e862701"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.cat.village.json",
+    "before_sha256": "9035a8ea46ba9e530f5e2ab2cb149c213ba299d7b076526b72c364e167a88cd3",
+    "after_sha256": "00ac2be7713eca7a2245384f8cf1f02578e4bc97a38ca456696dac6345ef489c"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.commissions_ready.respond.json",
+    "before_sha256": null,
+    "after_sha256": "3a2659a7e2a10baf06465b260460a115de51b7b0d133755190fe6b65cadeaa6a"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.followup.json",
+    "before_sha256": null,
+    "after_sha256": "56453d9009784f434fe4988156e003c02b98d02977803b997c8f79f65e338eb6"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.introduction_ready.respond.json",
+    "before_sha256": null,
+    "after_sha256": "4b065e14ab30372ee3924708cc30d16ef65aa9d87beb2d045973de1977856ca9"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.qualification_recovery.respond.json",
+    "before_sha256": null,
+    "after_sha256": "da1f0aacd3dc0be9804914f26bb1d6e9a154931ac716ba3c0cdb440bcf805b88"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.scene.guild_contact.workshop_unavailable.respond.json",
+    "before_sha256": null,
+    "after_sha256": "cdc50c0a389f4220539b27f3d0e5a559a6ffeb06e52789fb779b5f0a0e4657ed"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.topic.guild_contact.more.respond.json",
+    "before_sha256": null,
+    "after_sha256": "83e20f6c1a11566a39fdda55dc34f64b8e98b590f4db2d704bc60ef7b4d8ef8b"
+  },
+  {
+    "path": "src/main/resources/data/mcaconversations/dialogues/conversations.topic.guild_contact.open.respond.json",
+    "before_sha256": null,
+    "after_sha256": "1361024644b3fb54be70e2818466ebe8be49e27fc04c453b0fd0042765fc53fa"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/authoring/ContentCompiler.java",
+    "before_sha256": "6f67115994ab58c5476777a49397c1b830176d2fc5b691b7a9b5ac521f4d9d2c",
+    "after_sha256": "4b2885714c198ff54fdfc6b3f7e83e93b52967cddf2aba7a2d6dbf384591fbfb"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/authoring/TopicPackCompiler.java",
+    "before_sha256": "61953a0f04afb24bdc4276a620345106c6bcff763ff05586a32449ed8533202c",
+    "after_sha256": "009571dc0c884b22bb35ad76f5e369629af576ff96704d9d1fdb973136ab9492"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/compat/CivicBridgeTest.java",
+    "before_sha256": null,
+    "after_sha256": "deea52cf089beadff005b417b341219b33d40599c9041fd3398da4792e05b4d8"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/content/CivicContentContractTest.java",
+    "before_sha256": null,
+    "after_sha256": "4bad1d63b5c6a3938e29f383ea696625e2319544e957ff70619f20d3cddc59ba"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/content/ContentLintTest.java",
+    "before_sha256": "aba896684858ab23de5aabf2a8d55439160522a18e6f5dc94afa194516213952",
+    "after_sha256": "922542cf637c6c967e1bb1917b3c644b9eacd8d7c89fb2ccd13e4b7fd95386af"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/content/ConversationGraphLintTest.java",
+    "before_sha256": "7fe60942b76700e674a31da39e99aa909a202049fde4ee3b88d1c1754d77b2d9",
+    "after_sha256": "17db8969e9e8d66b741dbb35056800d3b987b1a993614426570525c1ed8be5fb"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/context/CivicContextSourceTest.java",
+    "before_sha256": null,
+    "after_sha256": "c51487a6642d489aed23ad128e840eddcc7d8fe47280018961c3e6e81e9ecdf5"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/context/ContextKeyOwnershipTest.java",
+    "before_sha256": "c7808809ff5693b047708b214622348350e2f538386026bc76220beb68c5949c",
+    "after_sha256": "ea8aec27a74a7666c87e6ea3c912c6b735f9cd0c12e516b72b07802791be98d7"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/conversation/ContentOperationConsistencyTest.java",
+    "before_sha256": "c1607ebccacaa2dee4770a37f74fd6d4fd2530b75d9d550a988d2a9bd94db342",
+    "after_sha256": "665e1fd888b4d1c05a5f812c7d756d8e45837b7bdfc19816b0fc070d156ca656"
+  },
+  {
+    "path": "src/test/java/dev/otectus/mcaconversations/conversation/TopicGateTest.java",
+    "before_sha256": "fa9d7552d8eaf44657f2b8dc2d0bda26770ede9fc25ea4021595287c2b959258",
+    "after_sha256": "fe027757fa81db6a4db6bcf8efec2ac9f22b69d8e11b9fc2961483dca70a6dd4"
+  },
+  {
+    "path": "src/test/resources/generated_matcher_fixtures.tsv",
+    "before_sha256": "662937b0ba392e04f9a742ccc04b061508e61523691c01cc5faa77b46b0a8e39",
+    "after_sha256": "d268eb17c64ff265b68e98ae336386da68561eff490869b2855d61d3cd06b1f0"
+  }
+]

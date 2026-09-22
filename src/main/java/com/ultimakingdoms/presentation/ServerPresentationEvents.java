@@ -35,6 +35,8 @@ public final class ServerPresentationEvents {
             return;
         }
         Optional<SettlementView> current = service.getSettlementAt(player.serverLevel(), player.blockPosition());
+        current.ifPresent(settlement -> com.ultimakingdoms.knowledge.SettlementKnowledge.get(player.getServer())
+                .discover(player.getUUID(), settlement.id()));
         OverlayPacket packet = current.flatMap(settlement -> service.getKingdom(settlement.kingdomId())
                         .map(kingdom -> new OverlayPacket(Optional.of(player.level().dimension().location()),
                                 Optional.of(SettlementSummary.from(settlement)),

@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "id": "ultima:warfare/reconnaissance",
+  "institutional_commission": true,
+  "weight": 1,
+  "category": "Civilian Reconnaissance",
+  "difficulty": "medium",
+  "priority": 10,
+  "repeat": { "type": "once" },
+  "giver": { "adult_only": true },
+  "conditions": { "type": "mcaquests:institutional_service_available" },
+  "title": { "text": "Survey the Forest Approaches" },
+  "dialogue": {
+    "offer": { "text": "Survey a forest approach and report safely to this recognized contact. Payment: five emeralds." },
+    "accept": { "text": "Your issuer, institution, settlement, and control snapshot are now fixed." },
+    "decline": { "text": "No reconnaissance duty is imposed." },
+    "in_progress": { "text": "Visit a forest biome, then return to the original issuer." },
+    "ready": { "text": "Your survey is ready to report." },
+    "complete": { "text": "The survey is recorded as civilian service. Five emeralds are paid." }
+  },
+  "objectives": [ { "type": "mcaquests:visit_biome", "tag": "minecraft:is_forest" } ],
+  "rewards": [ { "type": "mcaquests:item", "item": "minecraft:emerald", "count": 5 } ],
+  "turn_in": { "mode": "original_giver" }
+}

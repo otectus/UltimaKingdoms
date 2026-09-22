@@ -64,6 +64,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
     private static final ResourceLocation UNKNOWN_BIOME = new ResourceLocation("minecraft", "the_void");
     private static final long OBSERVATION_WRITE_INTERVAL = 1_200L;
 
+    private boolean validatingMutation;
     private final MinecraftServer server;
     private final DefinitionRegistry definitions;
     private final SettlementSavedData data;
@@ -86,6 +87,14 @@ public final class KingdomsServiceImpl implements KingdomsService {
                 UltimaKingdomsConfig.POI_MINIMUM_COUNT.get(),
                 UltimaKingdomsConfig.DEFAULT_SETTLEMENT_RADIUS.get()
         ));
+    }
+
+    @Override
+    public Map<String, Set<String>> getSettlementExternalRefs(UUID settlementId) {
+        requireServerThread();
+        Map<String, Set<String>> result = new LinkedHashMap<>();
+        data.get(settlementId).ifPresent(record -> record.externalRefValues.forEach((key, values) -> result.put(key, Set.copyOf(values))));
+        return Map.copyOf(result);
     }
 
     @Override
@@ -112,6 +121,12 @@ public final class KingdomsServiceImpl implements KingdomsService {
     public Optional<SettlementView> getSettlement(UUID id) {
         requireServerThread();
         return snapshot(id).map(value -> (SettlementView) value);
+    }
+
+    @Override
+    public Optional<SettlementView> getSettlementByExternalRef(String namespace, String value) {
+        requireServerThread();
+        return data.getByExternalRef(namespace, value).map(record -> (SettlementView) record.snapshot());
     }
 
     @Override
@@ -229,6 +244,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
 
     @Override
     public SettlementView registerCandidate(ServerLevel level, SettlementCandidate candidate) {
+        if (validatingMutation) throw new IllegalStateException("Mutation during settlement preflight");
         requireServerThread();
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(candidate, "candidate");
@@ -286,6 +302,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
 
     @Override
     public SettlementView rename(UUID settlementId, String newName) {
+        if (validatingMutation) throw new IllegalStateException("Mutation during settlement preflight");
         requireServerThread();
         SettlementRecord record = requireSettlement(settlementId);
         if (record.nameLocked) throw new IllegalArgumentException("Settlement name is locked: " + record.displayName);
@@ -313,6 +330,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
 
     @Override
     public SettlementView reclassify(UUID settlementId) {
+        if (validatingMutation) throw new IllegalStateException("Mutation during settlement preflight");
         requireServerThread();
         SettlementRecord record = requireSettlement(settlementId);
         if (record.kingdomLocked) throw new IllegalArgumentException("Settlement kingdom is locked: " + record.displayName);
@@ -324,6 +342,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
             throw new IllegalArgumentException("Unknown kingdom: " + resolution.kingdomId());
         }
         ResourceLocation oldKingdom = record.kingdomId;
+        if (!oldKingdom.equals(resolution.kingdomId())) preflight(record, null, resolution.kingdomId());
         record.kingdomId = resolution.kingdomId();
         record.assignmentSource = resolution.source();
         record.assignmentTrace.clear();
@@ -339,6 +358,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
 
     @Override
     public SettlementView setLocks(UUID settlementId, boolean nameLocked, boolean kingdomLocked) {
+        if (validatingMutation) throw new IllegalStateException("Mutation during settlement preflight");
         requireServerThread();
         SettlementRecord record = requireSettlement(settlementId);
         if (record.nameLocked == nameLocked && record.kingdomLocked == kingdomLocked) return record.snapshot();
@@ -350,6 +370,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
 
     @Override
     public SettlementView merge(UUID sourceId, UUID targetId) {
+        if (validatingMutation) throw new IllegalStateException("Mutation during settlement preflight");
         requireServerThread();
         UUID resolvedSource = data.resolveId(Objects.requireNonNull(sourceId, "sourceId"));
         UUID resolvedTarget = data.resolveId(Objects.requireNonNull(targetId, "targetId"));
@@ -359,6 +380,9 @@ public final class KingdomsServiceImpl implements KingdomsService {
         if (!source.dimension.equals(target.dimension)) {
             throw new IllegalArgumentException("Cannot merge settlements in different dimensions");
         }
+        data.validateMergeExternalRefs(source, target);
+        preflight(source, target, target.kingdomId);
+        SettlementSnapshot retired = source.snapshot();
         addAlias(target, source.displayName);
         source.aliases.forEach(alias -> addAlias(target, alias));
         target.retiredSlugs.add(source.slug);
@@ -376,9 +400,11 @@ public final class KingdomsServiceImpl implements KingdomsService {
                 values.forEach(value -> target.addExternalRef(namespace, value)));
         target.lastObservedGameTime = Math.max(target.lastObservedGameTime, source.lastObservedGameTime);
         spatialIndex.remove(source.snapshot());
-        data.changed(target);
         data.redirect(source.id, target.id);
-        return target.snapshot();
+        data.changed(target);
+        SettlementSnapshot merged = target.snapshot();
+        MinecraftForge.EVENT_BUS.post(new com.ultimakingdoms.api.event.SettlementMergedEvent(server, retired, merged));
+        return merged;
     }
 
     @Override
@@ -503,6 +529,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
     }
 
     private SettlementView setKingdom(UUID settlementId, ResourceLocation kingdomId, ChangeReason reason) {
+        if (validatingMutation) throw new IllegalStateException("Mutation during settlement preflight");
         requireServerThread();
         Objects.requireNonNull(kingdomId, "kingdomId");
         if (definitions.snapshot().kingdom(kingdomId).isEmpty()) {
@@ -512,6 +539,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
         if (record.kingdomLocked) throw new IllegalArgumentException("Settlement kingdom is locked: " + record.displayName);
         if (record.kingdomId.equals(kingdomId)) return record.snapshot();
         ResourceLocation oldKingdom = record.kingdomId;
+        preflight(record, null, kingdomId);
         record.kingdomId = kingdomId;
         record.assignmentSource = AssignmentSource.MANUAL;
         record.assignmentTrace.clear();
@@ -520,6 +548,16 @@ public final class KingdomsServiceImpl implements KingdomsService {
         SettlementSnapshot snapshot = record.snapshot();
         MinecraftForge.EVENT_BUS.post(new SettlementKingdomChangedEvent(snapshot, oldKingdom, kingdomId, reason));
         return snapshot;
+    }
+
+    private void preflight(SettlementRecord source, SettlementRecord target, ResourceLocation kingdom) {
+        if (validatingMutation) throw new IllegalStateException("Nested settlement mutation during preflight");
+        var event = new com.ultimakingdoms.api.event.SettlementMutationPreflightEvent(server,
+                source.snapshot(), target == null ? null : target.snapshot(), kingdom);
+        validatingMutation = true;
+        try {
+            if (MinecraftForge.EVENT_BUS.post(event)) throw new IllegalArgumentException(event.rejection());
+        } finally { validatingMutation = false; }
     }
 
     private void applyHint(Entity entity, CivicIdentityHint hint) {
@@ -603,6 +641,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
     }
 
     private void observe(SettlementRecord record, SettlementCandidate candidate, long gameTime) {
+        data.validateExternalRefs(record.id, candidate.externalRefs());
         boolean changed = false;
         if (!record.hasDetectorIdentity(candidate.sourceId(), candidate.sourceKey())) {
             record.addDetectorIdentity(candidate.sourceId(), candidate.sourceKey());

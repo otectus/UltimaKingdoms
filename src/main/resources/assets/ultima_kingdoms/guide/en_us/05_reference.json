@@ -1,0 +1,64 @@
+{
+  "entries": [
+    {
+      "id": "glossary",
+      "category": "reference",
+      "title": "Plain-language glossary",
+      "summary": "Translate the technical words still used by existing screens and commands.",
+      "body": [
+        "Charter: the agreed rules establishing a government or recognizing an institution. Institution: an officially recognized civic place. Chapter: a local branch of an organization. Contact: a specific resident who can offer its services.",
+        "Standing: a score with a particular kingdom or organization. Deed: a distinct verified service recorded for progression. Rank: a membership level with defined rights. Honor: a political award, which may be discretionary or earned from verified service.",
+        "Mandate: a leader's explicit permission grant. Ratify: sign for a government with authority. Sovereignty: recognized political rule. Controller: the native military owner or occupier. Interregnum: a period with no current leader. Regent: a temporary authorized substitute under an adopted rule.",
+        "Novation: transferring an accepted obligation under the supported owner-approved process. Tombstone: a retained record explaining that an old identity was merged or ended. Redirect: a stable way to resolve an old ID to its current identity without copying all its historical standing.",
+        "Provider: the mod that actually owns a fact or action, such as MCA for marriage or Recruits for troops. Receipt: saved proof of a particular completed operation. Revision: the version of a record you inspected. Intent: a saved plan recording what operation is being attempted so interruption can be recovered safely.",
+        "CAS or optimistic concurrency: refusing a write if the record changed since you read it. Epoch: the identity of a provider's receipt history generation. Reconciliation: an operator's acknowledgment of checked existing native state; it is not an automatic repair or proof that the original requested outcome happened.",
+        "Mobilization lease: a temporary deployment arrangement for a recruit you already control. Ending the deployment restores its supported original orders; it does not mean firing that recruit from employment."
+      ],
+      "commands": []
+    },
+    {
+      "id": "when_something_is_blocked",
+      "category": "reference",
+      "title": "When an action is blocked",
+      "summary": "Match the message to the next useful step.",
+      "body": [
+        "Changed record or stale review: reopen the read or inspect task, read the new terms and status, then decide whether to act. The server is expected to refuse an obsolete form rather than guess your intent.",
+        "Missing authority: check the kingdom, office or mandate, settlement scope, and actual actor. Ask the appropriate leader or office holder. Guild rank is not military command, and operator status is not automatic diplomatic signing authority.",
+        "Unavailable contact or building: visit the real nearby contact, check that they are alive and eligible, and have the owner restore the actual workshop or recognized institution. Selecting a person who is no longer loaded does not load them for you. A valid appointment cannot replace missing building evidence.",
+        "Not enough standing or deeds: read that particular service's member and independent routes. Do different authored eligible jobs. Repeating one already-credited job may pay normally but cannot manufacture more distinct guild deeds.",
+        "Provider unavailable or definition missing: ask the operator to check versions, companion patches, content, configuration, and diagnostics. Your accepted work can remain suspended. This is different from being personally ineligible; changing race, deity, or reputation is not a general fix.",
+        "Save unavailable, acknowledgment pending, or read-only data: stop repeating reward or ownership changes. Inspect the retained operation and use its named recovery task with the original actor where required. If status is ambiguous or accounting diverged, an operator must review it. Do not delete sidecars or duplicate a contract to make the warning disappear.",
+        "No response: the UI may retry safely using its retained request. Refresh and inspect before making a new consequential request; a missing reply does not prove the original action failed."
+      ],
+      "commands": []
+    },
+    {
+      "id": "privacy_and_multiplayer",
+      "category": "reference",
+      "title": "Multiplayer, consent, and privacy",
+      "summary": "Your view and your permissions are checked for your player, every time.",
+      "body": [
+        "Your guild page describes your own standing, deeds, and private service history. Political pages filter petitions, proposals, and ballots. Discovery filters locations. A screenshot, copied ID, or another player's stored command does not transfer their permissions.",
+        "When two players choose opposing outcomes, the server uses the recorded version and saved resolution to accept at most one shared terminal result. Each participant's own completed native work and reward remains with the quest provider. Shared world choices and individual service payment are not the same transaction.",
+        "Some actions require independent consent: two governments signing a protection pact, two organizational authorities accepting a merger, both parties agreeing to a recruit transfer, or participants accepting an authored dramatic scenario. Do not assume that proximity, marriage, an alliance, or having the same guild satisfies those steps.",
+        "A server operator has maintenance powers but should use the explicit repair tools and retain reasons. Operator reconciliation of a transfer acknowledges reviewed native state; it does not secretly confiscate another player's troops or overwrite unit counts.",
+        "Ordinary kingdom identity and a public government fact can be visible while a personal petition, family opportunity, legal matter, or undiscovered destination remains private. Use authorized pages rather than asking for global dumps of hidden records."
+      ],
+      "commands": []
+    },
+    {
+      "id": "feature_map",
+      "category": "reference",
+      "title": "Find the right task",
+      "summary": "Press K, search by goal, and choose named records from the parts of the world you are allowed to know.",
+      "body": [
+        "Press K and search by your goal. Settlements covers nearby and known places, kingdoms, and civic residence. Government covers offices, mandates, agreements, petitions, institutions, honors, succession, houses, history, elections, and regency. Civic Service covers guild membership, eligibility, introductions, chapters, contacts, qualifications, commissions, hospitality, and workshops.",
+        "Warfare and Exploration covers military-control inspection, campaigns, accords, temporary recruit orders, civilian recovery work, sites, routes, encounters, and neutral resource access. War Room buttons open the relevant server task directly; they do not draft a chat command.",
+        "Evolving World covers scenario browsing and contributions, digests, protection duties, family introductions, negotiated recruit transfers, authored drama, and recovery. Organizations covers chartered founding, merger consent, member opt-out, accepted-job novation, finalization, and dissolution. Each selector follows the same privacy rules as the owning service.",
+        "Players with permission level 2 also see Administration and Standing tasks. These cover settlement creation and correction, civic identity, definition reload, evolution configuration and regions, site and route authoring, diagnostics, reputation correction and migration, and guarded transfer reconciliation. Operator tasks are absent from an ordinary player's catalogue.",
+        "Type a few words into search, select named choices, review, and apply. Missing choices usually mean the place is undiscovered, a participant is offline, authority or consent is absent, a prerequisite is incomplete, or an optional provider is unavailable. Open the related read or inspect task for the current explanation."
+      ],
+      "commands": []
+    }
+  ]
+}

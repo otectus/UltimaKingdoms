@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "offices": [],
+  "permissions": [
+    "APPOINT",
+    "SEAT",
+    "PROPOSE",
+    "RATIFY",
+    "REVIEW",
+    "HONOR",
+    "RECOGNIZE",
+    "DELEGATE"
+  ],
+  "requires": [],
+  "buildingTypes": [],
+  "durationTicks": 720000,
+  "maxOffices": 2,
+  "independentApproval": true,
+  "commissionPool": "",
+  "kind": "office",
+  "title": "politics.ultima_kingdoms.leader"
+}

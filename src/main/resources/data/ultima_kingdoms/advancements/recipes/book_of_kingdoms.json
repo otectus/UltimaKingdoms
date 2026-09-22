@@ -1,0 +1,1 @@
+{"parent":"minecraft:recipes/root","criteria":{"has_book":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":["minecraft:book"]}]}},"has_the_recipe":{"trigger":"minecraft:recipe_unlocked","conditions":{"recipe":"ultima_kingdoms:book_of_kingdoms"}}},"requirements":[["has_book","has_the_recipe"]],"rewards":{"recipes":["ultima_kingdoms:book_of_kingdoms"]}}
