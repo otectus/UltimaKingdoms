@@ -15,7 +15,10 @@ public final class InteractionClient {
     private static final KeyMapping OPEN=new KeyMapping("key.ultima_kingdoms.actions",GLFW.GLFW_KEY_K,"key.categories.misc");
     @SubscribeEvent public static void keys(RegisterKeyMappingsEvent event){event.register(OPEN);}
     public static void init(){InteractionNetwork.receive(KingdomActionsScreen::receive);}
-    public static void open(Screen parent,String task,String search){Minecraft.getInstance().setScreen(new KingdomActionsScreen(parent,task,search));}
+    public static void open(Screen parent,String task,String search){open(parent,task,search,"");}
+    /** Opens a task with context from the calling screen; {@code prefill} is a JSON object of field key to value (for example the shown settlement). */
+    public static void open(Screen parent,String task,String search,String prefill){Minecraft.getInstance().setScreen(new KingdomActionsScreen(parent,task,search,prefill));}
+    public static String prefill(String key,Object value){if(value==null)return "";var json=new com.google.gson.JsonObject();json.addProperty(key,String.valueOf(value));return json.toString();}
     static void tickKeys(){while(OPEN.consumeClick())if(Minecraft.getInstance().player!=null&&Minecraft.getInstance().screen==null)open(null,"","");}
     private InteractionClient(){}
 }

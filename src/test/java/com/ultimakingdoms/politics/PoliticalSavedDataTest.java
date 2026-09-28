@@ -132,4 +132,10 @@ class PoliticalSavedDataTest {
     }
     private static CompoundTag future() { CompoundTag tag = new CompoundTag();tag.putInt("Schema",99);tag.putString("Unknown","preserve");return tag; }
     private static CompoundTag malformed() { CompoundTag tag = new CompoundTag();tag.putInt("Schema",1);tag.putString("Records","{broken");return tag; }
+    @Test void rulesSavedBeforeTheElectorateOptionDefaultToTheCouncil(){
+        Rule legacy=PoliticalSavedData.JSON.fromJson("{\"elections\":true,\"regency\":false,\"electionTicks\":2400,\"graceTicks\":400,\"regencyTicks\":3600,\"maxCandidates\":4,\"regentPermissions\":[]}",Rule.class);
+        org.junit.jupiter.api.Assertions.assertEquals(com.ultimakingdoms.api.politics.PoliticalTransition.Electorate.COUNCIL,legacy.electorate());
+        Rule residents=PoliticalSavedData.JSON.fromJson(PoliticalSavedData.JSON.toJson(new Rule(true,false,2400,400,3600,4,Set.of(),com.ultimakingdoms.api.politics.PoliticalTransition.Electorate.RESIDENTS)),Rule.class);
+        org.junit.jupiter.api.Assertions.assertEquals(com.ultimakingdoms.api.politics.PoliticalTransition.Electorate.RESIDENTS,residents.electorate());
+    }
 }

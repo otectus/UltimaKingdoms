@@ -29,7 +29,8 @@ public final class MobilizationCommands {
             c.getSource().sendSuccess(()->Component.literal(result),false);return 1;})));
         root.then(Commands.literal("status").executes(c->{var actor=c.getSource().getPlayerOrException();var lines=MobilizationEvents.get(actor.getServer()).status(actor);
             lines.forEach(v->c.getSource().sendSuccess(()->Component.literal(v),false));return lines.size();}));
-        event.getDispatcher().register(root);
+        var node = event.getDispatcher().register(root); // "/ultima mobilization ..." is the same command tree under the shared root
+        event.getDispatcher().register(Commands.literal("ultima").then(Commands.literal("mobilization").redirect(node)));
     }
     private static MobilizationDoctrine doctrine(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context){
         try{return MobilizationDoctrine.valueOf(StringArgumentType.getString(context,"doctrine").toUpperCase(java.util.Locale.ROOT));}

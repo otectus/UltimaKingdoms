@@ -25,8 +25,8 @@ public final class WarfareTasks {
         targets("commodity",c->net.minecraftforge.registries.ForgeRegistries.ITEMS.getEntries().stream().filter(e->e.getValue()!=net.minecraft.world.item.Items.AIR).sorted(Map.Entry.comparingByKey(Comparator.comparing(Object::toString))).map(e->new Choice(e.getKey().location().toString(),words(e.getKey().location().getPath()),e.getKey().location().getNamespace())).toList());
         task("here","Inspect military control here",false,false,List.of(),c->WarfareRuntime.get(c.server()).here(c.player));
         task("inspect","Inspect settlement military control",false,false,List.of(pick("settlement","Settlement","settlement")),c->WarfareRuntime.get(c.server()).view(c.player,c.uuid("settlement")));
-        task("map_here","Map the native faction here",true,true,List.of(pick("kingdom","Recognized kingdom","kingdom")),c->WarfareRuntime.get(c.server()).mapHere(c.player,c.id("kingdom")));
-        task("bind_here","Bind the current native claim",true,true,List.of(pick("settlement","Settlement","settlement")),c->WarfareRuntime.get(c.server()).bindHere(c.player,c.uuid("settlement")));
+        task("map_here","Map the native faction here",false,true,List.of(pick("kingdom","Recognized kingdom","kingdom")),c->WarfareRuntime.get(c.server()).mapHere(c.player,c.id("kingdom")));
+        task("bind_here","Bind the current native claim",false,true,List.of(pick("settlement","Settlement","settlement")),c->WarfareRuntime.get(c.server()).bindHere(c.player,c.uuid("settlement")));
         task("retire","Retire a native claim binding",true,true,List.of(pick("settlement","Settlement","settlement")),c->WarfareRuntime.get(c.server()).retire(c.player,c.uuid("settlement"),WarfareRuntime.get(c.server()).revision()));
         task("campaign_overview","Read local campaigns and control agreements",false,false,List.of(pick("settlement","Settlement","settlement")),c->campaigns(c).page(c.player,c.uuid("settlement")));
         task("campaigns","Browse local campaigns",false,false,List.of(pick("campaign","Campaign","campaign")),c->c.choice("campaign").label()+"\n"+c.choice("campaign").detail());

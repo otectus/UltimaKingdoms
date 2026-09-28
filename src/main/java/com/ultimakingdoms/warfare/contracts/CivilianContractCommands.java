@@ -19,7 +19,7 @@ public final class CivilianContractCommands {
 
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("ultima-contract")
+        var node = event.getDispatcher().register(Commands.literal("ultima-contract")
                 .then(Commands.argument("kind", StringArgumentType.word())
                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(
                                 Arrays.stream(CivilianContractKind.values()).filter(k -> !k.scoped()).map(CivilianContractKind::id), builder))
@@ -47,5 +47,6 @@ public final class CivilianContractCommands {
                                     Component.translatable("warfare.contract_kind." + kind.id()), giver.getDisplayName()), false);
                             return 1;
                         }))));
+        event.getDispatcher().register(Commands.literal("ultima").then(Commands.literal("contract").redirect(node))); // shared "/ultima contract" root
     }
 }

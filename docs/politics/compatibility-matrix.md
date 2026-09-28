@@ -30,6 +30,23 @@ Political NPC adulthood and institution evidence require this exact Townstead ve
 
 Chronicles ingestion, known-news queries, provider completion receipts, automated hereditary succession and elections are not advertised as supported. No compatibility is claimed for NeoForge, MCA 7.7, other Townstead releases, or actual Capitals co-installation. The conflict guard can be exercised independently of whether those mods can load together.
 
+## Accepted, not validated
+
+The companion ranges were widened after the family integration review of 2026-09-27: MCA: Quests
+`[1.6.5,)`, MCA: Crime `[0.7.5,)`, MCA: Reputation `[0.6.0,)` and Townstead `[0.7.6,0.9)`. A range
+is a statement that the reflective bridges are expected to bind or fail closed, not that a newer
+release was exercised; the tuple above remains the only runtime-validated one. MCA: Reputation 0.6.1
+ships the standing journal this mod's `ReputationOutboxBridge` binds, and the `[integration]`
+`enableUltimaKingdomsIntegration` switch on Reputation's side refuses this mod's writes when off.
+
 ## Current validation
 
 See `validation.md` for commands, actual results and remaining checks. Runtime artifacts and logs under `build/` are intentionally untracked. Their hashes identify the tested builds; compilation alone is not a packaged-runtime result.
+
+## Range policy
+
+Ultima Kingdoms follows the MCA add-on family's rule (`MCAReputation/docs/FAMILY_COMPATIBILITY.md`):
+companion ranges carry a lower bound only, because Forge enforces an optional range whenever the mod is
+present and every Ultima bridge already probes the companion's API and fails closed on drift. Townstead
+is the exception (`[0.7.6,0.9)`): it is third-party, its 0.8 line is the one that adds `api.v1`, and
+`0.9` is the first release nobody has probed.

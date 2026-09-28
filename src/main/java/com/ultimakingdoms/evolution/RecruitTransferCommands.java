@@ -33,7 +33,8 @@ public final class RecruitTransferCommands {
             if (verb.equals("inspect")) { s.inspect(p, id).forEach(line -> p.sendSystemMessage(Component.literal(line))); return "Private transfer inspection complete."; }
             return verb.equals("confirm") ? s.confirm(p, id) : s.restore(p, id);
         }))));
-        event.getDispatcher().register(root);
+        var node = event.getDispatcher().register(root); // "/ultima transfer ..." is the same command tree under the shared root
+        event.getDispatcher().register(Commands.literal("ultima").then(Commands.literal("transfer").redirect(node)));
     }
     private interface Work { String run() throws com.mojang.brigadier.exceptions.CommandSyntaxException; }
     private static int run(CommandContext<CommandSourceStack> c, Work work) {

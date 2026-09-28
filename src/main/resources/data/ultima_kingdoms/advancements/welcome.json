@@ -1,0 +1,14 @@
+{
+  "display": {
+    "icon": {"item": "ultima_kingdoms:village_ledger"},
+    "title": {"translate": "advancements.ultima_kingdoms.welcome.title", "fallback": "Kingdoms Await"},
+    "description": {"translate": "advancements.ultima_kingdoms.welcome.description", "fallback": "Press the Kingdom Tasks key (K by default) or craft a Village Ledger to begin."},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "background": "minecraft:textures/block/oak_planks.png"
+  },
+  "criteria": {
+    "joined": {"trigger": "minecraft:tick"}
+  }
+}

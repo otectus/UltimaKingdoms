@@ -73,7 +73,8 @@ final class R4FamilyScenario {
                     "R4 family evidence reads the reciprocal native tree without mutation");
 
             var evolution=EvolutionRuntime.get(server);evolution.configure(actor,true,false);evolution.region(actor,seatA.id(),true);
-            String opened=evolution.familyIntroduction(actor);UUID scenario=UUID.fromString(opened.split(" ")[3].replace(".",""));
+            String opened=evolution.familyIntroduction(actor);check(opened.startsWith("Private family introduction"),"family introduction opened: "+opened);
+            UUID scenario=evolution.scenarios(actor).stream().filter(v->v.trigger()==com.ultimakingdoms.evolution.EvolutionState.Trigger.FAMILY).findFirst().orElseThrow().id();
             check(evolution.page(actor,0).stream().anyMatch(line->line.contains(scenario.toString()))
                     &&evolution.page(outsider,0).stream().noneMatch(line->line.contains(scenario.toString())),
                     "family introduction uses separate civic residences and remains private to its audience");

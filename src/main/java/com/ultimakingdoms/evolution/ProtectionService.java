@@ -17,7 +17,7 @@ public final class ProtectionService {
     private final MinecraftServer server;
     private final ProtectionSavedData data;
     public ProtectionService(MinecraftServer server) { this.server = server; data = ProtectionSavedData.get(server); }
-    public long revision() { if(!server.isSameThread())throw new IllegalStateException("Protection requires server thread"); return data.snapshot().revision; }
+    public long revision() { if(!server.isSameThread())throw new IllegalStateException("Protection requires server thread"); return data.revision(); }
     public List<PactView> pacts(ServerPlayer viewer) { actor(viewer); var s=data.snapshot(); return s.pacts.values().stream().filter(p->visible(viewer,p))
             .sorted(Comparator.comparingLong(Pact::created).reversed()).map(p->new PactView(p.id(),p.protector(),p.subordinate(),p.beneficiary(),p.duties(),p.phase(),p.revision(),p.expires(),p.noticeTicks(),p.exitAt(),p.terms(),SettlementKnowledge.get(server).visible(viewer,p.beneficiary()))).toList(); }
     public List<ObligationView> obligations(ServerPlayer viewer) { actor(viewer); var visible=pacts(viewer).stream().filter(PactView::settlementVisible).map(PactView::id).collect(java.util.stream.Collectors.toSet());
@@ -56,7 +56,9 @@ public final class ProtectionService {
         if (s.pacts.values().stream().anyMatch(p -> p.subordinate().equals(subordinate) && (p.effective(now) || p.phase() == Phase.PROPOSED && p.expires() > now)))
             throw new IllegalArgumentException("Subordinate already has a protector or pending proposal");
         var p = new Pact(UUID.randomUUID(), protector, subordinate, beneficiary, duties, Map.of(), now, now + duration, notice, 0, 1, Phase.PROPOSED, terms);
-        s.pacts.put(p.id(), p); commit(s); return "Protectorate proposal " + p.id() + "; both governments must sign frozen terms. Revision 1.";
+        s.pacts.put(p.id(), p); commit(s);
+        for (String kingdom : List.of(protector, subordinate)) com.ultimakingdoms.interaction.Notify.government(server, kingdom, player.getUUID(), "A protectorate was proposed between " + com.ultimakingdoms.interaction.Names.kingdom(server, protector) + " and " + com.ultimakingdoms.interaction.Names.kingdom(server, subordinate) + "; both governments must sign.");
+        return "Protectorate proposal from " + com.ultimakingdoms.interaction.Names.kingdom(server, protector) + " for " + com.ultimakingdoms.interaction.Names.kingdom(server, subordinate) + "; both governments must sign the frozen terms.";
     }
     public String sign(ServerPlayer player, UUID id, String kingdom, long revision) {
         authority(player, kingdom, Politics.Permission.RATIFY); provider(); var s = data.snapshot(); var p = pact(s, id);
@@ -86,7 +88,7 @@ public final class ProtectionService {
             throw new IllegalArgumentException("This duty already has an open request");
         long now = now(s); var obligation = new Obligation(UUID.randomUUID(), id, duty, p.beneficiary(), player.getUUID(), now,
                 Math.min(p.expires(), now + 72000), 1, Status.OPEN, null, "", "Voluntary " + duty + " under protectorate " + id);
-        s.obligations.put(obligation.id(), obligation); commit(s); return "Obligation " + obligation.id() + " revision 1. Complete a matching native contract or explicitly refuse.";
+        s.obligations.put(obligation.id(), obligation); commit(s); return "Obligation for " + com.ultimakingdoms.interaction.Names.lower(com.ultimakingdoms.interaction.Names.words(duty)) + " opened under the protectorate. Complete a matching native contract or explicitly refuse.";
     }
     public String fulfill(ServerPlayer player, UUID id, long revision) {
         actor(player); provider(); var s = data.snapshot(); var o = s.obligations.get(id);
@@ -100,6 +102,7 @@ public final class ProtectionService {
         String key = proof.providerEpoch() + ":" + proof.receipt();
         if (!s.receipts.add(key)) throw new IllegalArgumentException("Receipt already satisfies an obligation");
         s.obligations.put(id, o.finish(Status.SATISFIED, player.getUUID(), key, "Native " + kind + " service verified", revision)); commit(s);
+        com.ultimakingdoms.factions.Consequences.standing(server, player.getUUID(), p.protector(), com.ultimakingdoms.factions.Consequences.OBLIGATION_FULFILLED, UUID.nameUUIDFromBytes(("fulfilled:" + id).getBytes(java.nio.charset.StandardCharsets.UTF_8)), "Fulfilled a protectorate obligation");
         return "Obligation satisfied from native completion receipt. Native payment remains with the quest provider.";
     }
     public String refuse(ServerPlayer player, UUID id, long revision, String reason) {
@@ -107,6 +110,7 @@ public final class ProtectionService {
         var p = pact(s, o.pact()); authority(player, p.subordinate(), Politics.Permission.REVIEW);
         if (reason.isBlank()) throw new IllegalArgumentException("Explain the refusal");
         s.obligations.put(id, o.finish(Status.REFUSED, player.getUUID(), "", reason, revision)); commit(s);
+        com.ultimakingdoms.factions.Consequences.standing(server, player.getUUID(), p.protector(), com.ultimakingdoms.factions.Consequences.OBLIGATION_REFUSED, UUID.nameUUIDFromBytes(("refused:" + id).getBytes(java.nio.charset.StandardCharsets.UTF_8)), "Refused a protectorate obligation");
         return "Refusal recorded. This may support negotiation; it does not declare war or transfer property.";
     }
     public List<String> page(ServerPlayer viewer, int offset) {

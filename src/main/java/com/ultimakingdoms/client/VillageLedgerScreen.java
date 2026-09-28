@@ -63,7 +63,7 @@ public final class VillageLedgerScreen extends Screen {
     @Override
     protected void init() {
         rowButtons.clear();
-        addRenderableWidget(Button.builder(Component.literal("Tasks"), b -> InteractionClient.open(this,"","")).bounds(panelLeft()+8,panelTop()+7,62,18).build());
+        addRenderableWidget(Button.builder(Component.translatable("menu.ultima_kingdoms.tasks"), b -> InteractionClient.open(this,"","",selected==null?"":InteractionClient.prefill("settlement",selected.id()))).bounds(panelLeft()+8,panelTop()+7,62,18).build());
         addRenderableWidget(Button.builder(Component.translatable("civic.ultima_kingdoms.title"),
                 button -> minecraft.setScreen(new GuildScreen(this))).bounds(panelLeft() + 10, panelTop() + 30, 70, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("politics.ultima_kingdoms.kingdom"), button -> {
@@ -71,7 +71,7 @@ public final class VillageLedgerScreen extends Screen {
             String kingdom = selected != null ? selected.kingdomId().toString() : filter.map(Object::toString).orElse("ultima_kingdoms:serenum");
             minecraft.setScreen(new com.ultimakingdoms.client.politics.KingdomScreen(this, kingdom, selected == null ? "" : selected.id().toString()));
         }).bounds(panelRight() - 90, panelTop() + 30, 80, 20).build());
-        warRoomButton = addRenderableWidget(Button.builder(Component.literal("War room"), button -> {
+        warRoomButton = addRenderableWidget(Button.builder(Component.translatable("menu.ultima_kingdoms.war_room"), button -> {
             if (selected != null) minecraft.setScreen(new WarRoomScreen(this, selected.id(), selected.displayName()));
         }).bounds(width / 2 - 40, panelBottom() - 54, 80, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("civic.ultima_kingdoms.refresh"), b -> request(offset))
@@ -184,6 +184,9 @@ public final class VillageLedgerScreen extends Screen {
         } else if (page == null || page.settlements().isEmpty()) {
             graphics.drawCenteredString(font, Component.translatable("screen.ultima_kingdoms.ledger.empty"),
                     width / 2, panelTop() + 80, VanillaGui.SECONDARY);
+            if (page != null && !page.diagnostic().isEmpty())
+                graphics.drawCenteredString(font, Component.literal(font.plainSubstrByWidth(page.diagnostic(), panelRight() - panelLeft() - 24)),
+                        width / 2, panelTop() + 94, VanillaGui.ERROR);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }

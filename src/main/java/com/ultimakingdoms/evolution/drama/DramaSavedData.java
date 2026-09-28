@@ -30,6 +30,7 @@ public final class DramaSavedData extends SavedData {
     }
     public boolean writable() { return preserved == null; }
     DramaState snapshot() { return JSON.fromJson(JSON.toJson(state), DramaState.class); }
+    long revision() { return state.revision; }
     boolean commit(MinecraftServer server, DramaState next) {
         if (!server.isSameThread()) throw new IllegalStateException("Drama requires server thread");
         if (!writable()) return false; next.validate();

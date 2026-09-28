@@ -30,6 +30,8 @@ public final class PoliticalSavedData extends SavedData {
         Map<String, Rule> transitionRules = new LinkedHashMap<>();
         Map<UUID, Election> elections = new LinkedHashMap<>();
         Map<String, Regency> regencies = new LinkedHashMap<>();
+        /** Kingdom to the player whose mandate came from a resolved election; appointment authority cannot displace it. */
+        Map<String, UUID> electedMandates = new LinkedHashMap<>();
         void validate() {
             if (revision < 0 || governments.size() > 128 || agreements.size() > 4096 || petitions.size() > 4096
                     || recognitions.size() > 4096 || honors.size() > 8192 || houses.size() > 128
@@ -65,6 +67,8 @@ public final class PoliticalSavedData extends SavedData {
                         || value.correctedBy() != null) throw new IllegalArgumentException("Invalid persisted political fact");
             });
             transitionRules.forEach((kingdom, rule) -> { id(kingdom); Objects.requireNonNull(rule); if (!governments.containsKey(kingdom)) throw new IllegalArgumentException("Transition rule without government"); });
+            if (electedMandates.size() > 128) throw new IllegalArgumentException("Political save limits exceeded");
+            electedMandates.forEach((kingdom, player) -> { id(kingdom); Objects.requireNonNull(player); if (!governments.containsKey(kingdom)) throw new IllegalArgumentException("Elected mandate without government"); });
             elections.forEach((key, election) -> { Objects.requireNonNull(election); id(election.kingdom()); Rule rule=transitionRules.get(election.kingdom());
                 if (!key.equals(election.id()) || !governments.containsKey(election.kingdom()) || (election.state()==ElectionState.OPEN||election.state()==ElectionState.GRACE)
                         &&(rule==null||!rule.elections()||election.candidates().size()>rule.maxCandidates())) throw new IllegalArgumentException("Invalid election identity"); });
@@ -103,6 +107,7 @@ public final class PoliticalSavedData extends SavedData {
                 data.records.transitionRules = new LinkedHashMap<>(); data.records.elections = new LinkedHashMap<>(); data.records.regencies = new LinkedHashMap<>();
             } else if (data.records.transitionRules == null || data.records.elections == null || data.records.regencies == null)
                 throw new IllegalArgumentException("Malformed constitutional transitions");
+            if (data.records.electedMandates == null) data.records.electedMandates = new LinkedHashMap<>(); // predates elected-mandate protection
             data.records.validate();
         } catch (RuntimeException failure) {
             data.records = new Records(); data.preserved = tag.copy();

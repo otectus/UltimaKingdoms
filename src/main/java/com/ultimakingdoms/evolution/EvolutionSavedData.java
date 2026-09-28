@@ -34,6 +34,7 @@ public final class EvolutionSavedData extends SavedData {
     public boolean writable() { return preserved == null; }
     boolean evaluationDue(long gameTime) { return writable() && state.enabled && Math.max(gameTime, state.clock) >= state.nextEvaluation; }
     EvolutionState snapshot() { return JSON.fromJson(JSON.toJson(state), EvolutionState.class); }
+    long revision() { return state.revision; }
     boolean commit(MinecraftServer server, EvolutionState next) {
         if (!server.isSameThread()) throw new IllegalStateException("Evolution requires server thread");
         if (!writable()) return false;

@@ -101,7 +101,10 @@ public final class Politics {
         public House { name = bounded(name, 64); motto = bounded(motto, 256); members = Set.copyOf(members); }
     }
     public record Notice(UUID id, String kingdom, Action action, UUID actor, String recordId, long gameTime) { }
-    public record Receipt(UUID actor, String fingerprint, Result result) { }
+    /** Replay receipt. {@code gameTime} is the overworld tick of the commit; legacy receipts carry 0 and retire first. */
+    public record Receipt(UUID actor, String fingerprint, Result result, long gameTime) {
+        public Receipt(UUID actor, String fingerprint, Result result) { this(actor, fingerprint, result, 0L); }
+    }
     public record Row(String id, String title, String detail, String termsHash) {
         public Row(String id, String title, String detail) { this(id, title, detail, ""); }
     }

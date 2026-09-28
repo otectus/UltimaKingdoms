@@ -19,7 +19,7 @@ import java.util.Set;
 public final class WorldContextCommands {
     private WorldContextCommands(){ }
     @SubscribeEvent public static void register(RegisterCommandsEvent event){
-        event.getDispatcher().register(Commands.literal("ultima-world")
+        var node = event.getDispatcher().register(Commands.literal("ultima-world")
                 .then(Commands.literal("sites").executes(c->sites(c.getSource(),0))
                         .then(Commands.argument("page",IntegerArgumentType.integer(0,1562)).executes(c->sites(c.getSource(),IntegerArgumentType.getInteger(c,"page")))))
                 .then(Commands.literal("routes").executes(c->routes(c.getSource(),0))
@@ -44,6 +44,7 @@ public final class WorldContextCommands {
                                     boolean ok=service(player).authorNeutralResource(player,com.ultimakingdoms.interaction.NamedTargets.uuid(c,"site","site"),com.ultimakingdoms.interaction.NamedTargets.uuid(c,"returnSite","site"),
                                             Set.of(ResourceLocationArgument.getId(c,"commodity")),Set.of(ResourceLocationArgument.getId(c,"excluded")));
                                     c.getSource().sendSuccess(()->Component.literal(ok?"Neutral access saved with an independent return site.":"Neutral access denied; both sites must be discovered and the resource site must be outside a settlement."),false);return ok?1:0;}))))))));
+        event.getDispatcher().register(Commands.literal("ultima").then(Commands.literal("world").redirect(node))); // shared "/ultima world" root
     }
     private static int sites(net.minecraft.commands.CommandSourceStack source,int page)throws com.mojang.brigadier.exceptions.CommandSyntaxException{
         var player=source.getPlayerOrException();var values=api(player).sites(player,page*16,16);source.sendSuccess(()->Component.literal("Known world sites ("+values.size()+")"),false);

@@ -138,6 +138,17 @@ public final class R2CrimeFixture {
         return contractId;
     }
 
+    /** Crime's own workshop answer as {@code status/reason}, for acceptance failure messages. */
+    public static String describeWorkshop(ServerPlayer player, Entity giver) {
+        try {
+            Object access = Class.forName(ROOT + "api.InstitutionalServiceApi")
+                    .getMethod("workshop", ServerPlayer.class, Entity.class).invoke(null, player, giver);
+            return call(access, "status") + "/" + call(access, "reason");
+        } catch (Exception failure) {
+            return "unreadable: " + failure;
+        }
+    }
+
     private static void addAcceptedReport(MinecraftServer server, Object community, UUID caseId,
                                           ServerPlayer player, Entity giver, long now) throws Exception {
         Class<?> reportType = Class.forName(ROOT + "memory.CrimeReport");

@@ -2,6 +2,7 @@
   "entries": [
     {
       "id": "political_pages",
+      "task": "politics.diagnose",
       "category": "politics",
       "title": "Read the kingdom pages",
       "summary": "Inspect first; an action changes a particular record under a particular authority.",
@@ -16,6 +17,7 @@
     },
     {
       "id": "found_a_government",
+      "task": "politics.diagnose",
       "category": "politics",
       "title": "Establish a government",
       "summary": "An operator chooses the first capital, constitution, and player leader.",
@@ -31,6 +33,7 @@
     },
     {
       "id": "offices_and_permissions",
+      "task": "politics.diagnose",
       "category": "politics",
       "title": "Appoint officials and delegate powers",
       "summary": "Give a defined responsibility, not blanket control of every system.",

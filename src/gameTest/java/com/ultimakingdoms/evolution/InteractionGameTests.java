@@ -34,9 +34,9 @@ public final class InteractionGameTests {
         check(ActionRegistry.targetKinds().containsAll(Set.of("settlement","kingdom","player","person","npc","organization","scenario","pact","obligation","transfer","drama","merge","merge_obligation","native_recruit","native_group","own_native_group","shared_transfer_destination")),"Named target providers incomplete");
 
         var operatorList=list(operator,"Configure world evolution");var visitorList=list(visitor,"Configure world evolution");
-        check(operatorList.options().stream().anyMatch(o->o.label().equals("Configure world evolution")),"Operator catalogue omitted administrative task");
+        check(operatorList.options().stream().anyMatch(o->o.labelText().equals("Configure world evolution")),"Operator catalogue omitted administrative task");
         check(visitorList.options().isEmpty(),"Player catalogue exposed operator task");
-        check(list(visitor,"known settlement").options().stream().anyMatch(o->o.label().equals("Read a known settlement")),"Player catalogue filter omitted read task");
+        check(list(visitor,"known settlement").options().stream().anyMatch(o->o.labelText().equals("Read a known settlement")),"Player catalogue filter omitted read task");
         helper.succeed();
     }
 
@@ -62,7 +62,8 @@ public final class InteractionGameTests {
         check(api.revision()==revision,"Duplicate APPLY repeated the mutation");
 
         SettlementKnowledge.get(helper.getLevel().getServer()).discover(operator.getUUID(),settlement.id());
-        var choose=start(operator,"settlement.rename");var option=choose.options().stream().filter(o->o.label().equals("Wizard Reach")).findFirst().orElseThrow();
+        var opened=start(operator,"settlement.rename");var choose=request(operator,opened.session(),opened.state(),"FILTER","","Wizard Reach",0); // other tests register settlements too; search keeps the target on the first page
+        var option=choose.options().stream().filter(o->o.labelText().equals("Wizard Reach")).findFirst().orElseThrow(()->new IllegalStateException("Rename picker did not list Wizard Reach: "+choose.detailText()));
         var rename=call(operator,choose,"PICK",option.key());check(rename.mode().equals("text"),"Rename wizard omitted name field");
         var renameReview=call(operator,rename,"NEXT","Wizard Harbor");var renamed=call(operator,renameReview,"APPLY","");
         check(renamed.mode().equals("result")&&api.getSettlement(settlement.id()).orElseThrow().displayName().equals("Wizard Harbor"),"Named picker rename failed: "+renamed.detail());
@@ -116,11 +117,11 @@ public final class InteractionGameTests {
     public static void nearbyPersonCanMoveWithoutInvalidatingNamedReview(GameTestHelper helper){
         InteractionNetwork.init();var operator=player(helper,"MovingPersonOperator",true);var pos=helper.absolutePos(new BlockPos(1,2,1));operator.setPos(pos.getX(),pos.getY(),pos.getZ());
         var villager=net.minecraft.world.entity.EntityType.VILLAGER.create(helper.getLevel());villager.setPos(pos.getX()+1,pos.getY(),pos.getZ());villager.setNoAi(true);villager.setCustomName(net.minecraft.network.chat.Component.literal("Moving Advisor"));helper.getLevel().addFreshEntity(villager);
-        var form=start(operator,"citizen.inspect");var option=form.options().stream().filter(o->o.label().equals("Moving Advisor")).findFirst().orElseThrow();
+        var form=start(operator,"citizen.inspect");var option=form.options().stream().filter(o->o.labelText().equals("Moving Advisor")).findFirst().orElseThrow();
         check(option.detail().contains("Current location"),"Nearby person picker omitted location context");
-        var review=call(operator,form,"PICK",option.key());check(review.mode().equals("review"),"Named person selection did not reach review");
-        villager.setPos(pos.getX()+2,pos.getY(),pos.getZ());var result=call(operator,review,"APPLY","");
-        check(result.mode().equals("result")&&!result.detail().contains("Could not complete"),"Ordinary NPC movement invalidated named review: "+result.detail());villager.discard();helper.succeed();
+        villager.setPos(pos.getX()+2,pos.getY(),pos.getZ());var result=call(operator,form,"PICK",option.key()); // read tasks run as soon as their fields are complete
+        check(result.mode().equals("result")&&!result.detail().contains("Could not complete"),"Ordinary NPC movement invalidated named selection: "+result.detail());
+        var again=call(operator,result,"CHECK","");check(again.mode().equals("result")&&again.detail().equals(result.detail()),"Completed read task was not retained for CHECK");villager.discard();helper.succeed();
     }
 
     private static InteractionNetwork.Reply start(FakePlayer player,String task){return request(player,NONE,NONE,"TASK",task,"",0);}

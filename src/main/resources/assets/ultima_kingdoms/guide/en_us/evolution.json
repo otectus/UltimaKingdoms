@@ -2,6 +2,7 @@
   "entries": [
     {
       "id": "evolution_world_opt_in",
+      "task": "evolution.configure",
       "category": "evolution",
       "title": "Enable an evolving world",
       "summary": "Operators opt in the world and individual settlements before authored opportunities can appear.",
@@ -17,6 +18,7 @@
     },
     {
       "id": "scenario_browser_and_digest",
+      "task": "evolution.overview",
       "category": "evolution",
       "title": "Browse scenarios and digests",
       "summary": "View only opportunities supported by your settlement knowledge and manage periodic notices.",
@@ -34,6 +36,7 @@
     },
     {
       "id": "scenario_contributions_and_service",
+      "task": "evolution.contribute",
       "category": "evolution",
       "title": "Contributions and scoped service",
       "summary": "Support an authored choice with the exact evidence or scoped MCA Quests service it requires.",
@@ -60,6 +63,7 @@
     },
     {
       "id": "scenario_resolution_and_recovery",
+      "task": "evolution.resolve",
       "category": "evolution",
       "title": "Resolve, decline, or recover",
       "summary": "Commit one supported outcome through the political owner, or leave the opportunity peacefully.",
@@ -95,6 +99,7 @@
     },
     {
       "id": "protection_pacts_and_duties",
+      "task": "protection.overview",
       "category": "evolution",
       "title": "Protection pacts and duties",
       "summary": "Create a pact between two kingdoms, handle its agreed duties, and leave after giving notice.",
@@ -119,6 +124,7 @@
     },
     {
       "id": "family_introductions",
+      "task": "evolution.family",
       "category": "evolution",
       "title": "Make a family introduction",
       "summary": "Use a verified reciprocal MCA marriage for a private diplomatic introduction across kingdoms.",
@@ -136,6 +142,7 @@
     },
     {
       "id": "recruit_transfer_workflow",
+      "task": "transfer.propose",
       "category": "evolution",
       "title": "Bilateral recruit transfers",
       "summary": "Freeze one recruit, obtain informed consent, apply through Recruits, and recover interrupted acknowledgment.",
@@ -154,6 +161,7 @@
     },
     {
       "id": "transfer_reconciliation",
+      "task": "transfer.reconcile",
       "category": "evolution",
       "title": "Reconcile divergent recruit accounting",
       "summary": "Acknowledge an operator-reviewed native state when unrelated recruit changes make automatic repair unsafe.",
@@ -169,6 +177,7 @@
     },
     {
       "id": "organization_founding",
+      "task": "organization.found",
       "category": "evolution",
       "title": "Found a dynamic organization",
       "summary": "Create a durable charter from an installed bounded template under current recognition authority.",
@@ -181,6 +190,7 @@
     },
     {
       "id": "organization_merge_and_dissolution",
+      "task": "organization.merge_propose",
       "category": "evolution",
       "title": "Merge or dissolve organizations",
       "summary": "Require bilateral authority, honor member opt-outs, and settle accepted obligations before closure.",
@@ -194,6 +204,7 @@
     },
     {
       "id": "constitutional_elections",
+      "task": "politics.election_open",
       "category": "evolution",
       "title": "Adopt rules and hold an election",
       "summary": "Let a legitimate government explicitly opt into a private, deterministic succession ballot.",
@@ -207,6 +218,7 @@
     },
     {
       "id": "constitutional_regency",
+      "task": "politics.appoint_regent",
       "category": "evolution",
       "title": "Appoint a bounded regent",
       "summary": "Grant temporary enumerated authority while preserving the government's named successor.",
@@ -220,6 +232,7 @@
     },
     {
       "id": "authored_drama_workflow",
+      "task": "drama.propose",
       "category": "evolution",
       "title": "Propose an authored drama",
       "summary": "Start a bounded opt-in operation from installed evidence, then require independent participant consent.",
@@ -286,7 +299,7 @@
       "body": [
         "Evolution, protection, transfers, drama, organizations, politics, and civilian contracts each keep bounded saved data under the world's data directory. Future, unsupported, or partial schemas are preserved read-only. State that precedes an external call is durably saved first, so a crash can leave a truthful pending operation for retry rather than an untracked duplicate.",
         "Do not delete a sidecar to clear a blocked record. Back up the world, inspect the named record and current provider state, restore the matching provider version, then choose the applicable retry, confirm, restore, release, exit, recover, reconciliation, or novation task. A failed save refuses the action. Recovery never broadens authority or changes frozen participants.",
-        "Current native contracts are MCA 7.6.26 for reciprocal family and residence facts, MCA Quests 1.6.5 through before 1.7 for objectives and receipts, Townstead 0.7.6 for political life-stage and building evidence, and Recruits 1.15.2 for warfare and transfer operations. There is no Townstead Chronicles archive adapter. Test provider absence only on an isolated copy; vanilla can remove unknown mod entities, so reinstall recovery must start from the untouched provider-world snapshot."
+        "Current native contracts are MCA 7.6.26 for reciprocal family and residence facts, MCA Quests 1.7.0 for objectives, receipts and commissions (1.6.5 provides only the kingdom quest condition), MCA Crime 0.7.5 for workshop legality and jurisdiction, MCA Reputation 0.6.1 for live faction synchronization (0.6.0 gives read-only local standing), Townstead 0.7.6 for political life-stage and building evidence, and Recruits 1.15.2 for warfare and transfer operations. There is no Townstead Chronicles archive adapter. Test provider absence only on an isolated copy; vanilla can remove unknown mod entities, so reinstall recovery must start from the untouched provider-world snapshot."
       ],
       "commands": [
         "/ultima-evolution inspect \"<opportunity name>\"",

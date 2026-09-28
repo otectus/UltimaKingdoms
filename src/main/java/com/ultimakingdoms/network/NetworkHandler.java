@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "4";
     private static final int PAGE_SIZE_WITH_SENTINEL = 21;
     private static final int MAX_OFFSET = 1_000_000;
     private static final int REQUEST_COOLDOWN_TICKS = 4;
@@ -120,7 +120,7 @@ public final class NetworkHandler {
                 LAST_RETRY_RESPONSE.put(player.getUUID(), now);
                 CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                         new LedgerPagePacket(packet.requestId(), service.revision(), kingdom, offset,
-                                false, retryAfter, List.of(), List.of()));
+                                false, retryAfter, List.of(), List.of(), ""));
             }
             return;
         }
@@ -143,6 +143,6 @@ public final class NetworkHandler {
                 .toList();
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new LedgerPagePacket(packet.requestId(), revision, kingdom, actualOffset,
-                        revisionReset, 0, settlements, kingdoms));
+                        revisionReset, 0, settlements, kingdoms, knowledge.diagnostic()));
     }
 }

@@ -62,6 +62,10 @@ public final class KingdomsServiceImpl implements KingdomsService {
     private static final ResourceLocation BUILTIN_STRUCTURE = new ResourceLocation(UltimaKingdomsApi.MOD_ID, "village_structure");
     private static final ResourceLocation MANUAL_SOURCE = new ResourceLocation(UltimaKingdomsApi.MOD_ID, "manual");
     private static final ResourceLocation UNKNOWN_BIOME = new ResourceLocation("minecraft", "the_void");
+    /** Datapack-extensible allow list for automatic residence, beside vanilla villagers. */
+    private static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> CIVIC_RESIDENTS =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,
+                    new ResourceLocation(UltimaKingdomsApi.MOD_ID, "civic_residents"));
     private static final long OBSERVATION_WRITE_INTERVAL = 1_200L;
 
     private boolean validatingMutation;
@@ -438,6 +442,10 @@ public final class KingdomsServiceImpl implements KingdomsService {
 
     @Override
     public CivicIdentityView setResidence(Entity entity, UUID settlementId) {
+        return setResidence(entity, settlementId, CivicIdentitySource.COMMAND);
+    }
+
+    private CivicIdentityView setResidence(Entity entity, UUID settlementId, CivicIdentitySource source) {
         requireEntity(entity);
         SettlementSnapshot settlement = snapshot(settlementId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown settlement: " + settlementId));
@@ -449,7 +457,7 @@ public final class KingdomsServiceImpl implements KingdomsService {
                 ? old.originKingdom() : Optional.of(settlement.kingdomId());
         long gameTime = entity.level().getGameTime();
         CivicIdentitySnapshot updated = new CivicIdentitySnapshot(originSettlement, originKingdom,
-                Optional.of(settlement.id()), Optional.of(settlement.kingdomId()), CivicIdentitySource.COMMAND,
+                Optional.of(settlement.id()), Optional.of(settlement.kingdomId()), source,
                 gameTime);
         civicStore.write(entity, updated);
         old.residenceSettlement().flatMap(this::snapshot).ifPresent(previous ->
@@ -512,10 +520,15 @@ public final class KingdomsServiceImpl implements KingdomsService {
                 return;
             }
         }
-        if (identity(entity).isPresent()) return;
+        if (!civicResident(entity) || identity(entity).isPresent()) return;
         getSettlementAt((ServerLevel) entity.level(), entity.blockPosition())
                 .map(SettlementView::id)
-                .ifPresent(id -> setResidence(entity, id));
+                .ifPresent(id -> setResidence(entity, id, CivicIdentitySource.AUTOMATIC));
+    }
+
+    /** Only villager-like NPCs acquire residence from position alone; hostile mobs and animals never do. */
+    static boolean civicResident(Entity entity) {
+        return entity instanceof net.minecraft.world.entity.npc.Villager || entity.getType().is(CIVIC_RESIDENTS);
     }
 
     public void copyIdentity(Entity source, Entity target) {
@@ -666,6 +679,19 @@ public final class KingdomsServiceImpl implements KingdomsService {
             record.sourceKey = candidate.sourceKey();
             spatialIndex.add(record.snapshot());
             changed = true;
+        } else if (detectionRank(candidate.detectionSource()) == detectionRank(record.detectionSource) && !contains(record.bounds, candidate.bounds())) {
+            // A settlement that keeps being observed beyond its recorded edge grows, up to a bounded span, instead of
+            // splitting into a second record or leaving new streets outside civic protection.
+            var grown = union(record.bounds, candidate.bounds());
+            int span = Math.max(grown.maxX() - grown.minX(), grown.maxZ() - grown.minZ());
+            if (span <= UltimaKingdomsConfig.DEFAULT_SETTLEMENT_RADIUS.get() * 8) {
+                SettlementSnapshot oldSnapshot = record.snapshot();
+                spatialIndex.remove(oldSnapshot);
+                record.bounds = grown;
+                record.radius = Math.max(record.radius, (span + 1) / 2);
+                spatialIndex.add(record.snapshot());
+                changed = true;
+            }
         }
         if (record.styleId == null && candidate.styleId().isPresent()) {
             record.styleId = candidate.styleId().get();
@@ -737,6 +763,13 @@ public final class KingdomsServiceImpl implements KingdomsService {
                 && record.hasStrongStructureIdentities();
     }
 
+    private static boolean contains(com.ultimakingdoms.api.SettlementBounds outer, com.ultimakingdoms.api.SettlementBounds inner) {
+        return outer.minX() <= inner.minX() && outer.minZ() <= inner.minZ() && outer.maxX() >= inner.maxX() && outer.maxZ() >= inner.maxZ();
+    }
+    private static com.ultimakingdoms.api.SettlementBounds union(com.ultimakingdoms.api.SettlementBounds first, com.ultimakingdoms.api.SettlementBounds second) {
+        return new com.ultimakingdoms.api.SettlementBounds(Math.min(first.minX(), second.minX()), Math.min(first.minZ(), second.minZ()),
+                Math.max(first.maxX(), second.maxX()), Math.max(first.maxZ(), second.maxZ()));
+    }
     private static boolean substantiallyOverlaps(com.ultimakingdoms.api.SettlementBounds first,
                                                  com.ultimakingdoms.api.SettlementBounds second) {
         int minX = Math.max(first.minX(), second.minX());

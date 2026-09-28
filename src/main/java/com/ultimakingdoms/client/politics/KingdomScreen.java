@@ -69,7 +69,7 @@ public final class KingdomScreen extends Screen {
                 .bounds(8, height - 48, 66, 20).build()).active = offset > 0;
         addRenderableWidget(Button.builder(label("next"), b -> { offset += 20; rowScroll = 0; request(null); })
                 .bounds(78, height - 48, 66, 20).build()).active = page != null && page.hasMore();
-        addRenderableWidget(Button.builder(label("actions"), b -> com.ultimakingdoms.client.InteractionClient.open(this,"","Government"))
+        addRenderableWidget(Button.builder(label("actions"), b -> com.ultimakingdoms.client.InteractionClient.open(this,"","Government",settlement.isEmpty()?"":com.ultimakingdoms.client.InteractionClient.prefill("target",settlement)))
                 .bounds(width - 148, height - 48, 68, 20).build()).active = page != null && pending == null && !tab.equals("history");
         addRenderableWidget(Button.builder(label("refresh"), b -> request(null)).bounds(width - 76, height - 48, 68, 20).build());
         addRenderableWidget(Button.builder(label("back"), b -> onClose()).bounds(width / 2 - 40, height - 24, 80, 20).build());

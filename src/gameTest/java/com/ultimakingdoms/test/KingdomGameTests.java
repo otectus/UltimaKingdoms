@@ -175,7 +175,7 @@ public class KingdomGameTests {
         var settlement=service(h).registerCandidate(h.getLevel(),candidate(h,"packet",0));
         var kingdom=service(h).getKingdom(settlement.kingdomId()).orElseThrow();
         var packet=new com.ultimakingdoms.network.LedgerPagePacket(42,service(h).revision(),Optional.empty(),0,false,0,
-                List.of(com.ultimakingdoms.presentation.SettlementSummary.from(settlement)),List.of(com.ultimakingdoms.presentation.KingdomSummary.from(kingdom)));
+                List.of(com.ultimakingdoms.presentation.SettlementSummary.from(settlement)),List.of(com.ultimakingdoms.presentation.KingdomSummary.from(kingdom)),"Settlement discovery is read-only: test diagnostic");
         var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
         try {packet.encode(buf);check(packet.equals(com.ultimakingdoms.network.LedgerPagePacket.decode(buf)),"Ledger packet roundtrip changed data");}
         finally{buf.release();}

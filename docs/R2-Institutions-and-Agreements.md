@@ -34,7 +34,7 @@ The honored issuer is the recognized institution's appointed contact. Receipt-ba
 
 ## Acceptance and delivery
 
-Provider changes are built in isolated `build/r2-provider-work/` copies and exported under `pack/r2/providers/`. The delivery contains matching Ultima Kingdoms, MCA Quests, MCA Crime and R1 MCA Conversations jars, available API artifacts, layered R1/R2 content and provider source exports. No live instance, original world or sibling source checkout is modified.
+Provider changes are built in isolated `build/r2-provider-work/` copies and exported under `pack/r2/providers/`. The delivery contains matching Ultima Kingdoms, MCA Quests, MCA Crime and R1 MCA Conversations jars, available API artifacts, layered R1/R2 content and provider source exports. No live instance, original world or sibling source checkout is modified. Current providers ship both halves natively: the MCA Quests half in MCA Quests 1.7.0 and the MCA Crime half (`InstitutionalServiceApi`) in MCA Crime 0.7.5, so the `pack/r2/providers` exports are superseded for those versions. Paid workshop service still requires Crime's `townstead.enabled` and `townstead.serviceRestrictions` options.
 
 Validation commands and evidence (2026-09-20):
 

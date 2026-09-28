@@ -30,6 +30,7 @@ public final class ProtectionSavedData extends SavedData {
     }
     public boolean writable() { return preserved == null; }
     ProtectionState snapshot() { return JSON.fromJson(JSON.toJson(state), ProtectionState.class); }
+    long revision() { return state.revision; }
     boolean commit(MinecraftServer server, ProtectionState next) {
         if (!server.isSameThread()) throw new IllegalStateException("Protection requires server thread");
         if (!writable()) return false; next.validate();

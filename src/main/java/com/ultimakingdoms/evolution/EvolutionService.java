@@ -22,7 +22,7 @@ public final class EvolutionService {
     private final MinecraftServer server;
     private final EvolutionSavedData data;
     public EvolutionService(MinecraftServer server) { this.server = server; this.data = EvolutionSavedData.get(server); }
-    public long revision() { if (!server.isSameThread()) throw new IllegalStateException("Evolution requires server thread"); return data.snapshot().revision; }
+    public long revision() { if (!server.isSameThread()) throw new IllegalStateException("Evolution requires server thread"); return data.revision(); }
     public SettingsView settings(ServerPlayer player) { actor(player); var s=data.snapshot(); return new SettingsView(s.revision,s.enabled,s.drama,
             s.subscriptions.contains(player.getUUID()),Set.copyOf(s.eligible),Set.copyOf(s.activeRegions),data.writable()); }
     public List<ScenarioView> scenarios(ServerPlayer player) { actor(player); var s=data.snapshot(); return s.scenarios.values().stream()
@@ -50,7 +50,8 @@ public final class EvolutionService {
     public String region(ServerPlayer player, UUID settlement, boolean enabled) {
         actor(player); if (!player.hasPermissions(2)) throw new IllegalArgumentException("Operator permission required");
         if (UltimaKingdomsApi.get(server).getSettlement(settlement).isEmpty()) throw new IllegalArgumentException("Settlement unavailable");
-        var s = data.snapshot(); if (enabled) s.eligible.add(settlement); else { s.eligible.remove(settlement); s.activeRegions.remove(settlement); } commit(s);
+        var s = data.snapshot(); if (s.paused == null) s.paused = new LinkedHashSet<>();
+        if (enabled) { s.eligible.add(settlement); s.paused.remove(settlement); } else { s.eligible.remove(settlement); s.paused.add(settlement); s.activeRegions.remove(settlement); } commit(s);
         return "Region " + (enabled ? "eligible" : "paused") + "; evaluation requires an online visitor.";
     }
     public String subscribe(ServerPlayer player, boolean enabled) {
@@ -72,7 +73,7 @@ public final class EvolutionService {
         String counterpart = other.kingdomId().toString();
         if (own.kingdomId().equals(other.kingdomId()) || !SettlementKnowledge.get(server).visible(player, other.id())
                 || UltimaPoliticsApi.get(server).government(counterpart).isEmpty()) throw new IllegalArgumentException("A known counterpart government is required");
-        if (!s.enabled || !s.eligible.contains(own.id())) throw new IllegalArgumentException("Enable evolution for this world and region first");
+        if (!s.enabled || !eligible(s, own.id())) throw new IllegalArgumentException("Enable evolution for this world and region first");
         String templateId = "ultima_kingdoms:family_introduction";
         var terms = EvolutionDefinitions.INSTANCE.snapshot().get(templateId); if (terms == null) throw new IllegalArgumentException("Family scenario definition unavailable");
         String key = player.getUUID() + ":family"; long now = now(s);
@@ -83,7 +84,16 @@ public final class EvolutionService {
                 new Evidence("mca:family", marriage.second() + "|" + counterpart, "RECIPROCAL_MARRIAGE", now,
                         "Your native family relationship offers a private diplomatic introduction"), player.getUUID(), now, now + terms.duration(), 1, Phase.OPEN, Map.of(), null, "");
         s.scenarios.put(id, e); s.cooldowns.put(key, now + terms.cooldown()); commit(s);
-        return "Private family introduction " + id + ". Preview the consequences before contributing; marriage grants no political ownership.";
+        return "Private family introduction: " + terms.title() + ". Preview the consequences before contributing; marriage grants no political ownership.";
+    }
+    /** The viewer's operational institution at the settlement, wherever it falls in the paged listing. */
+    private static com.ultimakingdoms.api.politics.InstitutionView institutionAt(com.ultimakingdoms.api.politics.PoliticalService politics, ServerPlayer viewer, UUID settlement) {
+        for (int offset = 0; offset <= 4096; offset += 32) {
+            var page = politics.knownInstitutions(viewer, offset, 32);
+            for (var v : page) if (v.settlement().equals(settlement) && v.operational()) return v;
+            if (page.size() < 32) break;
+        }
+        return null;
     }
     private String familyCounterpart(ServerPlayer player, Scenario e) {
         String[] parts = e.cause().receipt().split("\\|", 2);
@@ -102,7 +112,7 @@ public final class EvolutionService {
         return event;
     }
     private void available(EvolutionState s, Scenario e) {
-        if (!data.writable() || !s.enabled || !s.eligible.contains(e.settlement()) || e.terms().dramatic() && !s.drama)
+        if (!data.writable() || !s.enabled || !eligible(s, e.settlement()) || e.terms().dramatic() && !s.drama)
             throw new IllegalArgumentException("This scenario is paused by world policy");
         if (!EvolutionDefinitions.INSTANCE.snapshot().containsKey(e.templateId())) throw new IllegalArgumentException("Scenario definition unavailable; saved terms retained");
         if (UltimaKingdomsApi.get(server).getSettlement(e.settlement()).filter(v -> v.kingdomId().toString().equals(e.kingdom())).isEmpty())
@@ -162,8 +172,11 @@ public final class EvolutionService {
     }
     public String withdraw(ServerPlayer player, UUID id, long revision) {
         actor(player); var s = data.snapshot(); var e = require(player, s, id);
+        var contribution = e.contributions().get(player.getUUID());
+        boolean receipt = contribution != null && contribution.evidence().provider().equals("mcaquests");
+        if (contribution != null && !receipt) s.consumed.remove(contribution.evidence().key()); // authority and family proofs are re-verified on the next contribution
         s.scenarios.put(id, e.withdraw(player.getUUID(), revision, now(s))); commit(s);
-        return "Choice withdrawn; its service receipt remains recorded to prevent reuse.";
+        return receipt ? "Choice withdrawn; its service receipt remains recorded to prevent reuse." : "Choice withdrawn; you may contribute again while the opportunity stays open.";
     }
     public String resolve(ServerPlayer player, UUID id, long revision, Outcome outcome, String counterpart) {
         actor(player); var s = data.snapshot(); var e = require(player, s, id); available(s, e);
@@ -190,7 +203,7 @@ public final class EvolutionService {
         var intent = e.intent(); String result;
         var receipt = UltimaPoliticsApi.get(server).receipt(player, intent.request());
         if (receipt.filter(Politics.Result::success).isPresent()) {
-            result = "Government receipt " + intent.request() + "; record " + receipt.get().recordId();
+            result = "The government accepted this resolution and filed its record.";
             s.scenarios.put(id, e.finish(result)); commit(s); return result;
         }
         require(player, s, id); available(s, e);
@@ -199,10 +212,10 @@ public final class EvolutionService {
             var action = intent.outcome() == Outcome.SUCCEED ? Politics.Action.SUCCEED : Politics.Action.PETITION;
             var request = new Politics.Request(intent.request(), intent.politicalRevision(), action, e.kingdom(),
                     action == Politics.Action.PETITION ? "ultima_kingdoms:introduction_petition" : "", e.settlement().toString(),
-                    null, intent.counterpart(), "Scenario " + e.id() + ": " + e.terms().title(), "", 0, 0, 0);
+                    null, intent.counterpart(), "Scenario: " + e.terms().title(), "", 0, 0, 0);
             var response = UltimaPoliticsApi.get(server).execute(player, request);
             if (!response.success()) return "Resolution remains pending: " + response.message();
-            result = "Government receipt " + intent.request() + "; record " + response.recordId();
+            result = "The government accepted this resolution and filed its record.";
         } else result = intent.outcome() == Outcome.DECLINE ? "Opportunity declined peacefully" : "Verified " + intent.outcome().name().toLowerCase(Locale.ROOT) + " service acknowledged; further political terms require consent";
         s.scenarios.put(id, e.finish(result)); commit(s); return result;
     }
@@ -224,7 +237,7 @@ public final class EvolutionService {
         for (int i = 0; i < count; i++) {
             var player = players.get(Math.floorMod(s.cursor++, players.size()));
             UltimaKingdomsApi.get(server).getSettlementAt(player.serverLevel(), player.blockPosition())
-                    .filter(place -> s.eligible.contains(place.id())).ifPresent(place -> active.putIfAbsent(place.id(), player));
+                    .filter(place -> eligible(s, place.id())).ifPresent(place -> active.putIfAbsent(place.id(), player));
         }
         if (s.cursor > 1_000_000) s.cursor = 0;
         // Freeze the deadline across inactive sampling windows; returning to a region does not apply offline catch-up.
@@ -243,15 +256,21 @@ public final class EvolutionService {
         commit(s); // Save cursors before notification: a restart cannot repeat a digest.
         for (var player : deliveries) {
             long open = s.scenarios.values().stream().filter(e -> e.pending() && visible(player, e)).count();
-            if (open > 0) player.sendSystemMessage(net.minecraft.network.chat.Component.literal(open + " known political opportunities. /ultima-evolution list"));
+            if (open > 0) player.sendSystemMessage(net.minecraft.network.chat.Component.literal(open + " known political opportunities. Open Kingdom Tasks and choose \"World evolution status\"."));
         }
+    }
+    /** Explicitly eligible, or automatically eligible when its kingdom is governed and no operator paused it. */
+    private boolean eligible(EvolutionState s, UUID settlement) {
+        if (s.eligible.contains(settlement)) return true;
+        if (!EvolutionConfig.AUTO_ELIGIBLE.get() || s.paused != null && s.paused.contains(settlement)) return false;
+        return UltimaKingdomsApi.get(server).getSettlement(settlement).flatMap(place -> UltimaPoliticsApi.get(server).government(place.kingdomId().toString())).isPresent();
     }
     private void generate(EvolutionState s, ServerPlayer viewer, UUID settlement, long now) {
         if (s.scenarios.size() >= CAPACITY || activeCount(s) >= EvolutionConfig.CONCURRENT.get()) return;
         var place = UltimaKingdomsApi.get(server).getSettlement(settlement).orElse(null); if (place == null) return;
         var politics = UltimaPoliticsApi.get(server); var government = politics.government(place.kingdomId().toString()).orElse(null);
         if (government == null) return;
-        var institution = politics.knownInstitutions(viewer, 0, 32).stream().filter(v -> v.settlement().equals(settlement) && v.operational()).findFirst().orElse(null);
+        var institution = institutionAt(politics, viewer, settlement);
         for (var item : EvolutionDefinitions.INSTANCE.snapshot().entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             var terms = item.getValue(); if (terms.dramatic() && !s.drama) continue;
             String key = settlement + ":" + item.getKey();
@@ -261,19 +280,19 @@ public final class EvolutionService {
                 cause = new Evidence("ultima_kingdoms:institution", institution.id() + ":" + institution.revision(), "OPERATIONAL_INSTITUTION", now, "A recognized local institution is open to diplomatic introductions");
             if (terms.trigger() == Trigger.INTERREGNUM && government.state() == Politics.State.INTERREGNUM && government.successor() != null)
                 cause = new Evidence("ultima_kingdoms:government", government.kingdom() + ":" + government.revision(), "NAMED_SUCCESSION", now, "Leadership is vacant with a legally named successor");
-            if (terms.trigger() == Trigger.OCCUPATION && institution != null) {
+            if (terms.trigger() == Trigger.OCCUPATION) {
                 var control = WarfareApi.get(server).flatMap(p -> p.control(viewer, settlement)).orElse(null);
                 boolean occupied = com.ultimakingdoms.warfare.WarfareRuntime.get(server).verifiedBinding(settlement)
                         .filter(b -> b.condition() == com.ultimakingdoms.warfare.ControlState.Condition.OCCUPIED).isPresent();
                 if (control != null && "available".equals(control.availability()) && (control.contested() || occupied))
                     cause = new Evidence("ultima_kingdoms:control", settlement + ":" + control.sequence(), "CONTROL_TRANSITION", now, "Confirmed local control conditions support relief and autonomy talks");
             }
-            if (terms.trigger() == Trigger.DEMAND && institution != null) {
+            if (terms.trigger() == Trigger.DEMAND) {
                 var demand = new ProtectionService(server).openDemand(settlement).stream().findFirst().orElse(null);
                 if (demand != null) cause = new Evidence("ultima_kingdoms:protection", demand.id().toString(), "VOLUNTARY_DEMAND", demand.created(),
                         "A signed protectorate has requested voluntary " + demand.duty().name().toLowerCase(Locale.ROOT));
             }
-            if (terms.trigger() == Trigger.GRIEVANCE && institution != null) {
+            if (terms.trigger() == Trigger.GRIEVANCE) {
                 var dispute = new ProtectionService(server).disputes(settlement).stream().findFirst().orElse(null);
                 if (dispute != null) cause = new Evidence("ultima_kingdoms:protection", dispute.id().toString(), "REFUSED_VOLUNTARY_OBLIGATION", dispute.created(),
                         "A signed voluntary obligation was refused; mediation or an alternative civilian contribution can reopen talks");
@@ -282,9 +301,11 @@ public final class EvolutionService {
             String causeKey = "cause:" + com.ultimakingdoms.politics.GovernmentService.hash(item.getKey() + ":" + cause.key());
             if (s.consumed.contains(causeKey)) continue;
             String seed = key + ":" + now; UUID id = UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
-            var event = new Scenario(id, item.getKey(), terms, settlement, terms.trigger() == Trigger.INTERREGNUM ? null : institution.id(),
+            var event = new Scenario(id, item.getKey(), terms, settlement, terms.trigger() == Trigger.INTERREGNUM || institution == null ? null : institution.id(),
                     place.kingdomId().toString(), cause, null, now, Math.addExact(now, terms.duration()), 1, Phase.OPEN, Map.of(), null, "");
-            s.scenarios.put(id, event); s.consumed.add(causeKey); s.cooldowns.put(key, Math.addExact(now, terms.cooldown())); return;
+            s.scenarios.put(id, event); s.consumed.add(causeKey); s.cooldowns.put(key, Math.addExact(now, terms.cooldown()));
+            com.ultimakingdoms.interaction.Notify.government(server, place.kingdomId().toString(), null, "A new opportunity opened at " + place.displayName() + ": " + terms.title() + ".");
+            return;
         }
     }
     private long activeCount(EvolutionState s) {

@@ -94,6 +94,24 @@ The remaining commands require permission level 2:
 
 Manual settlement radii range from 16 to 512 blocks and default to 64. Discovery radii range from 1 to 32 chunks and default to 8.
 
+The other systems share the same root. Each of these also keeps its historical hyphenated root (`/ultima-evolution` and `/ultima evolution` are the same command tree):
+
+```text
+/ultima politics …      government, petitions, agreements, elections and regency
+/ultima guild …         civic chapters, membership and organization lifecycle
+/ultima faction …       kingdom standing (operator maintenance)
+/ultima warfare …       claims, campaigns, accords and mobilization
+/ultima contract …      civilian recovery contracts
+/ultima mobilization …  temporary native mobilization
+/ultima world …         discovered sites, routes and encounters
+/ultima evolution …     world evolution opportunities
+/ultima protection …    protectorate pacts and obligations
+/ultima transfer …      recruit transfers
+/ultima drama …         authored drama proposals
+```
+
+Every one of these is also a Kingdom Tasks form, and most Book of Kingdoms topics open the task they describe.
+
 ## Configuration
 
 The common config is written to `config/ultima_kingdoms-common.toml`:
@@ -106,6 +124,9 @@ The common config is written to `config/ultima_kingdoms-common.toml`:
 | `settlementDiscovery.chunkScansPerTick` | 2 | 1–64 | Loaded chunks inspected per server tick |
 | `settlementDiscovery.candidateMergeDistance` | 32 | 0–256 | Match distance for weak candidates |
 | `civicIdentity.evidenceInterval` | 200 | 20–24000 | Ticks between NPC civic-evidence checks |
+| `politics.openFounding` | `true` | — | A capital resident may found that kingdom's first government with themselves as leader |
+
+World evolution has its own file, `config/ultima-kingdoms-evolution-common.toml`; `autoEligibleRegions` (default `true`) treats every settlement of a governed kingdom as an evolution region unless an operator pauses it, once the world itself has opted in.
 
 The client config is `config/ultima-kingdoms-client.toml`:
 
@@ -116,7 +137,7 @@ The client config is `config/ultima-kingdoms-client.toml`:
 | `entryOverlay.durationTicks` | 80 | 20–400 | Display duration in client ticks |
 | `entryOverlay.y` | 54 | 0–1000 | Vertical screen position in pixels |
 
-Optional integrations use separate common configs. `config/ultima_kingdoms-integrations-common.toml` enables the optional `ultima_kingdoms:kingdom` condition registered with MCA Quests by default, and `config/ultima_kingdoms-townstead-common.toml` enables the Townstead adapter by default. Quest definitions use `kingdom_lifecycle`; conversation topics use `kingdom_gate`. A quest lifecycle defaults to `offer_only`, so authors must select `mode: "live"` explicitly when an accepted quest should follow current political state. MCA Reputation synchronization is configured in `config/ultima_kingdoms-factions-common.toml` and defaults to `reputationSync.mode = SHADOW`.
+Optional integrations use separate common configs. `config/ultima_kingdoms-integrations-common.toml` enables the optional `ultima_kingdoms:kingdom` condition registered with MCA Quests by default, and `config/ultima_kingdoms-townstead-common.toml` enables the Townstead adapter by default. Quest definitions use `kingdom_lifecycle`; conversation topics use `kingdom_gate`. A quest lifecycle defaults to `offer_only`, so authors must select `mode: "live"` explicitly when an accepted quest should follow current political state. MCA Reputation synchronization is configured in `config/ultima_kingdoms-factions-common.toml` and defaults to `reputationSync.mode = SHADOW`. Live synchronization requires MCA Reputation 0.6.1 or later. With 0.6.0, Ultima reads local standing but receives no standing changes.
 
 ## Datapacks
 

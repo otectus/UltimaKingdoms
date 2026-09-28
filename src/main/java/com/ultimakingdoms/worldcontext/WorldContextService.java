@@ -126,17 +126,21 @@ public final class WorldContextService implements WorldContextApi.Provider {
 
     public boolean recordEncounter(Entity entity,Map<ServerPlayer,Integer> contributions,WorldContextDefinitions.EncounterRule rule){
         thread();if(!enabled()||!data.writable()||data.credited(entity.getUUID())||contributions.isEmpty())return false;
-        ResourceLocation type=BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());long now=entity.level().getGameTime();var next=data.snapshot();int added=0;
-        if(next.creditedEntities.size()>=WorldContextSavedData.RECEIPT_LIMIT||next.encounters.size()>=WorldContextSavedData.RECEIPT_LIMIT)return false;
-        int room=WorldContextSavedData.RECEIPT_LIMIT-next.encounters.size();
+        ResourceLocation type=BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());long now=entity.level().getGameTime();
+        if(data.creditedCount()>=WorldContextSavedData.RECEIPT_LIMIT||data.encounterCount()>=WorldContextSavedData.RECEIPT_LIMIT)return false;
+        // Deaths that earn nobody a receipt (mob farms, exhausted repeat budgets, no known site) cost no snapshot and no write.
+        record Credit(ServerPlayer player,UUID site,int prior,int contribution){}
+        var credits=new ArrayList<Credit>();int room=WorldContextSavedData.RECEIPT_LIMIT-data.encounterCount();
         for(var entry:contributions.entrySet()){
-            if(added>=room)break;ServerPlayer player=entry.getKey();
+            if(credits.size()>=room)break;ServerPlayer player=entry.getKey();
             if(player.level()!=entity.level())continue;var site=nearestKnownSite(player,entity,128);if(site.isEmpty())continue;
             int prior=data.recentEncounters(player.getUUID(),site.get().id(),type.toString(),now,REPEAT_WINDOW);if(prior>=rule.repeatBudget())continue;
-            UUID receipt=UUID.randomUUID();next.encounters.put(receipt.toString(),new WorldContextSavedData.Encounter(receipt,player.getUUID(),entity.getUUID(),
-                    site.get().id(),type.toString(),Math.max(1,entry.getValue()),prior+1,now));added++;
+            credits.add(new Credit(player,site.get().id(),prior,entry.getValue()));
         }
-        if(added==0)return false;next.creditedEntities.add(entity.getUUID().toString());next.revision++;return data.commit(server,next,WorldContextSavedData.Index.ENCOUNTERS);
+        if(credits.isEmpty())return false;var next=data.snapshot();
+        for(var credit:credits){UUID receipt=UUID.randomUUID();next.encounters.put(receipt.toString(),new WorldContextSavedData.Encounter(receipt,credit.player().getUUID(),entity.getUUID(),
+                credit.site(),type.toString(),Math.max(1,credit.contribution()),credit.prior()+1,now));}
+        next.creditedEntities.add(entity.getUUID().toString());next.revision++;return data.commit(server,next,WorldContextSavedData.Index.ENCOUNTERS);
     }
 
     @Override public List<WorldContextApi.Site> sites(ServerPlayer viewer,int offset,int limit){

@@ -19,6 +19,8 @@ import java.util.*;
 
 /** Coordinates existing civic, institutional and social owners; owns only explicit guild appointments. */
 public final class CivicService implements com.ultimakingdoms.api.civic.InstitutionalCommissionApi.Handler {
+    /** Commission contract state folded into task versions so a stale review cannot apply over a changed offer. */
+    public long commissionFingerprint(){return InstitutionalCommissionData.get(server).fingerprint();}
     public static final ResourceLocation WORKSHOP_QUEST=new ResourceLocation("ultima:civic/lamplighters/workshop_lanterns");
     public static final ResourceLocation INTRODUCTIONS=new ResourceLocation("ultima_kingdoms:route_introductions");
     public static final ResourceLocation COMMISSIONS=new ResourceLocation("ultima_kingdoms:commission_access");

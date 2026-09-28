@@ -27,6 +27,8 @@ final class InstitutionalCommissionData extends SavedData {
                 recognitionRevision,buildingFingerprint,legalFingerprint,offerExpires,value,honor,honorTerms); }
     }
     private Map<UUID,Contract> contracts=new LinkedHashMap<>();
+    /** Changes whenever any commission contract changes; part of the civic workshop task version. */
+    long fingerprint(){return contracts.hashCode();}
     private CompoundTag preserved;
     static InstitutionalCommissionData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(InstitutionalCommissionData::load,InstitutionalCommissionData::new,NAME);

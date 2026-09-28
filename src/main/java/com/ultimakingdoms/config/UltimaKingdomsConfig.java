@@ -10,6 +10,7 @@ public final class UltimaKingdomsConfig {
     public static final ForgeConfigSpec.IntValue CHUNK_SCANS_PER_TICK;
     public static final ForgeConfigSpec.IntValue CANDIDATE_MERGE_DISTANCE;
     public static final ForgeConfigSpec.IntValue CIVIC_EVIDENCE_INTERVAL;
+    public static final ForgeConfigSpec.BooleanValue OPEN_FOUNDING;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -29,6 +30,10 @@ public final class UltimaKingdomsConfig {
         CANDIDATE_MERGE_DISTANCE = builder
                 .comment("Maximum anchor distance for weak candidates to match an existing settlement.")
                 .defineInRange("candidateMergeDistance", 32, 0, 256);
+        builder.pop();
+        builder.push("politics");
+        OPEN_FOUNDING = builder.comment("Let a player whose civic residence is in the chosen capital found that kingdom's first government with themselves as leader; operators can always found.")
+                .define("openFounding", true);
         builder.pop();
         builder.push("civicIdentity");
         CIVIC_EVIDENCE_INTERVAL = builder

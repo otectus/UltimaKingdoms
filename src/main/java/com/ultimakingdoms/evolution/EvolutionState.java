@@ -100,6 +100,8 @@ public final class EvolutionState {
     public long lastEvaluation;
     public int cursor;
     public Set<UUID> eligible = new LinkedHashSet<>();
+    /** Regions an operator paused while automatic eligibility is on. */
+    public Set<UUID> paused = new LinkedHashSet<>();
     public Set<UUID> activeRegions = new LinkedHashSet<>();
     public Map<UUID, Scenario> scenarios = new LinkedHashMap<>();
     public Map<String, Long> cooldowns = new LinkedHashMap<>();

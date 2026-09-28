@@ -183,6 +183,41 @@ public class PoliticalGameTests {
             } catch(Throwable failure){MinecraftForge.EVENT_BUS.unregister(politics);throw failure;}
         });
     }
+    @GameTest(template="empty",timeoutTicks=200)
+    public static void electedMandateOutranksAppointment(GameTestHelper helper) {
+        var server=helper.getLevel().getServer(); var identity=UltimaKingdomsApi.get(server);
+        var data=new PoliticalSavedData(); var knownPlayers=new HashSet<UUID>(); var politics=new GovernmentService(server,identity,UltimaKingdoms.POLITICS,data,false,knownPlayers::contains);
+        var one=new net.minecraftforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),"ElectionOne")) { @Override public boolean hasPermissions(int level) { return level <= 2; } };
+        var two=FakePlayerFactory.get(helper.getLevel(),new GameProfile(UUID.randomUUID(),"ElectionTwo"));
+        var three=FakePlayerFactory.get(helper.getLevel(),new GameProfile(UUID.randomUUID(),"ElectionThree"));
+        knownPlayers.addAll(List.of(one.getUUID(),two.getUUID(),three.getUUID()));
+        MinecraftForge.EVENT_BUS.register(politics);
+        try {
+            var a=settlement(helper,identity,"election-a",144,SERENUM);
+            Result founded=politics.execute(one,req(politics,Action.BOOTSTRAP,SERENUM,SERENUM+"_charter",a.id().toString(),one,"","",""));check(founded.success(),founded.message());
+            var legacyRule=new com.ultimakingdoms.api.politics.PoliticalTransition.Rule(true,false,1200,200,1200,4,Set.of());
+            check(legacyRule.electorate()==com.ultimakingdoms.api.politics.PoliticalTransition.Electorate.COUNCIL,"Legacy rule constructor did not default to a council electorate");
+            Result adopted=politics.adoptTransitionRule(one,UUID.randomUUID(),politics.revision(),SERENUM,legacyRule);check(adopted.success(),adopted.message());
+            Result steward=politics.execute(one,req(politics,Action.APPOINT,SERENUM,"ultima_kingdoms:local_steward",a.id().toString(),two,"","",""));check(steward.success(),steward.message());
+            Result opened=politics.openElection(one,UUID.randomUUID(),politics.revision(),SERENUM,List.of(two.getUUID(),three.getUUID()));check(opened.success(),opened.message());
+            UUID election=UUID.fromString(opened.recordId());
+            check(data.records().elections.get(election).electorate().equals(Set.of(one.getUUID(),two.getUUID())),"Council electorate was not frozen from offices");
+            check(politics.castBallot(one,UUID.randomUUID(),politics.revision(),election,two.getUUID()).success(),"Leader ballot rejected");
+            check(politics.castBallot(two,UUID.randomUUID(),politics.revision(),election,two.getUUID()).success(),"Steward ballot rejected");
+            Result closed=politics.closeElection(one,UUID.randomUUID(),politics.revision(),election);check(closed.success(),closed.message());
+            var government=data.records().governments.get(SERENUM);
+            check(government.successor()!=null&&government.successor().id().equals(two.getUUID()),"Election winner did not become the named successor");
+            check(two.getUUID().equals(data.records().electedMandates.get(SERENUM)),"Elected mandate was not recorded");
+            Result renamed=politics.execute(one,req(politics,Action.NAME_SUCCESSOR,SERENUM,"","",three,"","",""));
+            check(!renamed.success()&&renamed.message().contains("elected"),"Appointment authority displaced an elected successor: "+renamed.message());
+            check(politics.execute(one,req(politics,Action.ABDICATE,SERENUM,"","",null,"","","")).success(),"Abdication rejected");
+            check(politics.execute(two,req(politics,Action.SUCCEED,SERENUM,"","",null,"","","")).success(),"Elected successor could not take office");
+            check(two.getUUID().equals(data.records().electedMandates.get(SERENUM)),"Elected mandate did not follow the successor into office");
+            check(politics.execute(two,req(politics,Action.ABDICATE,SERENUM,"","",null,"","","")).success(),"Elected leader could not abdicate");
+            check(data.records().electedMandates.get(SERENUM)==null,"Abdication did not release the elected mandate");
+            helper.succeed();
+        } finally { MinecraftForge.EVENT_BUS.unregister(politics); }
+    }
     private static SettlementView settlement(GameTestHelper helper,KingdomsService service,String key,int dx,String kingdom) {
         BlockPos position=helper.absolutePos(new BlockPos(dx,2,2));
         var result=service.registerCandidate(helper.getLevel(),SettlementCandidate.structure(helper.getLevel().dimension(),position,4,new ResourceLocation("ultima_kingdoms:political_test"),key+position,null));

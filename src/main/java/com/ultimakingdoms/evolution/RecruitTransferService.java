@@ -51,7 +51,9 @@ public final class RecruitTransferService {
         long now = server.overworld().getGameTime();
         var t = new Transfer(UUID.randomUUID(), unitId, owner.getUUID(), recipientId, group, snapshot.equipment(), family,
                 now + 1200, now + 72000, 1, Phase.OFFERED, null, "Employment transfer: equipment travels with this recruit; native wages retain their remaining timer; no payment or troop levy is invented");
-        family(t); put(t); return "Private transfer proposal " + t.id() + " revision 1; recipient must consent and 1200 game ticks of notice must elapse.";
+        family(t); put(t);
+        com.ultimakingdoms.interaction.Notify.player(owner.getServer(), recipientId, owner.getUUID(), owner.getGameProfile().getName() + " offers you the recruit " + com.ultimakingdoms.interaction.Names.entity(owner.getServer(), unitId) + "; consent is required.");
+        return "Private transfer proposal for " + com.ultimakingdoms.interaction.Names.entity(owner.getServer(), unitId) + " to " + com.ultimakingdoms.interaction.Names.player(owner.getServer(), recipientId) + "; the recipient must consent and " + com.ultimakingdoms.interaction.Names.duration(1200) + " of notice must elapse.";
     }
     public String consent(ServerPlayer recipient, UUID id, long revision) {
         enabled(); var t = own(recipient, id); family(t);
@@ -93,7 +95,23 @@ public final class RecruitTransferService {
             return "Transfer interrupted: " + failure.getMessage() + ". Original-state recovery intent retained.";
         }
     }
+    /** Disk verification is bounded per transfer so repeated confirm/restore requests cannot flood the server with flushes. */
+    static final long VERIFICATION_COOLDOWN = 200L;
+    private static final Map<MinecraftServer, Map<UUID, Long>> LAST_VERIFICATION = new WeakHashMap<>();
+    private void throttleVerification(UUID id) {
+        long now = server.overworld().getGameTime();
+        var attempts = LAST_VERIFICATION.computeIfAbsent(server, ignored -> new HashMap<>());
+        Long last = attempts.get(id);
+        if (last != null && now - last < VERIFICATION_COOLDOWN && now >= last)
+            throw new IllegalArgumentException("Native verification was attempted moments ago; wait a few seconds, then inspect or retry.");
+        attempts.put(id, now);
+    }
     public String confirm(ServerPlayer actor, UUID id) {
+        var t = own(actor, id); if (t.terminal()) return t.detail();
+        throttleVerification(id);
+        return confirmVerified(actor, id);
+    }
+    private String confirmVerified(ServerPlayer actor, UUID id) {
         var t = own(actor, id); if (t.terminal()) return t.detail();
         if (t.snapshot() == null) throw new IllegalArgumentException("No native transfer to confirm");
         var unit = loaded(t.unit());
@@ -106,9 +124,10 @@ public final class RecruitTransferService {
         if (t.terminal() || t.snapshot() == null) throw new IllegalArgumentException("No pending native transfer to restore");
         var owner = server.getPlayerList().getPlayer(t.owner()); var recipient = server.getPlayerList().getPlayer(t.recipient());
         if (owner == null || recipient == null) throw new IllegalArgumentException("Both original parties must be online for guarded recovery");
+        throttleVerification(id);
         var unit = loaded(t.unit()); put(t.phase(Phase.RESTORING, t.snapshot(), "Explicit original-state recovery requested"));
         RecruitsTransfer.restore(unit, owner, recipient, t.snapshot());
-        return confirm(actor, id);
+        return confirmVerified(actor, id);
     }
     public List<String> inspect(ServerPlayer actor, UUID id) {
         var t = own(actor, id); return List.of(t.id() + " | " + t.phase() + " | revision " + t.revision(),
@@ -123,6 +142,7 @@ public final class RecruitTransferService {
         actor(actor);if(!actor.hasPermissions(2))throw new IllegalArgumentException("Operator reconciliation authority required");
         var t=data.get(id).orElseThrow(()->new IllegalArgumentException("Transfer unavailable"));
         if(t.terminal()||t.snapshot()==null||t.revision()!=revision)throw new IllegalArgumentException("Pending intent changed; preview again");
+        throttleVerification(id);
         var unit=loaded(t.unit());var review=RecruitsTransfer.review(unit,t.snapshot(),false);
         if(!review.fingerprint().equals(fingerprint))throw new IllegalArgumentException("Native state changed; preview and review again");
         var receipt=new Reconciliation(actor.getUUID(),fingerprint,reason,server.overworld().getGameTime(),review.observation());

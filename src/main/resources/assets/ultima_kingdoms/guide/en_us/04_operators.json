@@ -2,6 +2,7 @@
   "entries": [
     {
       "id": "operator_overview",
+      "task": "administration.integrations",
       "category": "operators",
       "title": "Run a world safely",
       "summary": "Keep setup, player authority, and recovery as separate jobs.",
@@ -36,6 +37,7 @@
     },
     {
       "id": "standing_sync",
+      "task": "standing.diagnostics",
       "category": "operators",
       "title": "Kingdom standing and MCA reputation",
       "summary": "Sovereign reputation is separate from guild credit and local personal affection.",

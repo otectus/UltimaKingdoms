@@ -2,6 +2,7 @@
   "entries": [
     {
       "id": "start_here",
+      "task": "*",
       "category": "basics",
       "title": "Start here",
       "summary": "A peaceful first session, with no office, army, or guild required.",

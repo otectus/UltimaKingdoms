@@ -6,10 +6,21 @@ import java.util.*;
 public final class PoliticalTransition {
     private PoliticalTransition() { }
     public enum ElectionState { OPEN, GRACE, RESOLVED, EXPIRED, CANCELLED }
+    /** Who is frozen into an election's electorate when it opens. */
+    public enum Electorate {
+        /** Office holders and mandate holders of the government (the default). */
+        COUNCIL,
+        /** The council plus every connected player whose civic residence lies in one of the kingdom's settlements. */
+        RESIDENTS
+    }
     public record Rule(boolean elections, boolean regency, long electionTicks, long graceTicks, long regencyTicks,
-                       int maxCandidates, Set<Politics.Permission> regentPermissions) {
+                       int maxCandidates, Set<Politics.Permission> regentPermissions, Electorate electorate) {
+        public Rule(boolean elections, boolean regency, long electionTicks, long graceTicks, long regencyTicks, int maxCandidates, Set<Politics.Permission> regentPermissions) {
+            this(elections, regency, electionTicks, graceTicks, regencyTicks, maxCandidates, regentPermissions, Electorate.COUNCIL);
+        }
         public Rule {
             regentPermissions = Set.copyOf(regentPermissions);
+            if (electorate == null) electorate = Electorate.COUNCIL; // rules saved before the option existed
             if (electionTicks < 1200 || electionTicks > 2_419_200 || graceTicks < 200 || graceTicks > 172_800
                     || regencyTicks < 1200 || regencyTicks > 2_419_200 || maxCandidates < 2 || maxCandidates > 16
                     || regentPermissions.size() > 8 || regentPermissions.contains(Politics.Permission.DELEGATE))

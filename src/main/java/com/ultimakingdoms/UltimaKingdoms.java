@@ -179,6 +179,18 @@ public final class UltimaKingdoms {
                 .merge(event.source().id(), event.target().id());
     }
 
+    /** One welcome line on a player's first login, so the menu key and the ledger are discoverable without the wiki. */
+    @SubscribeEvent
+    public void playerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) return;
+        var persisted = player.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG);
+        if (persisted.getBoolean("ultima_kingdoms:welcomed")) return;
+        persisted.putBoolean("ultima_kingdoms:welcomed", true);
+        player.getPersistentData().put(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG, persisted);
+        player.sendSystemMessage(net.minecraft.network.chat.Component.translatableWithFallback("notice.ultima_kingdoms.welcome",
+                "Ultima Kingdoms: press %s for Kingdom Tasks, craft a Village Ledger (paper, book and compass) to browse settlements, or read the Book of Kingdoms (book and paper).",
+                net.minecraft.network.chat.Component.keybind("key.ultima_kingdoms.actions")));
+    }
     @SubscribeEvent
     public void entityJoined(EntityJoinLevelEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)

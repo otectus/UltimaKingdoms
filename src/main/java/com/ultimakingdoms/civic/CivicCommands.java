@@ -49,7 +49,7 @@ public final class CivicCommands {
                         (view.claimId().isEmpty()?"":" | owner "+view.ownerId()+" | siege "+view.underSiege())),false); return 1;
             })))
             .then(Commands.literal("integrations").requires(s -> s.hasPermission(2)).executes(c -> {
-                for(String id:new String[]{"mca","mcaquests","mcareputation","mcacrime","townstead","recruits","dotcoinmod","runicskills","runic_gods","runic_races"}) {
+                for(String id:new String[]{"mca","mcaquests","mcaconversations","mcareputation","mcacrime","townstead","recruits","dotcoinmod","runicskills","runic_gods","runic_races"}) {
                     var mod=ModList.get().getModContainerById(id);
                     c.getSource().sendSuccess(() -> Component.literal(id+": "+mod.map(m -> "installed "+m.getModInfo().getVersion()).orElse("absent")),false);
                 }

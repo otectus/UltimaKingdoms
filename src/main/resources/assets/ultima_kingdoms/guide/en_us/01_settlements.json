@@ -2,6 +2,7 @@
   "entries": [
     {
       "id": "ledger_and_discovery",
+      "task": "settlement.inspect",
       "category": "settlements",
       "title": "Find and use settlements",
       "summary": "The Village Ledger is your starting point for places, guilds, and government.",
@@ -19,6 +20,7 @@
     },
     {
       "id": "kingdoms",
+      "task": "kingdom.list",
       "category": "settlements",
       "title": "The six starting kingdoms",
       "summary": "Kingdom identity is persistent and can be extended by a datapack.",
@@ -36,6 +38,7 @@
     },
     {
       "id": "npc_identity",
+      "task": "citizen.inspect",
       "category": "settlements",
       "title": "Residents, origins, and visitors",
       "summary": "Civic identity records a home without taking over a person’s life.",
@@ -53,6 +56,7 @@
     },
     {
       "id": "settlement_changes",
+      "task": "settlement.rename",
       "category": "settlements",
       "title": "Rename, reassign, or merge places",
       "summary": "Operator tools change saved identity; they do not rebuild the settlement.",

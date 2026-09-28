@@ -17,7 +17,9 @@ public record LedgerPagePacket(
         boolean revisionReset,
         int retryAfterTicks,
         List<SettlementSummary> settlements,
-        List<KingdomSummary> kingdoms
+        List<KingdomSummary> kingdoms,
+        /** Why the ledger is empty when settlement discovery is read-only; blank otherwise. */
+        String diagnostic
 ) {
     private static final int MAX_PAGE_RESULTS = 21;
     private static final int MAX_KINGDOMS = 64;
@@ -25,6 +27,8 @@ public record LedgerPagePacket(
     public LedgerPagePacket {
         settlements = List.copyOf(settlements);
         kingdoms = List.copyOf(kingdoms);
+        diagnostic = diagnostic == null ? "" : diagnostic;
+        if (diagnostic.length() > 512) throw new IllegalArgumentException("Oversized ledger diagnostic");
         if (requestId < 1 || registryRevision < 0 || offset < 0
                 || retryAfterTicks < 0 || retryAfterTicks > 100
                 || settlements.size() > MAX_PAGE_RESULTS || kingdoms.size() > MAX_KINGDOMS) {
@@ -55,8 +59,9 @@ public record LedgerPagePacket(
         }
         List<KingdomSummary> kingdoms = new ArrayList<>(kingdomCount);
         for (int i = 0; i < kingdomCount; i++) kingdoms.add(KingdomSummary.decode(buffer));
+        String diagnostic = buffer.readUtf(512);
         return new LedgerPagePacket(requestId, revision, kingdom, offset, revisionReset,
-                retryAfterTicks, settlements, kingdoms);
+                retryAfterTicks, settlements, kingdoms, diagnostic);
     }
 
     public void encode(FriendlyByteBuf buffer) {
@@ -71,5 +76,6 @@ public record LedgerPagePacket(
         settlements.forEach(summary -> summary.encode(buffer));
         buffer.writeVarInt(kingdoms.size());
         kingdoms.forEach(summary -> summary.encode(buffer));
+        buffer.writeUtf(diagnostic, 512);
     }
 }

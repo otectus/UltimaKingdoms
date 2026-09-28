@@ -84,11 +84,12 @@ public final class KingdomGuideScreen extends Screen {
             if(!current.commands().isEmpty()){text.add(label("commands"));current.commands().forEach(c->text.add(Component.literal(c)));text.add(label("command_help"));}}
         else text.add(label("unavailable"));
         if(!problems.isEmpty())text.add(label("resource_error"));article.setContent(text);
-        int x=left+sidebar+5,w=panelWidth-sidebar-15,buttonWidth=(w-8)/3;
+        int x=left+sidebar+5,w=panelWidth-sidebar-15,buttonWidth=(w-12)/4;
         var ordered=matches.isEmpty()?entries:matches;int index=current==null?-1:ordered.indexOf(current);
         var prev=addRenderableWidget(Button.builder(label("previous_topic"),b->select(ordered.get(index-1))).bounds(x,height-32,buttonWidth,20).build());prev.active=index>0;
         var next=addRenderableWidget(Button.builder(label("next_topic"),b->select(ordered.get(index+1))).bounds(x+buttonWidth+4,height-32,buttonWidth,20).build());next.active=index>=0&&index+1<ordered.size();
         addRenderableWidget(Button.builder(label("close"),b->onClose()).bounds(x+2*(buttonWidth+4),height-32,buttonWidth,20).build());
+        var open=addRenderableWidget(Button.builder(label("open_task"),b->{if(current!=null&&!current.task().isEmpty())InteractionClient.open(this,current.task().equals("*")?"":current.task(),"");}).bounds(x+3*(buttonWidth+4),height-32,buttonWidth,20).tooltip(Tooltip.create(label("open_task_help"))).build());open.active=current!=null&&!current.task().isEmpty()&&Minecraft.getInstance().player!=null;
     }
     private void listNavigation(int size){
         offset=Math.min(offset,Math.max(0,((Math.max(1,size)-1)/rows)*rows));

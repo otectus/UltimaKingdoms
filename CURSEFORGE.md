@@ -7,7 +7,7 @@ Ultima Kingdoms recognizes settlements, assigns each one a permanent name and ki
 ## Features
 
 - Persistent settlement names, kingdom membership, territory, and discovery records
-- Five kingdoms with distinct name pools, biome rules, colors, and heraldry
+- Six kingdoms with distinct name pools, biome rules, colors, and heraldry
 - Automatic detection of village structures and village point-of-interest clusters
 - Craftable Village Ledger with settlement browsing, kingdom filters, and detail pages
 - Configurable settlement-entry titles and heraldry
@@ -16,7 +16,7 @@ Ultima Kingdoms recognizes settlements, assigns each one a permanent name and ki
 - Public API for Ultima addons and other integrations
 - Optional Minecraft Comes Alive Reborn integration
 
-This initial release focuses on durable village and civic identity. Reputation, diplomacy, warfare, roads, capitals, and settlement-history simulation are outside its current scope.
+The core is durable village and civic identity. Kingdom standing, governments, diplomacy, warfare, world sites and world evolution are optional layers built on it; see the README and the in-game Book of Kingdoms for what each requires.
 
 ## Getting started
 

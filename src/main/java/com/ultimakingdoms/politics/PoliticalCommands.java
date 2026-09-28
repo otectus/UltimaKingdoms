@@ -70,7 +70,7 @@ public final class PoliticalCommands {
         root.then(Commands.literal("election_close").then(com.ultimakingdoms.interaction.NamedTargets.argument("election","election")
                 .executes(c->transition(c,(service,player)->service.closeElection(player,UUID.randomUUID(),service.revision(),com.ultimakingdoms.interaction.NamedTargets.uuid(c,"election","election"))))));
         root.then(Commands.literal("election_inspect").then(com.ultimakingdoms.interaction.NamedTargets.argument("election","election").executes(c->{var player=c.getSource().getPlayerOrException();var view=UltimaPoliticsApi.get(player.getServer()).election(player,com.ultimakingdoms.interaction.NamedTargets.uuid(c,"election","election"));
-            if(view.isEmpty()){c.getSource().sendFailure(Component.literal("Election unavailable"));return 0;}c.getSource().sendSuccess(()->Component.literal(view.get().toString()),false);return 1;})));
+            if(view.isEmpty()){c.getSource().sendFailure(Component.literal("Election unavailable"));return 0;}c.getSource().sendSuccess(()->Component.literal(describe(player.getServer(),view.get())),false);return 1;})));
         root.then(Commands.literal("appoint_regent").then(word("kingdom").then(Commands.argument("person",EntityArgument.player())
                 .executes(PoliticalCommands::appointRegent))));
         root.then(Commands.literal("end_regency").then(word("kingdom").executes(c->transition(c,(service,player)->service.endRegency(player,UUID.randomUUID(),service.revision(),arg(c,"kingdom"))))));
@@ -110,6 +110,16 @@ public final class PoliticalCommands {
         if (result.success()) c.getSource().sendSuccess(() -> Component.literal(result.message() + ": " + result.recordId()), false);
         else c.getSource().sendFailure(Component.literal(result.message()));
         return result.success() ? 1 : 0;
+    }
+    /** Readable election summary: names, counts and remaining time instead of identifiers. */
+    static String describe(net.minecraft.server.MinecraftServer server, com.ultimakingdoms.api.politics.PoliticalTransition.ElectionView view) {
+        String candidates = view.candidates().stream().map(id -> com.ultimakingdoms.interaction.Names.person(server, id)).sorted().collect(java.util.stream.Collectors.joining(", "));
+        String deadline = com.ultimakingdoms.interaction.Names.remaining(server, view.deadline());
+        return "Election in " + com.ultimakingdoms.interaction.Names.kingdom(server, view.kingdom()) + ": " + com.ultimakingdoms.interaction.Names.words(view.state())
+                + ". Candidates: " + (candidates.isEmpty() ? "none" : candidates) + ". Ballots: " + view.ballotsCast() + " of " + view.electorateSize()
+                + ". Voting closes " + (deadline.equals("expired") ? "now" : "in " + deadline) + "."
+                + (view.viewerEligible() ? view.viewerVoted() ? " You have voted." : " You may vote." : " You are not part of the electorate.")
+                + view.winner().map(w -> " Winner: " + com.ultimakingdoms.interaction.Names.person(server, w) + ".").orElse("");
     }
     private static int inspect(CommandContext<CommandSourceStack> c, String tab) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         var player = c.getSource().getPlayerOrException();

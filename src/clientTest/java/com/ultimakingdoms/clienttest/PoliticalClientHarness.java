@@ -55,8 +55,8 @@ public final class PoliticalClientHarness {
                     if(reply.mode().equals("tasks")){if(wizardStep==0){searchActions("Establish a government");wizardStep++;}else click("Establish a government");}
                     else if(reply.mode().equals("choice")){String answer=switch(wizardStep++){case 1->"Serenum";case 2->"Bellmeadow";case 3->"Serenum Civic Crown";default->mc.player.getName().getString();};click(answer);}
                     else if(reply.mode().equals("review"))click("Apply reviewed action");
-                    else if(reply.mode().equals("result")){check(!reply.detail().contains("Could not complete"),"Reviewed government established");mc.screen.onClose();click("Refresh");next();}
-                    else throw new AssertionError(reply.detail());entered=ticks;
+                    else if(reply.mode().equals("result")){check(!reply.detailText().contains("Could not complete"),"Reviewed government established");mc.screen.onClose();click("Refresh");next();}
+                    else throw new AssertionError(reply.detailText());entered=ticks;
                 }
                 case 4->{if(!ready())return;check(page().rows().stream().anyMatch(r->r.title().equals("ACTIVE")),"Real packet constituted a government");shot("politics-overview.png");click("Council");next();}
                 case 5->{if(!ready())return;check(page().rows().stream().anyMatch(r->r.id().equals("ultima_kingdoms:leader")),"Persistent leadership visible");shot("politics-council.png");click("Actions");next();}

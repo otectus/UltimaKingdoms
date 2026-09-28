@@ -2,6 +2,7 @@
   "entries": [
     {
       "id": "first_guild_steps",
+      "task": "civic.status",
       "category": "civic",
       "title": "Help the Lamplighters",
       "summary": "Earn service credit through real work, whether you join or stay independent.",
@@ -49,6 +50,7 @@
     },
     {
       "id": "contacts_and_introductions",
+      "task": "civic.introduction",
       "category": "civic",
       "title": "Find a guild contact",
       "summary": "A contact is a real resident at a working local chapter.",
@@ -67,6 +69,7 @@
     },
     {
       "id": "workshop_commissions",
+      "task": "civic.commissions",
       "category": "civic",
       "title": "Complete a paid workshop commission",
       "summary": "Recognized institutional work can pay normally and record a civic honor.",
@@ -85,6 +88,7 @@
     },
     {
       "id": "hospitality_and_legal_access",
+      "task": "civic.hospitality",
       "category": "civic",
       "title": "Hospitality and local restrictions",
       "summary": "Diplomacy can open introductions; a local legal problem may still block service.",
@@ -100,6 +104,7 @@
     },
     {
       "id": "establish_a_chapter",
+      "task": "civic.charter",
       "category": "civic",
       "title": "Establish a local guild chapter",
       "summary": "For office holders: recognize the building, charter the branch, appoint a resident.",

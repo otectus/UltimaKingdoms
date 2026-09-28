@@ -53,9 +53,9 @@ final class R4ServiceScenario {
             var chapter=civic.knownChapters(steward,0).stream().filter(c->c.institution().equals(institution)).findFirst().orElseThrow();
             check(civic.appoint(steward,chapter.id(),place.npc()).success(),"R4 native contact");
             var protection=new ProtectionService(server);
-            UUID pact=id(protection.propose(steward,a,b,place.settlement().id(),Set.of(ProtectionState.Duty.CIVIC_AID),168000,1200,"Workshop assistance"),"proposal ");
+            protection.propose(steward,a,b,place.settlement().id(),Set.of(ProtectionState.Duty.CIVIC_AID),168000,1200,"Workshop assistance");UUID pact=protection.pacts(steward).get(0).id();
             protection.sign(steward,pact,a,1);protection.sign(neighbor,pact,b,2);
-            UUID obligation=id(protection.request(steward,pact,ProtectionState.Duty.CIVIC_AID,3),"Obligation ");
+            protection.request(steward,pact,ProtectionState.Duty.CIVIC_AID,3);UUID obligation=protection.obligations(steward).get(0).id();
             ResourceLocation quest=new ResourceLocation("ultima:evolution/aid");
             String json;
             try(var reader=server.getResourceManager().openAsReader(new ResourceLocation("ultima:mcaquests/quests/evolution/aid.json"))) { json=new String(reader.lines().reduce("",(x,y)->x+y)); }

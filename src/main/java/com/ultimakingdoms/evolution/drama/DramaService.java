@@ -22,7 +22,7 @@ public final class DramaService {
     private final DramaSavedData data;
     private final DramaDefinitions definitions;
     DramaService(MinecraftServer server, DramaDefinitions definitions) { this.server = server; this.definitions = definitions; this.data = DramaSavedData.get(server); }
-    public long revision() { thread(); return data.snapshot().revision; }
+    public long revision() { thread(); return data.revision(); }
     public long activeCount() { thread(); return data.snapshot().dramas.values().stream().filter(d -> !d.terminal()).count(); }
     public Optional<DramaState.Drama> drama(UUID id) { thread(); return Optional.ofNullable(data.snapshot().dramas.get(id)); }
     public List<TemplateView> templates() { thread(); return definitions.snapshot().entrySet().stream().sorted(Map.Entry.comparingByKey())
@@ -71,7 +71,7 @@ public final class DramaService {
         }
         String fingerprint = templateId + "|" + settlement + "|" + subject;
         var current = data.snapshot();
-        if (current.receipts.containsKey(request)) { require(current.receipts.get(request).equals(fingerprint), "Request id belongs to another proposal."); return "Drama " + request + " already recorded."; }
+        if (current.receipts.containsKey(request)) { require(current.receipts.get(request).equals(fingerprint), "Request id belongs to another proposal."); return "This drama proposal is already recorded."; }
         require(current.revision == expectedRevision, "Drama state changed; refresh before proposing.");
         require(current.dramas.values().stream().filter(d -> !d.terminal()).count() + EvolutionRuntime.activeScenarioCount(server)
                 < com.ultimakingdoms.evolution.EvolutionConfig.CONCURRENT.get(), "The shared world evolution concurrency budget is full.");
@@ -82,7 +82,8 @@ public final class DramaService {
                 subject, dynamic, participants, Set.of(source), evidence, now(), template.durationTicks(), now(), 1, 0, DramaState.Phase.PROPOSED,
                 DramaState.Operation.NONE, DramaState.operationId(request, "provider"), "Awaiting an independent participant's consent");
         current.dramas.put(request, frozen); current.receipts.put(request, fingerprint); save(current);
-        return "Drama " + request + " proposed from frozen authored terms; the other participant must consent.";
+        com.ultimakingdoms.interaction.Notify.players(server, frozen.participants().values(), actor.getUUID(), "A drama \"" + frozen.terms().title() + "\" was proposed at " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + "; your consent is requested.");
+        return "Drama \"" + frozen.terms().title() + "\" proposed from frozen authored terms; the other participant must consent.";
     }
 
     public String consent(ServerPlayer actor, UUID id, long expectedRevision) {
@@ -205,8 +206,8 @@ public final class DramaService {
     }
     public List<String> inspect(ServerPlayer viewer, UUID id) {
         actor(viewer); var drama = data.snapshot().dramas.get(id); if (drama == null || !participates(viewer, drama)) return List.of("Drama unavailable.");
-        var lines = new ArrayList<String>(); lines.add(drama.id() + " | " + drama.terms().title() + " | " + drama.phase() + " | revision " + drama.revision());
-        lines.add("Objective: " + drama.terms().objective()); lines.add("Remaining online time: " + drama.remainingTicks() + "; consents " + drama.consents().size() + "/2");
+        var lines = new ArrayList<String>(); lines.add(drama.terms().title() + " · " + com.ultimakingdoms.interaction.Names.words(drama.phase()));
+        lines.add("Objective: " + drama.terms().objective()); lines.add("Remaining online time: " + com.ultimakingdoms.interaction.Names.duration(drama.remainingTicks()) + "; consents " + drama.consents().size() + " of 2");
         drama.evidence().forEach(e -> lines.add("Evidence " + e.source() + "/" + e.kind() + " #" + e.revision() + ": " + e.detail())); lines.add("Status: " + drama.result()); return List.copyOf(lines);
     }
 

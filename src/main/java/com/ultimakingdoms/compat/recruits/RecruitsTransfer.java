@@ -184,8 +184,15 @@ public final class RecruitsTransfer {
             Object factions = Class.forName(ROOT + "FactionEvents").getField("recruitsFactionManager").get(null);
             call(factions, "save", new Class<?>[]{ServerLevel.class}, server.overworld());
         } catch (ReflectiveOperationException failure) { throw new IllegalArgumentException("Native faction persistence unavailable", failure); }
-        server.saveEverything(false, true, true);
+        flushEntityAndOverworldData(unit);
         return saved(unit, before, transferred);
+    }
+    /** Targeted flush: the unit's level entity sections plus the overworld SavedData files the check below reads. A full world save is not required. */
+    private static void flushEntityAndOverworldData(Entity unit) {
+        var level = (ServerLevel) unit.level();
+        var manager = (PersistentEntitySectionManager<?>) field(level, ServerLevel.class, PersistentEntitySectionManager.class);
+        manager.saveAll();
+        unit.getServer().overworld().getDataStorage().save();
     }
     public static boolean saved(Entity unit, Snapshot before, boolean transferred) {
         return saved(unit,before,transferred,true);

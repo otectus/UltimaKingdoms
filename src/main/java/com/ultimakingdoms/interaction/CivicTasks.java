@@ -8,7 +8,7 @@ import static com.ultimakingdoms.interaction.ActionRegistry.*;
 
 public final class CivicTasks {
     private static CivicService civic(Context c){return CivicRuntime.get(c.server());}
-    private static void task(String id,String title,boolean change,List<Field> fields,Handler handler){add(new Task("civic."+id,"Guilds and service",title,"Membership, service qualification, nearby contact and legal access are checked separately. A missing requirement is explained by the service.",false,change,fields,c->civic(c).revision()+":"+OrganizationApi.get(c.server()).revision(),handler));}
+    private static void task(String id,String title,boolean change,List<Field> fields,Handler handler){add(new Task("civic."+id,"Guilds and service",title,"Membership, service qualification, nearby contact and legal access are checked separately. A missing requirement is explained by the service.",false,change,fields,c->civic(c).revision()+":"+OrganizationApi.get(c.server()).revision()+":"+civic(c).commissionFingerprint(),handler));}
     public static void init(){
         targets("chapter",c->{var out=new ArrayList<Choice>();for(int offset=0;offset<=4096;offset+=16){var page=civic(c).knownChapters(c.player,offset);for(var v:page)out.add(new Choice(v.id().toString(),"Chapter at "+v.settlementName(),words(v.status().name()),Map.of("revision",""+civic(c).revision(),"organization",v.organization())));if(page.size()<16)break;}return out;});
         targets("contact",c->{var out=new ArrayList<Choice>();for(int offset=0;offset<=16384;offset+=64){var page=civic(c).dismissibleContacts(c.player,offset,64);for(var v:page)out.add(new Choice(v.npc().toString(),v.label(),v.detail(),Map.of("revision",""+v.revision())));if(page.size()<64)break;}return out;});

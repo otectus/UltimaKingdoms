@@ -14,6 +14,7 @@
     },
     {
       "id": "claim_mapping_and_binding",
+      "task": "warfare.bind_here",
       "category": "warfare",
       "title": "Map claims to settlements",
       "summary": "Operators connect real Recruits claims to civic kingdoms and settlements without assigning anyone to a faction.",
@@ -32,6 +33,7 @@
     },
     {
       "id": "campaign_declaration",
+      "task": "warfare.declare",
       "category": "warfare",
       "title": "Declare a bounded campaign",
       "summary": "Publish an authorized military goal with notice, a deadline, and a real native claim.",
@@ -51,6 +53,7 @@
     },
     {
       "id": "campaign_withdrawal_and_recovery",
+      "task": "warfare.withdraw",
       "category": "warfare",
       "title": "Withdraw or recover a campaign",
       "summary": "Use explicit exits and retries when a native declaration is canceled, interrupted, or awaiting acknowledgment.",
@@ -67,6 +70,7 @@
     },
     {
       "id": "sovereignty_accords",
+      "task": "warfare.accord",
       "category": "warfare",
       "title": "Negotiate sovereignty accords",
       "summary": "Reach a bilateral recognized, autonomous, or independent settlement without rewriting civic identity.",
@@ -102,6 +106,7 @@
     },
     {
       "id": "temporary_mobilization",
+      "task": "warfare.muster",
       "category": "warfare",
       "title": "Issue temporary recruit orders",
       "summary": "Muster self-owned loaded recruits under defense, escort, or scout doctrine for a bounded lease.",
@@ -120,6 +125,7 @@
     },
     {
       "id": "civilian_contracts",
+      "task": "warfare.contract",
       "category": "warfare",
       "title": "Take civilian contracts",
       "summary": "Open one of six authored native service quests from a recognized nearby civilian contact.",
@@ -139,6 +145,7 @@
     },
     {
       "id": "discover_world_sites",
+      "task": "world.sites",
       "category": "warfare",
       "title": "Discover world sites",
       "summary": "Build a private evidence-backed ledger by visiting configured structures and authored locations.",
@@ -155,6 +162,7 @@
     },
     {
       "id": "institution_routes",
+      "task": "world.routes",
       "category": "warfare",
       "title": "Travel institution routes",
       "summary": "Follow authored checkpoint routes between known operational institutions with current safe conduct.",
@@ -172,6 +180,7 @@
     },
     {
       "id": "neutral_resource_access",
+      "task": "world.resource",
       "category": "warfare",
       "title": "Request neutral resource access",
       "summary": "Use an authored outside-settlement resource policy with a known independent return path.",
@@ -187,6 +196,7 @@
     },
     {
       "id": "encounter_receipts",
+      "task": "world.encounters",
       "category": "warfare",
       "title": "Record encounter contributions",
       "summary": "Review bounded credit for configured hostile encounters near sites you already know.",

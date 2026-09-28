@@ -35,7 +35,7 @@ final class WarfareScenario {
             }
             runtime.reconcile(); runtime.reconcile();
             var lines = runtime.view(actor, settlement.id());
-            check(lines.stream().anyMatch(s -> s.contains("OCCUPIED")), "occupation retained across restart/provider absence");
+            check(lines.stream().anyMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("occupied")), "occupation retained across restart/provider absence");
             check(lines.stream().anyMatch(s -> s.contains("Observation #3.")), "one siege retains one control transition");
             check(settlement.kingdomId().equals(A), "original civic kingdom preserved across restart");
             if (phase.equals("r3-absent"))
@@ -73,7 +73,7 @@ final class WarfareScenario {
         check(denied, "civilian cannot create native mapping");
         check(runtime.view(observer, settlement.id()).equals(List.of("Control information unavailable.")), "guessed settlement UUID hides control history");
         SettlementKnowledge.get(server).discover(observer.getUUID(), settlement.id());
-        check(runtime.view(observer, settlement.id()).stream().anyMatch(s -> s.contains("CONTROLLED")), "local discovered civilian can inspect control");
+        check(runtime.view(observer, settlement.id()).stream().anyMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("controlled")), "local discovered civilian can inspect control");
         observer.setPos(500, 64, 500);
         check(runtime.view(observer, settlement.id()).equals(List.of("Visit this settlement to inspect its control history.")), "discovery alone grants no remote live intelligence");
         observer.setPos(0, 64, 0);
@@ -85,14 +85,14 @@ final class WarfareScenario {
         check(runtime.revision() == boundRevision, "unsaved native siege creates no durable control event");
         call(manager, "save", level); server.saveEverything(false, true, true);
         runtime.reconcile(); runtime.reconcile();
-        check(runtime.view(actor, settlement.id()).stream().anyMatch(s -> s.contains("UNDER_SIEGE")), "saved native siege appears in history");
+        check(runtime.view(actor, settlement.id()).stream().anyMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("under siege")), "saved native siege appears in history");
         call(claim, "addParty", claimType.getField("attackingParties").get(claim), attacker);
         call(claim, "setSiegeSuccess", level);
         long beforeSave = runtime.revision(); runtime.reconcile(); runtime.reconcile();
         check(runtime.revision() == beforeSave, "native success event awaits provider disk confirmation");
         call(manager, "save", level); server.saveEverything(false, true, true);
         runtime.reconcile(); runtime.reconcile();
-        check(runtime.view(actor, settlement.id()).stream().anyMatch(s -> s.contains("OCCUPIED")), "saved native siege records provisional occupation");
+        check(runtime.view(actor, settlement.id()).stream().anyMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("occupied")), "saved native siege records provisional occupation");
         WarfareConfig.MILITARY.set(true);
         long occupiedRevision = runtime.revision(); runtime.reconcile(); runtime.reconcile();
         check(occupiedRevision == runtime.revision(), "duplicate reconciliation does not repeat control transition");
@@ -121,7 +121,7 @@ final class WarfareScenario {
         check(denied, "civilian cannot retire a binding");
         WarfareConfig.ENABLED.set(false);
         runtime.retire(actor, outpost.id(), retirementRevision);
-        check(runtime.view(actor, outpost.id()).stream().anyMatch(s -> s.contains("RETIRED")), "disabled-feature retirement preserves history");
+        check(runtime.view(actor, outpost.id()).stream().anyMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("retired")), "disabled-feature retirement preserves history");
         check(RecruitsObservation.here(actor).claimId().equals(call(second, "getUUID").toString()), "retirement leaves native claim unchanged");
         kingdoms.setKingdom(outpost.id(), A);
         check(kingdoms.getSettlement(outpost.id()).orElseThrow().kingdomId().equals(A), "explicit retirement releases civic migration preflight");

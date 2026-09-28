@@ -94,7 +94,8 @@ final class MilitaryScenario {
             var muster=com.ultimakingdoms.warfare.mobilization.MobilizationEvents.get(server);
             String musterResult=wizard(one,"warfare.muster","Harbor Guard","Defense");
             check(musterResult.startsWith("Mobilized"),"native defense muster applied: "+musterResult);
-            UUID lease=UUID.fromString(muster.status(one).get(0).split(" ")[0]);muster.dismiss(one,lease);
+            UUID lease=com.ultimakingdoms.warfare.mobilization.MobilizationEvents.get(server).deployments(one,0,64).get(0).id(); // newest lease first; results name units, not ids
+            muster.dismiss(one,lease);
             check(RecruitsMobilization.snapshot(firstTroop).equals(beforeOrders),"dismissal restores native orders and owner/group identity");
             var protectedVillager=net.minecraft.world.entity.EntityType.VILLAGER.create(level);protectedVillager.setPos(10,64,10);
             server.getScoreboard().addPlayerToTeam(protectedVillager.getScoreboardName(),server.getScoreboard().getPlayerTeam("mil_b"));
@@ -112,7 +113,7 @@ final class MilitaryScenario {
             detection.invoke(nativeEvents,level);
             check((boolean)call(manager,"isActiveSiege",claim) && (boolean)type.getField("isUnderSiege").get(claim),"native troop detection starts eligible siege");
             call(manager,"save",level);server.saveEverything(false,true,true);control.reconcile();control.reconcile();
-            check(control.view(one,target.id()).stream().anyMatch(v->v.contains("UNDER_SIEGE")),"native started siege recorded after provider save");
+            check(control.view(one,target.id()).stream().anyMatch(v->v.toLowerCase(java.util.Locale.ROOT).contains("under siege")),"native started siege recorded after provider save"); // control views read as words, not enum names
             int health=(Integer)call(claim,"getHealth");online.remove(two.getUUID());nativeTick.invoke(nativeEvents,level);
             check((Integer)call(claim,"getHealth")==health,"offline defender freezes native siege damage");online.put(two.getUUID(),two);
             online.remove(two.getUUID());call(claim,"setHealth",0);nativeTick.invoke(nativeEvents,level);nativeTick.invoke(nativeEvents,level);
@@ -159,16 +160,22 @@ final class MilitaryScenario {
         var reply=com.ultimakingdoms.interaction.InteractionNetwork.handle(player,new com.ultimakingdoms.interaction.InteractionNetwork.Request(UUID.randomUUID(),none,none,"TASK",task,"",0));
         for(String answer:answers){
             String operation=reply.mode().equals("choice")?"PICK":"NEXT",value=answer;
-            if(operation.equals("PICK"))value=reply.options().stream().filter(o->o.label().equalsIgnoreCase(answer)).findFirst().orElseThrow(()->new AssertionError("Named GUI choice missing: "+answer)).key();
+            if(operation.equals("PICK"))value=reply.options().stream().filter(o->o.labelText().equalsIgnoreCase(answer)).findFirst().orElseThrow(()->new AssertionError("Named GUI choice missing: "+answer)).key();
             reply=com.ultimakingdoms.interaction.InteractionNetwork.handle(player,new com.ultimakingdoms.interaction.InteractionNetwork.Request(UUID.randomUUID(),reply.session(),reply.state(),operation,value,"",0));
         }
-        check(reply.mode().equals("review"),"native task reaches review without commands: "+task+" "+reply.detail());
+        if(reply.mode().equals("result")){ // non-consequential tasks run as soon as their fields are complete
+            check(!reply.detailText().contains("Could not complete"),"native GUI read task applies: "+task+" "+reply.detailText());
+            var again=com.ultimakingdoms.interaction.InteractionNetwork.handle(player,new com.ultimakingdoms.interaction.InteractionNetwork.Request(UUID.randomUUID(),reply.session(),reply.state(),"CHECK","","",0));
+            check(again.detail().equals(reply.detail()),"native GUI repeat check returns retained result: "+task);
+            return reply.detailText();
+        }
+        check(reply.mode().equals("review"),"native task reaches review without commands: "+task+" "+reply.detailText());
         var request=new com.ultimakingdoms.interaction.InteractionNetwork.Request(UUID.randomUUID(),reply.session(),reply.state(),"APPLY","","",0);
         reply=com.ultimakingdoms.interaction.InteractionNetwork.handle(player,request);
-        check(reply.mode().equals("result")&&!reply.detail().contains("Could not complete"),"native GUI task applies: "+task+" "+reply.detail());
+        check(reply.mode().equals("result")&&!reply.detailText().contains("Could not complete"),"native GUI task applies: "+task+" "+reply.detailText());
         var duplicate=com.ultimakingdoms.interaction.InteractionNetwork.handle(player,request);
         check(duplicate.detail().equals(reply.detail()),"native GUI repeat click returns retained result: "+task);
-        return reply.detail();
+        return reply.detailText();
     }
     static void restart(MinecraftServer server,java.util.function.BiConsumer<Long,Runnable> schedule,Consumer<String> finish)throws Exception {
         var fixture=com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("r3-military-fixture.json"))).getAsJsonObject();
@@ -178,7 +185,7 @@ final class MilitaryScenario {
             var unit=server.overworld().getEntity(UUID.fromString(fixture.get("unit").getAsString()));check(unit!=null,"native leased entity persisted and loaded after restart");
             var restored=new com.google.gson.Gson().toJsonTree(RecruitsMobilization.snapshot(unit));
             check(restored.equals(fixture.get("orders")),"original native orders and ownership survived restart: actual="+restored+" expected="+fixture.get("orders"));
-            check(com.ultimakingdoms.warfare.mobilization.MobilizationEvents.get(server).status(actor).stream().anyMatch(s->s.startsWith(fixture.get("lease").getAsString())&&s.contains(" RESTORED ")),"pending restoration acknowledged only after native entity reload");
+            check(com.ultimakingdoms.warfare.mobilization.MobilizationEvents.get(server).deployments(actor,0,64).stream().anyMatch(l->l.id().toString().equals(fixture.get("lease").getAsString())&&l.phase()==com.ultimakingdoms.warfare.mobilization.MobilizationSavedData.Phase.RESTORED),"pending restoration acknowledged only after native entity reload");
             check(CampaignService.get(server).control(UUID.fromString(fixture.get("settlement").getAsString())).orElseThrow().autonomy().equals("AUTONOMOUS"),"ratified sovereignty history survived restart and native breach");
             check(RecruitsMilitary.relation(server,"mil_a","mil_b")==Relation.ALLY,"restart does not rewrite divergent native diplomacy");
             finish.accept("PASS integration military restart: native restored orders, lease acknowledgment, sovereignty history and no relation writeback");

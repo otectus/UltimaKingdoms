@@ -89,9 +89,13 @@ public final class CampaignService implements WarfareApi.Provider {
                 actor.getUUID(), goal, now() + WarfareConfig.NOTICE.get(), now() + WarfareConfig.NOTICE.get() + WarfareConfig.CAMPAIGN_DURATION.get(),
                 Phase.NOTICE, binding.sequence(), before, reason);
         next.campaigns.put(request, campaign); notice(next, settlement, "declaration_intent", actor.getUUID(), reason);
-        receipt(next, actor, request, fingerprint, "Campaign " + request + " recorded; inspect its native application status."); save(next);
-        applyDeclaration(actor, request);
-        return "Campaign " + request + ": " + data.snapshot().campaigns.get(request).phase() + ". Native siege detection still governs the battle.";
+        String defenderKingdom = kingdoms().getSettlement(settlement).map(s -> s.kingdomId().toString()).orElse("");
+        com.ultimakingdoms.factions.Consequences.standing(server, actor.getUUID(), defenderKingdom, com.ultimakingdoms.factions.Consequences.DECLARED_WAR, request, "Declared a campaign against " + com.ultimakingdoms.interaction.Names.settlement(server, settlement));
+        com.ultimakingdoms.interaction.Notify.government(server, defenderKingdom, actor.getUUID(), "A campaign to " + com.ultimakingdoms.interaction.Names.lower(com.ultimakingdoms.interaction.Names.words(goal)) + " was declared against " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + ".");
+        receipt(next, actor, request, fingerprint, "Campaign to " + com.ultimakingdoms.interaction.Names.lower(com.ultimakingdoms.interaction.Names.words(goal)) + " at " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + " recorded; inspect its native application status."); save(next);
+        try { applyDeclaration(actor, request); }
+        catch (IllegalArgumentException | IllegalStateException pending) { return "Campaign to " + com.ultimakingdoms.interaction.Names.lower(com.ultimakingdoms.interaction.Names.words(goal)) + " at " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + " is recorded, but its native declaration is still pending: " + pending.getMessage() + " Retry it from the campaign's apply task."; }
+        return "Campaign to " + com.ultimakingdoms.interaction.Names.lower(com.ultimakingdoms.interaction.Names.words(goal)) + " at " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + ": " + com.ultimakingdoms.interaction.Names.words(data.snapshot().campaigns.get(request).phase()) + ". Native siege detection still governs the battle.";
     }
     public String applyDeclaration(ServerPlayer actor, UUID campaignId) {
         String faction = authority(actor, Politics.Permission.PROPOSE);
@@ -129,7 +133,8 @@ public final class CampaignService implements WarfareApi.Provider {
                 RecruitsMilitary.relation(server, first, counterpart), RecruitsMilitary.relation(server, counterpart, first), Map.of(first, actor.getUUID()),
                 TreatyPhase.PROPOSED, status, recognizedKingdom, now() + WarfareConfig.CAMPAIGN_DURATION.get(), binding.sequence(), binding.claim(), binding.owner(), terms);
         next.accords.put(request, accord); notice(next, settlement, "accord_proposed", actor.getUUID(), terms);
-        receipt(next, actor, request, fingerprint, "Accord " + request + " awaits the other native leader and political ratifier."); save(next);
+        com.ultimakingdoms.interaction.Notify.government(server, kingdoms().getSettlement(settlement).map(s -> s.kingdomId().toString()).orElse(""), actor.getUUID(), "An accord was proposed at " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + "; it awaits the other native leader and political ratifier.");
+        receipt(next, actor, request, fingerprint, "Accord at " + com.ultimakingdoms.interaction.Names.settlement(server, settlement) + " awaits the other native leader and political ratifier."); save(next);
         return next.receipts.get(request).result();
     }
     public String sign(ServerPlayer actor, UUID accordId, long expectedRevision) {
@@ -140,7 +145,13 @@ public final class CampaignService implements WarfareApi.Provider {
         accordControl(accord);
         require(!accord.signatures().containsKey(side), "This faction already signed.");
         accord = accord.sign(side, actor.getUUID()); next.accords.put(accordId, accord); save(next);
-        return accord.phase() == TreatyPhase.SIGNED ? applyAccord(actor, accordId) : "Signature recorded.";
+        if (accord.phase() == TreatyPhase.SIGNED) for (var signature : accord.signatures().entrySet()) {
+            String counterpartKingdom = signature.getKey().equals(accord.first()) ? accord.secondKingdom() : accord.firstKingdom();
+            com.ultimakingdoms.factions.Consequences.standing(server, signature.getValue(), counterpartKingdom, com.ultimakingdoms.factions.Consequences.SIGNED_ACCORD, UUID.nameUUIDFromBytes((accordId + ":" + signature.getKey()).getBytes(java.nio.charset.StandardCharsets.UTF_8)), "Signed an accord at " + com.ultimakingdoms.interaction.Names.settlement(server, accord.settlement()));
+        }
+        if (accord.phase() != TreatyPhase.SIGNED) return "Signature recorded.";
+        try { return applyAccord(actor, accordId); }
+        catch (IllegalArgumentException | IllegalStateException pending) { return "Signature recorded; the accord's native application is still pending: " + pending.getMessage() + " Apply it again once the condition clears."; }
     }
     public String applyAccord(ServerPlayer requester, UUID accordId) {
         actor(requester); var next = data.snapshot(); var accord = next.accords.get(accordId);
@@ -178,7 +189,7 @@ public final class CampaignService implements WarfareApi.Provider {
         require(c != null && c.attacker().equals(faction) && c.commander().equals(actor.getUUID()), "Only this campaign's commander may withdraw.");
         require(c.phase() != Phase.RESOLVED, "Campaign already closed.");
         next.campaigns.put(campaignId, c.phase(Phase.SUSPENDED, "Withdrawal requested; native confirmation pending.")); save(next);
-        boolean confirmed = RecruitsMilitary.apply(actor, c.attacker(), c.defender(), Relation.ENEMY, Relation.NEUTRAL);
+        boolean confirmed = RecruitsMilitary.apply(actor, c.attacker(), c.defender(), Relation.ENEMY, c.before()); // restore what stood before the declaration
         next = data.snapshot();
         next.campaigns.put(campaignId, c.phase(confirmed ? Phase.RESOLVED : Phase.SUSPENDED,
                 confirmed ? "Own military declaration withdrawn; counterpart diplomacy remains native-owned." : "Native withdrawal pending; explicit retry required.")); save(next);
@@ -308,12 +319,12 @@ public final class CampaignService implements WarfareApi.Provider {
         if (!viewer.hasPermissions(2) && kingdoms().getSettlementAt(viewer.serverLevel(), viewer.blockPosition()).filter(s -> s.id().equals(settlement)).isEmpty())
             return List.of("Visit this settlement to inspect its campaigns and negotiations.");
         var result = new ArrayList<String>(); result.add("Campaign revision: " + revision());
-        control(viewer, settlement).ifPresent(c -> result.add("Sovereignty: " + c.autonomy() + " | " + c.recognizedKingdom() + " | " + c.availability()));
+        control(viewer, settlement).ifPresent(c -> result.add("Sovereignty: " + com.ultimakingdoms.interaction.Names.words(c.autonomy()) + " · " + com.ultimakingdoms.interaction.Names.kingdom(server, c.recognizedKingdom()) + " · " + c.availability()));
         var state = data.snapshot();
         state.campaigns.values().stream().filter(c -> c.settlement().equals(settlement)).skip(Math.max(0, state.campaigns.values().stream().filter(c -> c.settlement().equals(settlement)).count() - 6))
-                .forEach(c -> result.add(c.id() + " | " + c.goal() + " | " + c.phase() + " | " + c.reason()));
+                .forEach(c -> result.add(com.ultimakingdoms.interaction.Names.words(c.goal()) + " campaign · " + com.ultimakingdoms.interaction.Names.words(c.phase()) + " · " + c.reason()));
         state.accords.values().stream().filter(a -> a.settlement().equals(settlement)).limit(6)
-                .forEach(a -> result.add(a.id() + " | " + a.phase() + " | " + a.sovereignty() + " | " + a.reason()));
+                .forEach(a -> result.add(com.ultimakingdoms.interaction.Names.words(a.sovereignty()) + " agreement · " + com.ultimakingdoms.interaction.Names.words(a.phase()) + " · " + a.reason()));
         return List.copyOf(result);
     }
 }

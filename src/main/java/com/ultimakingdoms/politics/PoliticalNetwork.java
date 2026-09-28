@@ -34,8 +34,9 @@ public final class PoliticalNetwork {
                         PoliticalService service = UltimaPoliticsApi.get(player.getServer());
                         // Validate query bounds before any accompanying mutation can commit.
                         service.page(player, q.id(), q.kingdom(), q.tab(), q.offset());
-                        if (q.mutation() != null && !q.mutation().kingdom().equals(q.kingdom())) return;
-                        Result result = q.mutation() == null ? null : service.execute(player, q.mutation());
+                        // Mutations travel only through the reviewed Kingdom Tasks protocol; this channel reads.
+                        if (q.mutation() != null) return;
+                        Result result = null;
                         Page page = service.page(player, q.id(), q.kingdom(), q.tab(), q.offset());
                         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Reply(page, result));
                     } catch (IllegalArgumentException | IllegalStateException ignored) { }

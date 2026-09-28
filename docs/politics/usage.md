@@ -49,7 +49,7 @@ Agreements expose political terms and opportunity entries. They do not create or
 
 The overview previews a named successor and current eligibility. `name_successor`, `abdicate` and `succeed` provide explicit continuity. Confirmed NPC death vacates offices once; cancellation, unloading, player death/respawn and absence do not automatically install a ruler. Succession rechecks the candidate and preserves the capital, kingdom identity and active treaties. Vacant leadership without a named successor requires an explicit operator appointment. Old delegated mandates do not survive leadership vacancy.
 
-The House action records one political house label, motto and explicitly selected member per government. It does not change surnames, genealogy, marriage or inheritance. Automatic hereditary selection, elections, regencies, multi-house institutions and genetic/family systems are not implemented or advertised.
+The House action records one political house label, motto and explicitly selected member per government. It does not change surnames, genealogy, marriage or inheritance. Elections and regencies are constitutional transitions adopted per kingdom (see the `transition_rule`, election and regency tasks, and docs/R4-Evolving-World.md); the electorate is the council, or the council plus connected residents when the rule says so, and an elected successor or leader cannot be displaced by appointment. Automatic hereditary selection, multi-house institutions and genetic/family systems are not implemented or advertised.
 
 ## Data and limits
 

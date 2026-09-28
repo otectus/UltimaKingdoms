@@ -9,6 +9,12 @@ import java.util.*;
 
 public final class RecruitsEvents {
     private static boolean registered;
+    private static final Set<String> LOGGED = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** Fail-closed hooks stay silent by design; one line per failure kind tells operators why sieges are refused. */
+    private static void failedClosed(String where, Throwable failure) {
+        if (LOGGED.add(where + ":" + failure.getClass().getName()))
+            com.mojang.logging.LogUtils.getLogger().warn("Native siege policy hook {} failed closed; sieges are refused until this is resolved: {}", where, failure.toString());
+    }
     private RecruitsEvents() { }
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void register() {
@@ -31,7 +37,7 @@ public final class RecruitsEvents {
             for (Object faction : (List<?>)claim.getClass().getField("attackingParties").get(claim))
                 attackers.add((String)faction.getClass().getMethod("getStringID").invoke(faction));
             return CampaignService.get(level.getServer()).siegeAllowed(id, attackers);
-        } catch (ReflectiveOperationException | RuntimeException failure) { return false; }
+        } catch (ReflectiveOperationException | RuntimeException failure) { failedClosed("allowed", failure); return false; }
     }
     private static void siege(Event event) {
         try {
@@ -40,7 +46,7 @@ public final class RecruitsEvents {
             Object claim = event.getClass().getMethod("getClaim").invoke(event);
             if (!allowed(level, claim)) event.setCanceled(true);
         } catch (ReflectiveOperationException | RuntimeException failure) {
-            event.setCanceled(true);
+            failedClosed("siege", failure); event.setCanceled(true);
         }
     }
 }

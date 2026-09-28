@@ -147,5 +147,5 @@ public final class MobilizationService {
     public List<MobilizationSavedData.Lease> deployments(ServerPlayer viewer,int offset,int limit){thread();if(viewer.getServer()!=server||viewer.hasDisconnected()||offset<0||offset>8192||limit<1||limit>64)throw new IllegalArgumentException("Invalid deployment query.");return data.leases().stream().filter(l->viewer.hasPermissions(2)||l.actor().equals(viewer.getUUID())).sorted(Comparator.comparing(MobilizationSavedData.Lease::createdAt).reversed().thenComparing(MobilizationSavedData.Lease::id)).skip(offset).limit(limit).toList();}
     public List<String> status(ServerPlayer viewer){thread();return data.leases().stream().filter(l->viewer.hasPermissions(2)||l.actor().equals(viewer.getUUID()))
             .sorted(Comparator.comparing(MobilizationSavedData.Lease::createdAt).reversed()).limit(32)
-            .map(l->l.id()+" unit="+l.unit()+" "+l.doctrine()+" "+l.phase()+" expires="+l.expiresAt()+" "+l.detail()).toList();}
+            .map(l->com.ultimakingdoms.interaction.Names.words(l.doctrine())+" · "+com.ultimakingdoms.interaction.Names.words(l.phase())+" · "+com.ultimakingdoms.interaction.Names.entity(server,l.unit())+" · expires "+com.ultimakingdoms.interaction.Names.remaining(server,l.expiresAt())+" · "+l.detail()).toList();}
 }

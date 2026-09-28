@@ -57,6 +57,12 @@ public final class WarfareRuntime {
     private static void operator(ServerPlayer actor) {
         if (!actor.hasPermissions(2)) throw new IllegalArgumentException("Only an operator can register military bindings.");
     }
+    /** Operators, or the kingdom's own government with proposal authority, may register its military mappings and bindings. */
+    private void authority(ServerPlayer actor, net.minecraft.resources.ResourceLocation kingdom) {
+        if (actor.hasPermissions(2)) return;
+        if (!com.ultimakingdoms.api.politics.UltimaPoliticsApi.get(server).authorized(actor, kingdom.toString(), com.ultimakingdoms.api.politics.Politics.Permission.PROPOSE))
+            throw new IllegalArgumentException("Only an operator or this kingdom's government with proposal authority can register military bindings.");
+    }
     private void commit(ControlState next) {
         next.revision = Math.addExact(next.revision, 1);
         if (!data.commit(server, next)) throw new IllegalArgumentException("Control records could not be saved; action refused.");
@@ -64,7 +70,7 @@ public final class WarfareRuntime {
     /** Mapping labels refer to an existing native owner observed where the operator stands. */
     public String mapHere(ServerPlayer actor, net.minecraft.resources.ResourceLocation kingdom) {
         actor(actor);
-        operator(actor); enabled();
+        enabled(); authority(actor, kingdom);
         if (kingdoms.getKingdom(kingdom).filter(KingdomView::defined).isEmpty()) throw new IllegalArgumentException("Kingdom unavailable.");
         var view = RecruitsObservation.here(actor); requireClaim(view);
         var next = data.snapshot();
@@ -78,8 +84,9 @@ public final class WarfareRuntime {
     }
     public String bindHere(ServerPlayer actor, UUID settlementId) {
         actor(actor);
-        operator(actor); enabled();
+        enabled();
         var settlement = kingdoms.getSettlement(settlementId).orElseThrow(() -> new IllegalArgumentException("Settlement unavailable."));
+        authority(actor, settlement.kingdomId());
         if (kingdoms.getKingdom(settlement.kingdomId()).filter(KingdomView::defined).isEmpty())
             throw new IllegalArgumentException("Settlement kingdom definition unavailable.");
         if (!settlement.dimension().equals(Level.OVERWORLD)
@@ -136,18 +143,18 @@ public final class WarfareRuntime {
                 .max(Comparator.comparingLong(b -> b.history().get(b.history().size() - 1).gameTime())).orElse(null);
         if (binding == null) return List.of("No explicit native claim binding.");
         var lines = new ArrayList<String>();
-        if (viewer.hasPermissions(2)) lines.add("Control revision: " + state.revision + "; retire explicitly with /ultima warfare retire " + id + " " + state.revision);
+        if (viewer.hasPermissions(2)) lines.add("Control revision " + state.revision + ". Operators retire this binding with the \"Retire a native claim binding\" task, which reviews the current revision.");
         lines.add(!WarfareConfig.ENABLED.get() ? "Political warfare disabled; retained historical snapshot."
                 : !data.writable() ? "Control records unavailable; read-only recovery required."
                 : binding.condition() == ControlState.Condition.RETIRED ? "Retired binding; historical information only."
                 : availability.getOrDefault(id, "Stale: awaiting native reconciliation after startup."));
         var political = CampaignService.get(server).control(viewer, id);
-        lines.add("Recognized sovereign: " + political.map(c -> c.recognizedKingdom() + " | " + c.autonomy()).orElse(binding.sovereign()));
-        lines.add("Observed military owner: " + binding.owner() + " | " + binding.condition());
+        lines.add("Recognized sovereign: " + political.map(c -> com.ultimakingdoms.interaction.Names.kingdom(server, c.recognizedKingdom()) + " · " + com.ultimakingdoms.interaction.Names.words(c.autonomy())).orElse(com.ultimakingdoms.interaction.Names.kingdom(server, binding.sovereign())));
+        lines.add("Observed military owner: " + binding.owner() + " · " + com.ultimakingdoms.interaction.Names.words(binding.condition()));
         lines.add("Observation #" + binding.sequence() + ". Occupation does not change civic identity or civilian law.");
         binding.history().stream().skip(Math.max(0, binding.history().size() - 6)).forEach(e ->
-                lines.add("Day " + e.gameTime() / 24000 + ": " + e.condition() + " | " + e.owner()));
-        lines.add("Peace/autonomy: /ultima warfare campaigns " + id + ". Civilian contracts: /ultima-contract. Local civilian law remains in force.");
+                lines.add(com.ultimakingdoms.interaction.Names.words(com.ultimakingdoms.interaction.Names.day(e.gameTime())) + ": " + com.ultimakingdoms.interaction.Names.words(e.condition()) + " · " + e.owner()));
+        lines.add("Peace and autonomy are negotiated through the Warfare tasks; civilian contracts through the Contracts tasks. Local civilian law remains in force.");
         return List.copyOf(lines);
     }
     public List<String> here(ServerPlayer viewer) {

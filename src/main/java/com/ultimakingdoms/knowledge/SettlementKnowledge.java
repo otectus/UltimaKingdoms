@@ -42,7 +42,32 @@ public final class SettlementKnowledge extends SavedData {
         setDirty();
         save(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
                 .resolve("data").resolve(NAME + ".dat").toFile());
-        if (isDirty()) throw new IllegalStateException("Cannot durably initialize settlement discovery");
+        if (isDirty()) {
+            // Startup policy: an unwritable discovery file never stops the server. Discovery becomes read-only, the
+            // ledger and selectors show this diagnostic, and the file on disk is left exactly as it was found.
+            CompoundTag snapshot = save(new CompoundTag());
+            legacyPublic.clear(); discovered.clear(); entries = 0; initialized = false; preserved = snapshot;
+            diagnostic = "Settlement discovery is read-only: " + NAME + ".dat could not be written at startup";
+            com.mojang.logging.LogUtils.getLogger().error("{}; check the world data directory permissions and free space", diagnostic);
+        }
+    }
+    /** Every settlement the viewer may see in ledger order, bounded, for selectors that need the whole list once. */
+    public List<SettlementView> all(ServerPlayer viewer, KingdomsService kingdoms, Optional<ResourceLocation> kingdom, int limit) {
+        if (limit < 1 || limit > 1_000_000) throw new IllegalArgumentException("Invalid discovery limit");
+        if (viewer.hasPermissions(2)) {
+            var out = new ArrayList<SettlementView>();
+            for (int offset = 0; offset < limit; offset += 64) { var page = kingdoms.getSettlementPage(kingdom, offset, Math.min(64, limit - offset)); out.addAll(page); if (page.size() < 64) break; }
+            return out;
+        }
+        return known(viewer, kingdoms, kingdom).limit(limit).toList();
+    }
+    private java.util.stream.Stream<SettlementView> known(ServerPlayer viewer, KingdomsService kingdoms, Optional<ResourceLocation> kingdom) {
+        Set<UUID> ids = new HashSet<>(legacyPublic);
+        ids.addAll(discovered.getOrDefault(viewer.getUUID(), Set.of()));
+        if (!writable()) ids.clear();
+        return ids.stream().map(kingdoms::getSettlement).flatMap(Optional::stream)
+                .filter(s -> kingdom.isEmpty() || kingdom.get().equals(s.kingdomId()))
+                .sorted(Comparator.comparing(SettlementView::displayName).thenComparing(s -> s.id().toString()));
     }
 
     public boolean writable() { return preserved == null; }
@@ -74,13 +99,7 @@ public final class SettlementKnowledge extends SavedData {
         if (offset < 0 || offset > 1_000_000 || limit < 1 || limit > 64)
             throw new IllegalArgumentException("Invalid discovery page");
         if (viewer.hasPermissions(2)) return kingdoms.getSettlementPage(kingdom, offset, limit);
-        Set<UUID> ids = new HashSet<>(legacyPublic);
-        ids.addAll(discovered.getOrDefault(viewer.getUUID(), Set.of()));
-        if (!writable()) ids.clear();
-        return ids.stream().map(kingdoms::getSettlement).flatMap(Optional::stream)
-                .filter(s -> kingdom.isEmpty() || kingdom.get().equals(s.kingdomId()))
-                .sorted(Comparator.comparing(SettlementView::displayName).thenComparing(s -> s.id().toString()))
-                .skip(offset).limit(limit).toList();
+        return known(viewer, kingdoms, kingdom).skip(offset).limit(limit).toList();
     }
 
     public long count(ServerPlayer viewer, KingdomsService kingdoms, ResourceLocation kingdom) {

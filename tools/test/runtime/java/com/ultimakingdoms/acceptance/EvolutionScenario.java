@@ -52,11 +52,12 @@ final class EvolutionScenario {
             for (var p : List.of(one, two)) { SettlementKnowledge.get(server).discover(p.getUUID(), seatA.id()); SettlementKnowledge.get(server).discover(p.getUUID(), seatB.id()); }
             var evolution = EvolutionRuntime.get(server); evolution.configure(one, true, true); evolution.region(one, seatA.id(), true);
             var protection = new ProtectionService(server);
-            UUID pact = parse(protection.propose(one, A, B, seatA.id(), Set.of(ProtectionState.Duty.CIVIC_AID), 168000, 1200, "Voluntary aid with peaceful exit"), "proposal ");
+            protection.propose(one, A, B, seatA.id(), Set.of(ProtectionState.Duty.CIVIC_AID), 168000, 1200, "Voluntary aid with peaceful exit");
+            UUID pact = protection.pacts(one).get(0).id(); // newest first; results name kingdoms, not ids
             protection.sign(one, pact, A, 1); protection.sign(two, pact, B, 2);
             boolean refused = false; try { protection.request(one, pact, ProtectionState.Duty.DEFENSE_ASSISTANCE, 3); } catch (IllegalArgumentException expected) { refused = true; }
             check(refused, "out-of-scope protectorate levy denied");
-            UUID obligation = parse(protection.request(one, pact, ProtectionState.Duty.CIVIC_AID, 3), "Obligation ");
+            protection.request(one, pact, ProtectionState.Duty.CIVIC_AID, 3); UUID obligation = protection.obligations(one).get(0).id();
             protection.refuse(two, obligation, 1, "Local workshop is serving its residents first");
             check(protection.inspect(one, pact).stream().anyMatch(s -> s.contains("REFUSED")), "subordinate retains explicit refusal");
             protection.exit(two, pact, B, 3);
@@ -103,13 +104,13 @@ final class EvolutionScenario {
             Class eventType = Class.forName("com.talhanation.recruits.RecruitEvent$Hired");
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, false, eventType,
                     (java.util.function.Consumer<net.minecraftforge.eventbus.api.Event>) e -> { if (veto.get()) e.setCanceled(true); });
-            UUID transfer = parse(transfers.propose(one, unit.getUUID(), two.getUUID(), secondGroupId, false), "proposal ");
+            transfers.propose(one, unit.getUUID(), two.getUUID(), secondGroupId, false); UUID transfer = newestTransfer(transfers, one, unit.getUUID());
             transfers.consent(two, transfer, 1); server.getWorldData().overworldData().setGameTime(level.getGameTime()+1201);
             String refusal = transfers.apply(one, transfer, 2);
             check(RecruitsTransfer.matches(unit, before, false), "native hire veto restores original owner/group/count/equipment: " + refusal);
             check(transfers.inspect(one, transfer).get(0).contains("CANCELLED"), "restoration has actual disk acknowledgment");
             veto.set(false);
-            transfer = parse(transfers.propose(one, unit.getUUID(), two.getUUID(), secondGroupId, false), "proposal ");
+            transfers.propose(one, unit.getUUID(), two.getUUID(), secondGroupId, false); transfer = newestTransfer(transfers, one, unit.getUUID());
             transfers.consent(two, transfer, 1); server.getWorldData().overworldData().setGameTime(level.getGameTime()+1201);
             var forced = Set.copyOf(level.getForcedChunks()); String result = transfers.apply(one, transfer, 2);
             check(transfers.inspect(one, transfer).get(0).contains("COMPLETE"), "native transfer has disk acknowledgment: " + result);
@@ -190,6 +191,9 @@ final class EvolutionScenario {
         }
         server.saveEverything(false,true,true);
         finish.accept("PASS integration " + phase + ": durable outcome, ownership, private history and schema/provider preservation");
+    }
+    private static UUID newestTransfer(RecruitTransferService transfers, ServerPlayer owner, UUID unit) {
+        return transfers.transfers(owner).stream().filter(v -> v.unit().equals(unit)).max(java.util.Comparator.comparingLong(RecruitTransferService.TransferView::deadline)).orElseThrow().id();
     }
     private static UUID parse(String line, String prefix) { int start = line.indexOf(prefix) + prefix.length(); return UUID.fromString(line.substring(start, start + 36)); }
     private static void success(Politics.Result result) { check(result.success(), "political setup: " + result.message()); }

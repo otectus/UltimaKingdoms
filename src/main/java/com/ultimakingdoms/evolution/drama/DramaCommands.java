@@ -26,7 +26,8 @@ public final class DramaCommands {
         root.then(action("negotiate", (service, player, id, revision) -> service.negotiate(player, id, revision)));
         root.then(action("exit", (service, player, id, revision) -> service.exit(player, id, revision)));
         root.then(action("recover", (service, player, id, revision) -> service.recover(player, id, revision)));
-        event.getDispatcher().register(root);
+        var node = event.getDispatcher().register(root); // "/ultima drama ..." is the same command tree under the shared root
+        event.getDispatcher().register(Commands.literal("ultima").then(Commands.literal("drama").redirect(node)));
     }
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> action(String name, Action action) {
         return Commands.literal(name).then(com.ultimakingdoms.interaction.NamedTargets.argument("drama","drama").then(Commands.argument("revision", LongArgumentType.longArg(1))

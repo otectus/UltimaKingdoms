@@ -34,7 +34,7 @@ Member ranks are volunteer / Lamplighter / route warden at 0 / 60 / 100 standing
 - `/ultima military here` observes the current Overworld claim through exact Recruits 1.15.2. It never changes claims, teams, relations or troops.
 - Operator `/ultima integrations` reports installed versions and civic/discovery health. Installation alone is not proof that a capability bound successfully.
 
-Native MCA Conversations integration is implemented in its provider patch: a private guild-contact topic, current qualification/workshop branches and authenticated introduction/commission actions. It uses the actual speaker and requester; it does not broadcast standing, private worship or destinations into public NPC chat. See provider delivery and final acceptance below.
+Native MCA Conversations integration ships in MCA Conversations 1.8.0, and the MCA Quests half ships in MCA Quests 1.7.0; the R1 provider patches are superseded for those versions. It provides a private guild-contact topic, current qualification/workshop branches and authenticated introduction/commission actions. It uses the actual speaker and requester; it does not broadcast standing, private worship or destinations into public NPC chat. See provider delivery and final acceptance below.
 
 ## Source and provider boundaries
 

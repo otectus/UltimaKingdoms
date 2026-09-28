@@ -10,8 +10,8 @@ import static com.ultimakingdoms.interaction.ActionRegistry.*;
 public final class BasicTargets {
     public static void init(){
         targets("kingdom",c->UltimaKingdomsApi.get(c.server()).getKingdoms().stream().map(k->new Choice(k.id().toString(),PlayerWords.text(k.translationKey()))).toList());
-        targets("settlement",c->{var api=UltimaKingdomsApi.get(c.server());var known=SettlementKnowledge.get(c.server());var out=new ArrayList<Choice>();
-            for(int offset=0;offset<=1_000_000;offset+=64){var page=known.page(c.player,api,Optional.empty(),offset,64);for(var s:page)out.add(new Choice(s.id().toString(),s.displayName(),s.dimension().location()+" · "+s.anchor().toShortString(),Map.of("revision",Long.toString(s.revision()),"kingdom",s.kingdomId().toString())));if(page.size()<64)break;}return out;});
+        targets("settlement",c->{var api=UltimaKingdomsApi.get(c.server());var out=new ArrayList<Choice>();
+            for(var s:SettlementKnowledge.get(c.server()).all(c.player,api,Optional.empty(),4096))out.add(new Choice(s.id().toString(),s.displayName(),s.dimension().location()+" · "+s.anchor().toShortString(),Map.of("revision",Long.toString(s.revision()),"kingdom",s.kingdomId().toString())));return out;});
         targets("player",c->c.server().getPlayerList().getPlayers().stream().map(p->new Choice(p.getUUID().toString(),p.getGameProfile().getName())).toList());
         targets("person",c->{var result=new ArrayList<>(c.choices("player"));result.addAll(c.choices("npc"));return result;});
         targets("npc",c->c.player.serverLevel().getEntities(c.player,c.player.getBoundingBox().inflate(32),e->e instanceof LivingEntity&&!(e instanceof net.minecraft.world.entity.player.Player)&&e.isAlive()&&c.player.hasLineOfSight(e)).stream().map(e->new Choice(e.getUUID().toString(),e.getDisplayName().getString(),"Nearby and visible")).toList());

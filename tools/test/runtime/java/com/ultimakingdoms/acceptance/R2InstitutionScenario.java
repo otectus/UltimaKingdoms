@@ -108,14 +108,14 @@ final class R2InstitutionScenario {
             check(!(boolean)NativeQuestScenario.invoke("quest.QuestManager","accept",player,source.npc(),CivicService.WORKSHOP_QUEST),"ordinary path cannot accept institutional template without binding");
             R2CrimeFixture.setup(player,source.npc());
             R2CrimeFixture.reportTheft(player,source.npc(),false);
-            check(com.ultimakingdoms.compat.crime.InstitutionalCrimeBridge.workshop(player,source.npc()).allowed(),"unreported local theft does not become institutional knowledge");
+            check(com.ultimakingdoms.compat.crime.InstitutionalCrimeBridge.workshop(player,source.npc()).allowed(),"unreported local theft does not become institutional knowledge: "+R2CrimeFixture.describeWorkshop(player,source.npc()));
             var staleOffer=civic.workshop(player,source.npc());check(staleOffer.success(),"native institutional offer opened before legal change");
             UUID firstCase=R2CrimeFixture.reportTheft(player,source.npc(),true);
             check(!(boolean)NativeQuestScenario.invoke("quest.QuestManager","accept",player,source.npc(),CivicService.WORKSHOP_QUEST),"reported case invalidates previously displayed acceptance");
             check(!civic.workshop(player,source.npc()).success(),"reported local case suspends only institutional service");
             R2CrimeFixture.resolveRestitution(player,firstCase);
             var restored=com.ultimakingdoms.compat.crime.InstitutionalCrimeBridge.workshop(player,source.npc());
-            check(restored.allowed()&&!restored.restitution().isEmpty(),"Crime-owned receipt-backed amends settle local case and restore workshop");
+            check(restored.allowed()&&!restored.restitution().isEmpty(),"Crime-owned receipt-backed amends settle local case and restore workshop: "+R2CrimeFixture.describeWorkshop(player,source.npc()));
             var open=civic.workshop(player,source.npc());check(open.success(),"recognized workshop opens paid native offer: "+open.reason());
             check((boolean)NativeQuestScenario.invoke("quest.QuestManager","accept",player,source.npc(),CivicService.WORKSHOP_QUEST),"native acceptance binds recognized workshop authorization");
             Object cancelledActive=((List<?>)NativeQuestScenario.call(data,"active")).get(0);

@@ -10,7 +10,7 @@ Each task asks for one value at a time. Saved records appear as readable, filter
 
 Consequential tasks end on a review page. It repeats the selected people and places, relevant terms, choice details, and consequences. **Apply reviewed action** performs the operation once. Backing out changes nothing. The server rejects a selection whose record or task version changed during review, and repeated apply messages return the completed session result rather than running the operation twice.
 
-The form protocol also rejects choices copied from another player or session, expired sessions, stale page nonces, permission lost while a form is open, and records that are no longer in the viewer-filtered choice set. A delayed result can be checked without submitting the action again. These checks support the interface; they do not replace the owning service's authority, provider, durability, or prerequisite checks.
+The form protocol also rejects choices copied from another player or session, expired sessions, stale page state ids, permission lost while a form is open, and records that are no longer in the viewer-filtered choice set. A delayed result can be checked without submitting the action again. These checks support the interface; they do not replace the owning service's authority, provider, durability, or prerequisite checks.
 
 Kingdom Tasks can also be opened from **Tasks** in the Village Ledger, **Actions** on a Kingdom page, and task buttons in the War Room. Those buttons open the real server task. They do not prepare a chat command or pass a hidden client assertion to a service.
 

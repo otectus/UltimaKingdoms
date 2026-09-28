@@ -21,7 +21,7 @@ public final class WarRoomScreen extends Screen {
     private final List<Button> actions=new ArrayList<>();
     private MenuTextPanel intelligence;
     private Button refresh;
-    public WarRoomScreen(Screen parent,UUID settlement,String settlementName){super(Component.literal("War room"));this.parent=parent;this.settlement=settlement;this.settlementName=settlementName;}
+    public WarRoomScreen(Screen parent,UUID settlement,String settlementName){super(Component.translatable("menu.ultima_kingdoms.war_room"));this.parent=parent;this.settlement=settlement;this.settlementName=settlementName;}
     private int panelWidth(){return Math.min(500,width-12);}
     private int panelHeight(){return Math.min(360,height-12);}
     private int left(){return (width-panelWidth())/2;}
@@ -31,7 +31,7 @@ public final class WarRoomScreen extends Screen {
     @Override protected void init(){
         actions.clear();
         addRenderableWidget(Button.builder(Component.translatable("gui.back"),b->onClose()).bounds(left()+10,bottom()-30,74,20).build());
-        refresh=addRenderableWidget(Button.builder(Component.literal("Refresh"),b->request()).bounds(left()+panelWidth()-84,bottom()-30,74,20).build());
+        refresh=addRenderableWidget(Button.builder(Component.translatable("menu.ultima_kingdoms.refresh"),b->request()).bounds(left()+panelWidth()-84,bottom()-30,74,20).build());
         intelligence=addRenderableWidget(new MenuTextPanel(left()+8,top()+50,panelWidth()-16,panelHeight()-178,label("local_intelligence")));
         if(snapshot==null&&timeout==0)request();
         else {updateContent();rebuildActions();}
@@ -46,7 +46,7 @@ public final class WarRoomScreen extends Screen {
         }return false;
     }
     private void updateContent(){
-        intelligence.setContent(snapshot==null?List.of(error==null?Component.literal("Requesting authorized local intelligence…"):error):
+        intelligence.setContent(snapshot==null?List.of(error==null?Component.translatableWithFallback("menu.ultima_kingdoms.war_room.requesting","Requesting authorized local intelligence…"):error):
                 snapshot.lines().stream().filter(line->!line.startsWith("Campaign revision:")).map(Component::literal).map(c->(Component)c).toList());
     }
     private void rebuildActions(){
@@ -54,13 +54,13 @@ public final class WarRoomScreen extends Screen {
         int buttonWidth=(panelWidth()-26)/2;
         for(int i=0;i<snapshot.commands().size();i++){
             var command=snapshot.commands().get(i);
-            Button button=Button.builder(Component.literal(command.label()),b->InteractionClient.open(this,command.value(),""))
+            Button button=Button.builder(Component.literal(command.label()),b->InteractionClient.open(this,command.value(),"",InteractionClient.prefill("settlement",settlement)))
                     .bounds(left()+10+(i%2)*(buttonWidth+6),bottom()-106+(i/2)*22,buttonWidth,20)
-                    .tooltip(Tooltip.create(Component.literal("Choose named targets and review this action."))).build();
+                    .tooltip(Tooltip.create(Component.translatableWithFallback("menu.ultima_kingdoms.war_room.action_hint","Choose named targets and review this action."))).build();
             actions.add(addRenderableWidget(button));
         }
     }
-    @Override public void tick(){super.tick();if(snapshot==null&&timeout>0&&--timeout==0){error=Component.literal("War-room request timed out. Refresh to retry.");refresh.active=true;updateContent();}}
+    @Override public void tick(){super.tick();if(snapshot==null&&timeout>0&&--timeout==0){error=Component.translatableWithFallback("menu.ultima_kingdoms.war_room.timeout","War-room request timed out. Refresh to retry.");refresh.active=true;updateContent();}}
     @Override public void render(GuiGraphics graphics,int mouseX,int mouseY,float partialTick){
         renderBackground(graphics);
         VanillaGui.panel(graphics,left(),top(),panelWidth(),panelHeight());

@@ -43,7 +43,8 @@ public final class EvolutionCommands {
                 .then(Commands.argument("kind", StringArgumentType.word()).executes(c -> run(c, () -> EvolutionContracts.offer(c.getSource().getPlayerOrException(),
                         com.ultimakingdoms.interaction.NamedTargets.uuid(c,"scope","scope"), com.ultimakingdoms.interaction.NamedTargets.uuid(c,"giver","npc"),
                         com.ultimakingdoms.warfare.contracts.CivilianContractKind.parse("evolving_" + StringArgumentType.getString(c, "kind")))))))));
-        event.getDispatcher().register(root);
+        var node = event.getDispatcher().register(root); // "/ultima evolution ..." is the same command tree under the shared root
+        event.getDispatcher().register(Commands.literal("ultima").then(Commands.literal("evolution").redirect(node)));
     }
     private static int resolve(CommandContext<CommandSourceStack> c, EvolutionState.Outcome outcome, String counterpart) {
         return run(c, () -> EvolutionRuntime.get(c.getSource().getServer()).resolve(c.getSource().getPlayerOrException(), com.ultimakingdoms.interaction.NamedTargets.uuid(c,"scenario","scenario"), LongArgumentType.getLong(c, "revision"), outcome, counterpart));

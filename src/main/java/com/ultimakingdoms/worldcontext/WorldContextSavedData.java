@@ -91,6 +91,7 @@ public final class WorldContextSavedData extends SavedData {
     }
     public boolean writable(){return preserved==null;} public String diagnostic(){return diagnostic;} public long revision(){return state.revision;}
     State snapshot(){return JSON.fromJson(JSON.toJson(state),State.class);}
+    int encounterCount(){return state.encounters.size();} int creditedCount(){return state.creditedEntities.size();}
     boolean commit(MinecraftServer server,State next,Index... changed){
         if(!server.isSameThread())throw new IllegalStateException("World context requires server thread");
         if(!writable())return false;next.validate();

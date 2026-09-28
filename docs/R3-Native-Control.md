@@ -12,7 +12,7 @@ Military commands require both the actual native faction leader and a current po
 
 The audited Recruits delayed executor also receives server-thread dispatch and shutdown cleanup. Delayed tasks are tied to their originating server session, preventing a disconnected world's callbacks from running in a later integrated-server world.
 
-MCA Quests and MCA Crime require the R3 provider builds for the contract, jurisdiction and external atlas interfaces. MCA Quests uses protocol 17: clients and server must use the same build. Provider source exports and before/after hashes are under `pack/r3/providers`; these layer on the R1/R2 provider changes. Core startup remains supported without these providers. Installed Map Atlases remains the rendering owner, and Recruits keeps its native territorial map.
+MCA Quests and MCA Crime provide the contract, jurisdiction and external atlas interfaces. MCA Crime 0.7.5 ships the jurisdiction half natively (`JurisdictionPolicyApi`). MCA Quests 1.7.0 and later ship the MCA Quests half natively and use protocol 18; the privately patched R3 MCA Quests jar used protocol 17 and does not interoperate with 1.7.0. Clients and server must use the same build. The provider source exports and before/after hashes under `pack/r3/providers` are superseded for those versions. Core startup remains supported without these providers. Installed Map Atlases remains the rendering owner, and Recruits keeps its native territorial map.
 
 ## Setup and player actions
 
