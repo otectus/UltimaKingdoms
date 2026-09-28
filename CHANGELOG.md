@@ -11,7 +11,11 @@ Implementation of the findings in [docs/UltimaKingdoms-Audit.md](docs/UltimaKing
   (0.8 adds `api.v1`; 0.9 has not been seen). Forge enforces an optional range when the mod is
   present, so the old upper bounds would have refused to launch with the next Crime, Reputation or
   Townstead release even though every one of those bridges already fails closed on API drift.
-  `recruits [1.15.2]` stays exact because the Recruits mixins target that release.
+  Recruits is `[1.15.2,)` on the same grounds: the integration is audited for exactly 1.15.2, and that is
+  enforced at runtime rather than by refusing to launch. `RecruitsMixinPlugin` applies the Recruits
+  mixins only to 1.15.2 and every Recruits adapter refuses any other version, so a newer Recruits now
+  launches with the integration off and one warning naming the installed version.
+  `ModsTomlRangesTest` fails the build if an optional dependency is pinned to one exact version.
 
 ### Fixed
 
@@ -42,6 +46,7 @@ Implementation of the findings in [docs/UltimaKingdoms-Audit.md](docs/UltimaKing
 - Checked against the current companion trees. MCA Quests 1.7.0 and MCA Conversations 1.8.0 ship their R1–R3 provider halves natively, and every reflective binding in both directions matches.
 - MCA Crime 0.7.5 now ships the workshop-legality (`InstitutionalServiceApi`) and jurisdiction (`JurisdictionPolicyApi`) providers. Without them, workshop commissions and native law enforcement stayed unavailable.
 - Live faction synchronization requires MCA Reputation 0.6.1, the first release with the standing journal. With 0.6.0, local standing is read-only.
+- Faction synchronization recovers on its own when MCA Reputation's standing journal lapses this server's cursor (`GAP`), which happens when synchronization was off, stalled or uninstalled for longer than the journal's retention bound (`standingJournalMaxEntries`). The skipped changes cannot be replayed: the cursor moves durably to where the journal's kept entries begin, one warning names how many were skipped, and the faction status line counts them (`source_gaps`, `source_skipped`). Until now a `GAP` stopped synchronization for good. Faction standing is deliberately not re-derived from MCA Reputation's standing baselines at that point, because a baseline already includes every change applied before the gap and importing it would count them twice.
 - The Book of Kingdoms names these provider versions; "Check installed integrations" also lists MCA Conversations.
 
 ## 0.1.0

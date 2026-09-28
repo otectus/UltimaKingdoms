@@ -122,6 +122,7 @@ final class ReputationOutboxBridge {
             lastMode=mode;
             long after=shadowMode?shadowAfter:cursor.get().through();
             Object batch=poll.invoke(null,server,CONSUMER,epoch,after,64);String status=String.valueOf(call(batch,"status"));
+            if("GAP".equals(status)){recoverFromGap(shadowMode);return;}
             if(!"READY".equals(status)){if(!"UNREGISTERED".equals(status))LOGGER.error("Durable reputation outbox status {}",status);return;}
             Object raw=call(batch,"deliveries");if(!(raw instanceof List<?> deliveries))return;
             for(Object delivery:deliveries){if(!process(delivery))break;if(shadowMode)shadowAfter=number(call(call(delivery,"envelope"),"sequence"));}
@@ -146,6 +147,47 @@ final class ReputationOutboxBridge {
             factions.applyFromOutbox(new FactionStandingRequest(player,kingdom,Integer.parseInt(payload.get("projectedDelta")),SOURCE,
                     FactionChangeCause.LOCAL_REPUTATION,event,sequence,Optional.of(settlement),Optional.of("MCA local reputation contribution"),(Boolean)call(envelope,"quiet")),CONSUMER.toString(),eventEpoch,sequence);
             return true;
+        }
+
+        /**
+         * MCA: Reputation reported GAP: its standing journal lapsed this consumer (its retention bound,
+         * 0.6.1), so the entries between this server's cursor and the start of what the journal kept were
+         * trimmed before they were applied, and cannot be replayed. Re-registering is idempotent and hands
+         * back the lapsed registration, whose startAfter is where the kept journal begins; the durable
+         * cursor moves there, the skipped range is recorded for the faction status line, and polling goes
+         * on without an operator.
+         *
+         * <p>Faction standing is deliberately not re-derived from standingBaselines(server). A baseline is
+         * a player's cumulative local score, which already includes every contribution applied before the
+         * gap, so importing it would credit those twice (docs/Ultima-Factions-Integration-Audit-and-Roadmap.md,
+         * "Enable new effects gradually"). The explicit legacy migration stays the tool for a deliberate
+         * re-import.
+         */
+        void recoverFromGap(boolean shadowMode)throws ReflectiveOperationException{
+            Object answer=register.invoke(null,server,consumer);
+            if(!(answer instanceof Optional<?> optional)||optional.isEmpty()){
+                LOGGER.error("MCA Reputation reported a standing-journal GAP and refused to re-register the Ultima Factions consumer; synchronisation waits");
+                return;
+            }
+            Object registration=optional.get();
+            if(!epoch.equals(call(registration,"epoch"))){
+                LOGGER.error("MCA Reputation's standing journal changed epoch; operator migration required");
+                return;
+            }
+            long resumeAfter=number(call(registration,"startAfter"));
+            Optional<FactionServiceImpl.SourceCursorState> durable=factions.durableSourceCursor(CONSUMER.toString());
+            if(durable.isEmpty())return;
+            long through=durable.get().through();
+            if(through<resumeAfter){
+                if(!factions.resumeSourceCursorAfterGap(CONSUMER.toString(),epoch,resumeAfter)){
+                    LOGGER.error("Could not durably move the reputation cursor past a standing-journal GAP; retrying on the next poll");
+                    return;
+                }
+                LOGGER.warn("MCA Reputation trimmed {} standing change(s) after entry {} before this server applied them "
+                        +"(its standing-journal retention bound); they cannot be replayed. Faction synchronisation resumes "
+                        +"after entry {}.",resumeAfter-through,through,resumeAfter);
+            }
+            if(shadowMode)shadowAfter=Math.max(shadowAfter,resumeAfter);
         }
 
         void ackDurableCursor(){try{Optional<FactionServiceImpl.SourceCursorState> cursor=factions.durableSourceCursor(CONSUMER.toString());if(cursor.isPresent())ack.invoke(null,server,CONSUMER,cursor.get().epoch(),cursor.get().through());}catch(ReflectiveOperationException exception){LOGGER.error("Could not acknowledge durable reputation cursor",exception);}}

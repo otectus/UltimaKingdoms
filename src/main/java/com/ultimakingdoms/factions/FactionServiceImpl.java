@@ -188,9 +188,12 @@ public final class FactionServiceImpl implements UltimaFactionsService {
         requireServerThread();
         long unmapped = data.pending().stream().filter(value -> "UNMAPPED".equals(value.status())).count();
         long failed = data.pending().stream().filter(value -> "FAILED".equals(value.status())).count();
+        int gaps = data.sourceGaps().stream().mapToInt(FactionSavedData.SourceGap::count).sum();
+        long skipped = data.sourceGaps().stream().mapToLong(FactionSavedData.SourceGap::skipped).sum();
         return "pending=" + data.pending().size() + " unmapped=" + unmapped
                 + " failed=" + failed + " ignored_receipts=" + data.ignoredReceiptCount()
-                + " ignored_consumed=" + data.ignoredConsumed() + " shadow=" + data.shadow().size();
+                + " ignored_consumed=" + data.ignoredConsumed() + " shadow=" + data.shadow().size()
+                + (gaps == 0 ? "" : " source_gaps=" + gaps + " source_skipped=" + skipped);
     }
 
     public Optional<SourceCursorState> durableSourceCursor(String consumer) {
@@ -210,6 +213,24 @@ public final class FactionServiceImpl implements UltimaFactionsService {
             durable = data.durableCursor(consumer);
         }
         return durable != null;
+    }
+
+    /**
+     * Resumes a consumer whose source trimmed entries it had not applied yet (MCA: Reputation's standing
+     * journal lapses a consumer that falls behind its retention bound). Moves the cursor forward to
+     * {@code resumeAfter}, records the skipped range for {@link #diagnosticSummary}, and saves. True once
+     * the new position is durable; false, with nothing changed, when the data is read-only or the move
+     * would not be forward within the cursor's epoch.
+     */
+    public boolean resumeSourceCursorAfterGap(String consumer, UUID epoch, long resumeAfter) {
+        requireServerThread();
+        if (!data.writable()) return false;
+        FactionSavedData.SourceCursor current = data.cursor(consumer);
+        if (current == null || !current.epoch().equals(epoch) || resumeAfter <= current.through()) return false;
+        data.skipGap(consumer, epoch, resumeAfter);
+        flushDurable();
+        FactionSavedData.SourceCursor durable = data.durableCursor(consumer);
+        return durable != null && durable.epoch().equals(epoch) && durable.through() == resumeAfter;
     }
 
     public void onDurableSave(Runnable listener) {

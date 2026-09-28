@@ -18,7 +18,18 @@ public final class RecruitsEvents {
     private RecruitsEvents() { }
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void register() {
-        if (registered || !ModList.get().getModContainerById("recruits").map(m -> m.getModInfo().getVersion().toString().equals("1.15.2")).orElse(false)) return;
+        if (registered) return;
+        var recruits = ModList.get().getModContainerById("recruits");
+        if (recruits.isEmpty()) return;
+        String version = recruits.get().getModInfo().getVersion().toString();
+        if (!version.equals("1.15.2")) {
+            // mods.toml admits any Recruits from 1.15.2 on, so an unaudited release launches; say once why
+            // the integration is inert instead of leaving an operator to find it through refused commands.
+            com.mojang.logging.LogUtils.getLogger().warn("Recruits {} is installed, but Ultima Kingdoms' Recruits "
+                    + "integration is audited for 1.15.2 only and stays off: no Recruits mixin is applied, native "
+                    + "claims read as unsupported, and warfare, mobilization and transfer commands refuse.", version);
+            return;
+        }
         try {
             for (String event : new String[]{"Start", "Tick"}) {
                 Class type = Class.forName("com.talhanation.recruits.SiegeEvent$" + event);

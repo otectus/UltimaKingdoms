@@ -29,6 +29,8 @@ final class FactionSavedData extends SavedData {
     private final Map<UUID, SyncReceipt> receipts = new LinkedHashMap<>();
     private final Map<String, Long> sourceCheckpoints = new LinkedHashMap<>();
     private final Map<String, SourceCursor> sourceCursors = new LinkedHashMap<>();
+    /** Ranges a source trimmed before this consumer applied them, per consumer; diagnostics only. */
+    private final Map<String, SourceGap> sourceGaps = new LinkedHashMap<>();
     private final Map<UUID, PendingReputationChange> pending = new LinkedHashMap<>();
     private final Map<UUID, IgnoredSourceReceipt> ignoredReceipts = new LinkedHashMap<>();
     private final Map<UUID, ShadowProjection> shadow = new LinkedHashMap<>();
@@ -109,6 +111,29 @@ final class FactionSavedData extends SavedData {
         SourceCursor replacement = new SourceCursor(epoch, through);
         if (replacement.equals(sourceCursors.put(consumer, replacement))) return;
         setDirty();
+    }
+
+    /**
+     * Moves a consumer's cursor past a range its source no longer holds (MCA: Reputation lapsed it) and
+     * records how much was skipped. Forward only, within one epoch: anything else is refused.
+     */
+    void skipGap(String consumer, UUID epoch, long resumeAfter) {
+        SourceCursor current = sourceCursors.get(consumer);
+        if (current == null || !current.epoch.equals(epoch) || resumeAfter <= current.through) {
+            throw new IllegalArgumentException("A source gap can only move an existing cursor forward");
+        }
+        sourceCursors.put(consumer, new SourceCursor(epoch, resumeAfter));
+        sourceGaps.merge(consumer, new SourceGap(1, resumeAfter - current.through, current.through, resumeAfter),
+                SourceGap::then);
+        setDirty();
+    }
+
+    SourceGap sourceGap(String consumer) {
+        return sourceGaps.get(consumer);
+    }
+
+    Collection<SourceGap> sourceGaps() {
+        return List.copyOf(sourceGaps.values());
     }
 
     private void validateCursorAdvance(String consumer, UUID epoch, long through) {
@@ -204,6 +229,11 @@ final class FactionSavedData extends SavedData {
         tag.put("SourceCheckpoints", checkpointTag);
         ListTag cursorTags = new ListTag();sourceCursors.forEach((consumer,cursor)->cursorTags.add(cursor.save(consumer)));
         tag.put("SourceCursors",cursorTags);
+        // Optional and additive: absent in older files, ignored by older builds, so SCHEMA stays put.
+        if (!sourceGaps.isEmpty()) {
+            ListTag gapTags=new ListTag();sourceGaps.forEach((consumer,gap)->gapTags.add(gap.save(consumer)));
+            tag.put("SourceGaps",gapTags);
+        }
         ListTag pendingTags=new ListTag();pending.values().forEach(value->pendingTags.add(value.save()));tag.put("Pending",pendingTags);
         ListTag ignoredTags=new ListTag();ignoredReceipts.values().forEach(value->ignoredTags.add(value.save()));tag.put("IgnoredReceipts",ignoredTags);
         tag.putLong("IgnoredConsumed", ignoredConsumed);
@@ -251,6 +281,9 @@ final class FactionSavedData extends SavedData {
         for(Tag value:tag.getList("SourceCursors",Tag.TAG_COMPOUND)) try {
             CompoundTag cursor=(CompoundTag)value;data.sourceCursors.put(cursor.getString("Consumer"),SourceCursor.load(cursor));
         }catch(RuntimeException exception){LOGGER.warn("Skipping malformed faction source cursor",exception);}
+        for(Tag value:tag.getList("SourceGaps",Tag.TAG_COMPOUND)) try {
+            CompoundTag gap=(CompoundTag)value;data.sourceGaps.put(gap.getString("Consumer"),SourceGap.load(gap));
+        }catch(RuntimeException exception){LOGGER.warn("Skipping malformed faction source gap",exception);}
         for(Tag value:tag.getList("Pending",Tag.TAG_COMPOUND)) try {PendingReputationChange pending=PendingReputationChange.load((CompoundTag)value);data.pending.put(pending.eventId(),pending);}catch(RuntimeException exception){LOGGER.warn("Skipping malformed pending reputation change",exception);}
         for(Tag value:tag.getList("IgnoredReceipts",Tag.TAG_COMPOUND)) try {IgnoredSourceReceipt receipt=IgnoredSourceReceipt.load((CompoundTag)value);data.ignoredReceipts.put(receipt.eventId(),receipt);}catch(RuntimeException exception){LOGGER.warn("Skipping malformed ignored reputation receipt",exception);}
         data.ignoredConsumed=Math.max(data.ignoredReceipts.size(),Math.max(0L,tag.getLong("IgnoredConsumed")));
@@ -261,6 +294,15 @@ final class FactionSavedData extends SavedData {
     }
 
     record Key(UUID player, ResourceLocation kingdom) {}
+
+    /** How often a source lapsed this consumer, how many entries that cost in all, and the last range. */
+    record SourceGap(int count, long skipped, long lastFrom, long lastTo) {
+        SourceGap then(SourceGap next) {
+            return new SourceGap(count + next.count, skipped + next.skipped, next.lastFrom, next.lastTo);
+        }
+        CompoundTag save(String consumer){CompoundTag tag=new CompoundTag();tag.putString("Consumer",consumer);tag.putInt("Count",count);tag.putLong("Skipped",skipped);tag.putLong("LastFrom",lastFrom);tag.putLong("LastTo",lastTo);return tag;}
+        static SourceGap load(CompoundTag tag){return new SourceGap(Math.max(0,tag.getInt("Count")),Math.max(0L,tag.getLong("Skipped")),Math.max(0L,tag.getLong("LastFrom")),Math.max(0L,tag.getLong("LastTo")));}
+    }
 
     record SourceCursor(UUID epoch,long through) {
         CompoundTag save(String consumer){CompoundTag tag=new CompoundTag();tag.putString("Consumer",consumer);tag.putUUID("Epoch",epoch);tag.putLong("Through",through);return tag;}

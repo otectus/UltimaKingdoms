@@ -49,6 +49,52 @@ class FactionSavedDataTest {
         assertEquals(new FactionSavedData.SourceCursor(epoch, 7L), loaded.cursor("test:consumer"));
     }
 
+    /**
+     * MCA: Reputation 0.6.1 lapses a consumer that falls behind its standing journal's retention bound;
+     * the bridge then moves this cursor to where the kept journal begins. The skipped range is recorded,
+     * and the move is forward-only within one epoch, like every other cursor write here.
+     */
+    @Test
+    void aSourceGapMovesTheCursorForwardAndIsRemembered() {
+        FactionSavedData data = new FactionSavedData();
+        UUID epoch = UUID.randomUUID();
+        data.advanceCursor("test:consumer", epoch, 7L);
+
+        data.skipGap("test:consumer", epoch, 20L);
+        assertEquals(new FactionSavedData.SourceCursor(epoch, 20L), data.cursor("test:consumer"));
+        data.skipGap("test:consumer", epoch, 25L);
+
+        FactionSavedData.SourceGap gap = data.sourceGap("test:consumer");
+        assertEquals(new FactionSavedData.SourceGap(2, 18L, 20L, 25L), gap);
+        FactionSavedData loaded = FactionSavedData.load(data.save(new CompoundTag()));
+        assertEquals(gap, loaded.sourceGap("test:consumer"));
+        assertEquals(new FactionSavedData.SourceCursor(epoch, 25L), loaded.cursor("test:consumer"));
+    }
+
+    @Test
+    void aSourceGapNeverMovesACursorBackwardsOrAcrossEpochs() {
+        FactionSavedData data = new FactionSavedData();
+        UUID epoch = UUID.randomUUID();
+        data.advanceCursor("test:consumer", epoch, 7L);
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> data.skipGap("test:consumer", epoch, 7L));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> data.skipGap("test:consumer", epoch, 3L));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> data.skipGap("test:consumer", UUID.randomUUID(), 20L));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> data.skipGap("test:unknown", epoch, 20L));
+        assertEquals(new FactionSavedData.SourceCursor(epoch, 7L), data.cursor("test:consumer"));
+        assertNull(data.sourceGap("test:consumer"));
+    }
+
+    @Test
+    void aFileWithNoGapsWritesNoGapTag() {
+        assertFalse(new FactionSavedData().save(new CompoundTag()).contains("SourceGaps"),
+                "the tag is optional, so files without a gap stay byte-identical to older ones");
+    }
+
     @Test
     void futureSchemaIsReadOnlyAndRoundTripsUnknownBytes() {
         CompoundTag future = new CompoundTag();
